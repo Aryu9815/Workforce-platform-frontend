@@ -21,6 +21,12 @@ const StaffDetail = () => {
     queryKey: ['staff', id],
     queryFn: () => staffApi.getStaff(id!),
     enabled: !!id,
+    select: (data) => ({
+    ...data,
+    initials: (data.first_name?.[0] || '') + (data.last_name?.[0] || '') || '??',
+    formattedJoinedDate: data.join_date ? new Date(data.join_date).toLocaleDateString() : 'N/A',
+    displayEmploymentType: data.employment_type?.replace('_', ' ') || 'N/A'
+  })
   })
   
   if (isLoading) {
@@ -67,7 +73,7 @@ const StaffDetail = () => {
           <div className="flex items-start">
             <div className="h-24 w-24 rounded-xl bg-primary-100 flex items-center justify-center">
               <span className="text-3xl font-bold text-primary-700">
-                {staff.first_name[0]}{staff.last_name[0]}
+                {(staff.first_name?.[0] || '') + (staff.last_name?.[0] || '') || '??'}
               </span>
             </div>
             <div className="ml-6 flex-1">
@@ -102,7 +108,7 @@ const StaffDetail = () => {
                 )}
                 <div className="flex items-center text-sm">
                   <Calendar className="h-4 w-4 text-secondary-400 mr-2" />
-                  Joined {new Date(staff.join_date).toLocaleDateString()}
+                  {staff.join_date ? new Date(staff.join_date).toLocaleDateString() : 'N/A'}
                 </div>
                 <div className="flex items-center text-sm">
                   <Building2 className="h-4 w-4 text-secondary-400 mr-2" />
@@ -110,7 +116,7 @@ const StaffDetail = () => {
                 </div>
                 <div className="flex items-center text-sm">
                   <Briefcase className="h-4 w-4 text-secondary-400 mr-2" />
-                  {staff.employment_type.replace('_', ' ')}
+                  {staff.employment_type?.replace('_', ' ') || 'Not Specified'}
                 </div>
               </div>
             </div>

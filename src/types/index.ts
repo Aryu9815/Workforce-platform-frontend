@@ -63,9 +63,9 @@ export interface FilterParams {
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
 }
-t: string;
-  updated_at: string;
-}
+// t: string;
+//   updated_at: string;
+// }
 
 export interface Department {
   id: string;
