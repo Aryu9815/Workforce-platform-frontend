@@ -45,7 +45,12 @@ export const staffApi = {
     const response = await apiClient.get(`/staff/${id}`)
     return response.data
   },
-  
+  getDesignations: async () => {
+    const response = await apiClient.get('/staff/designations')
+    console.log('Designations response:', response.data)
+    return response.data
+  },
+
   createStaff: async (data: CreateStaffData): Promise<Staff> => {
     const response = await apiClient.post('/staff', data)
     return response.data

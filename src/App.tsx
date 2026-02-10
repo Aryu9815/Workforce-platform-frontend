@@ -6,6 +6,7 @@ import Register from './pages/Register'
 import TenantSelect from './pages/TenantSelect'
 import Dashboard from './pages/Dashboard'
 import StaffList from './pages/staff/StaffList'
+import StaffCreate from './pages/staff/StaffCreate'
 import StaffDetail from './pages/staff/StaffDetail'
 import ProjectList from './pages/projects/ProjectList'
 import ProjectDetail from './pages/projects/ProjectDetail'
@@ -53,6 +54,7 @@ function App() {
         
         {/* Staff routes */}
         <Route path="staff" element={<StaffList />} />
+        <Route path="staff/new" element={<StaffCreate />} />
         <Route path="staff/:id" element={<StaffDetail />} />
         
         {/* Project routes */}
