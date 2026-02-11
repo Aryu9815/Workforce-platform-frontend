@@ -11,18 +11,18 @@ export interface User {
 }
 
 export interface Tenant {
-  id: number;
+  id: string;
   name: string;
-  slug: string;
-  description?: string;
-  logo_url?: string;
-  primary_color?: string;
-  is_active: boolean;
-  subscription_plan: string;
-  subscription_expires_at?: string;
-  settings?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
+  // slug: string;
+  // description?: string;
+  // logo_url?: string;
+  // primary_color?: string;
+  // is_active: boolean;
+  // subscription_plan: string;
+  // subscription_expires_at?: string;
+  // settings?: Record<string, any>;
+  // created_at: string;
+  // updated_at: string;
 }
 
 export interface Role {

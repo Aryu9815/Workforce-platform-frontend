@@ -5,6 +5,7 @@ import { User, Tenant } from '../types'
 interface AuthState {
   // State
   isAuthenticated: boolean
+  isloggedIn: boolean
   user: User | null
   tenant: Tenant | null
   tenants: Tenant[]
@@ -24,6 +25,7 @@ interface AuthState {
   setTenants: (tenants: Tenant[]) => void
   updateTokens: (accessToken: string, refreshToken: string) => void
   clearAuth: () => void
+  setAuthenticated: () => void
   hasPermission: (permission: string) => boolean
 }
 
@@ -32,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       // Initial state
       isAuthenticated: false,
+      isloggedIn: false,
       user: null,
       tenant: null,
       tenants: [],
@@ -41,7 +44,8 @@ export const useAuthStore = create<AuthState>()(
       
       // Actions
       setAuth: (data) => set({
-        isAuthenticated: true,
+        isloggedIn: true,
+        isAuthenticated: false,
         user: data.user,
         tenant: data.tenant || null,
         accessToken: data.accessToken,
@@ -67,7 +71,9 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: null,
         permissions: [],
       }),
-      
+
+      setAuthenticated: () => set({ isAuthenticated: true }),
+
       hasPermission: (permission) => {
         const { permissions } = get()
         return permissions.includes(permission) || permissions.includes('admin.access')
@@ -77,6 +83,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
+        isloggedIn: state.isloggedIn,
         user: state.user,
         tenant: state.tenant,
         tenants: state.tenants,

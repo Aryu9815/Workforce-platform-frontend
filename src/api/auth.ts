@@ -20,7 +20,8 @@ export interface AuthResponse {
   refresh_token: string
   token_type: string
   expires_in: number
-  tenant_id?: string
+  tenant: {}
+  multiple_tenants_found?: boolean
 }
 
 export const authApi = {
