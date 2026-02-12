@@ -80,6 +80,21 @@ export const staffApi = {
     return response.data
   },
   
+  createUser: async (
+  staffId: string,
+  data: {
+    role_id: string
+    login_email: string
+    is_active: boolean
+  }
+) => {
+  const response = await apiClient.post(
+    `/staff/${staffId}/users`,
+    data
+  )
+  return response.data
+},
+
   updateDepartment: async (id: string, data: Partial<Department>): Promise<Department> => {
     const response = await apiClient.put(`/staff/departments/${id}`, data)
     return response.data
