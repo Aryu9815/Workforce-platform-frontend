@@ -1,5 +1,5 @@
 import apiClient from './client'
-import { Project, PaginatedResponse } from '../types'
+import { Project, PaginatedResponse, ProjectMember } from '../types'
 
 export interface CreateProjectData {
   name: string
@@ -46,6 +46,13 @@ export const projectsApi = {
   
   getProject: async (id: string): Promise<Project> => {
     const response = await apiClient.get(`/projects/${id}`)
+    console.log(response.data)
+    return response.data
+  },
+  
+  getProjectMembers: async (id: string): Promise<ProjectMember[]> => {
+    const response = await apiClient.get(`/projects/${id}/members`)
+    console.log(response.data)
     return response.data
   },
   
@@ -56,6 +63,14 @@ export const projectsApi = {
   
   updateProject: async (id: string, data: UpdateProjectData): Promise<Project> => {
     const response = await apiClient.put(`/projects/${id}`, data)
+    return response.data
+  },
+  
+  addProjectMember: async (
+    id: string,
+    data: { staff_id: string; role?: string; joined_at?: string }
+  ): Promise<ProjectMember> => {
+    const response = await apiClient.post(`/projects/${id}/members`, data)
     return response.data
   },
   

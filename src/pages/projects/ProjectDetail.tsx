@@ -145,10 +145,41 @@ const ProjectDetail = () => {
           {/* Team members placeholder */}
           <div className="card">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-secondary-900">Team Members</h3>
+              <div className="flex items-center justify-between w-full">
+                <h3 className="text-lg font-semibold text-secondary-900">Team Members</h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigate(`/projects/${id}/members/new`)}
+                    className="btn-secondary"
+                  >
+                    Add Member
+                  </button>
+                  <button
+                    onClick={() => navigate(`/projects/${id}/members`)}
+                    className="btn-primary"
+                  >
+                    View All
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="card-body">
-              <p className="text-secondary-500 text-center py-4">No team members</p>
+              {project.project_members && project.project_members.length > 0 ? (
+                <div className="max-h-64 overflow-y-auto space-y-3 pr-1">
+                  {project.project_members.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() => navigate(`/staff/${member.staff_id}`)}
+                      className="w-full text-left p-3 rounded-lg border border-secondary-200 hover:bg-secondary-50 transition-colors"
+                    >
+                      <p className="text-sm font-medium text-secondary-900">{member.name}</p>
+                      <p className="text-xs text-secondary-600">{member.role}</p>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-secondary-500 text-center py-4">No team members</p>
+              )}
             </div>
           </div>
         </div>
