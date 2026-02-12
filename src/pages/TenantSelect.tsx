@@ -7,9 +7,9 @@ import { useState } from 'react'
 
 const TenantSelect = () => {
   const navigate = useNavigate()
-  const { tenants, setTenant, setAuth, user, refreshToken } = useAuthStore()
+  const { tenants, setAuth, user, setAuthenticated } = useAuthStore()
   const [isLoading, setIsLoading] = useState<string | null>(null)
-  
+
   const handleSelectTenant = async (tenantId: string) => {
     setIsLoading(tenantId)
     
@@ -28,7 +28,7 @@ const TenantSelect = () => {
         accessToken: response.access_token,
         refreshToken: response.refresh_token,
       })
-      
+      setAuthenticated()
       toast.success(`Switched to ${selectedTenant.name}`)
       navigate('/')
     } catch (error: any) {
@@ -73,9 +73,6 @@ const TenantSelect = () => {
                     <h3 className="text-lg font-semibold text-secondary-900 group-hover:text-primary-600 transition-colors">
                       {tenant.name}
                     </h3>
-                    <p className="text-sm text-secondary-500">
-                      {tenant.slug}
-                    </p>
                   </div>
                 </div>
                 

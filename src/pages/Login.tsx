@@ -49,7 +49,9 @@ const Login = () => {
           accessToken: authResponse.access_token,
           refreshToken: authResponse.refresh_token
         })
-        return navigate('/select-tenant')
+        console.log("navigate to tenant select", tenants)
+        navigate('/select-tenant')
+        return 
       }
 
       // Single tenant

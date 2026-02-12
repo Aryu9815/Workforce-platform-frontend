@@ -22,11 +22,18 @@ import ReimbursementDetail from './pages/reimbursements/ReimbursementDetail'
 import NotFound from './pages/NotFound'
 
 function App() {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, isloggedIn } = useAuthStore()
 
   // Protected route wrapper
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (!isAuthenticated) {
+      return <Navigate to="/login" replace />
+    }
+    return <>{children}</>
+  }
+  
+  const LoggedInRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!isloggedIn) {
       return <Navigate to="/login" replace />
     }
     return <>{children}</>
@@ -40,9 +47,9 @@ function App() {
       
       {/* Tenant selection */}
       <Route path="/select-tenant" element={
-        <ProtectedRoute>
+        <LoggedInRoute>
           <TenantSelect />
-        </ProtectedRoute>
+        </LoggedInRoute>
       } />
 
       {/* Protected routes with layout */}
