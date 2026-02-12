@@ -13,7 +13,7 @@ interface LoginForm {
 
 const Login = () => {
   const navigate = useNavigate()
-  const { setAuth, setTenants } = useAuthStore()
+  const { setAuthenticated, setAuth, setTenants } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   
@@ -53,7 +53,8 @@ const Login = () => {
         navigate('/select-tenant')
         return 
       }
-
+      console.log("tenants: ",tenants)
+      console.log(' No multi-tenant case')
       // Single tenant
       const tenant = tenants[0] || null
 
@@ -63,8 +64,9 @@ const Login = () => {
         accessToken: authResponse.access_token,
         refreshToken: authResponse.refresh_token
       })
-
+      setAuthenticated()
       toast.success('Welcome back!')
+      console.log("navigate to /")
       navigate('/')
 
     } catch (error: any) {

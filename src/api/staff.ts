@@ -71,7 +71,7 @@ export const staffApi = {
   },
   
   getStaffNames: async (): Promise<Record<string, string>> => {
-    const response = await apiClient.get('/staffs/get_names')
+    const response = await apiClient.get('/staff/get-names')
     return response.data
   },
   

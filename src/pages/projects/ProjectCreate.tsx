@@ -77,13 +77,12 @@ const ProjectCreate = () => {
             required
             className="input"
           />
-
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-secondary-700 mb-1">
               Project Manager
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400 pointer-events-none" />
               <input
                 type="text"
                 placeholder={isLoadingStaffNames ? 'Loading staff...' : 'Search staff by name'}
@@ -92,44 +91,41 @@ const ProjectCreate = () => {
                 className="input pl-10"
                 disabled={isLoadingStaffNames}
               />
-              {staffNames && (
-                <div className="mt-2 max-h-48 overflow-auto rounded-lg border border-secondary-200 bg-white">
-                  {Object.entries(staffNames)
-                    .map(([id, name]) => ({ id, name }))
-                    .filter(({ name }) =>
-                      managerSearch
-                        ? name.toLowerCase().includes(managerSearch.toLowerCase())
-                        : true
-                    )
-                    .slice(0, 50)
-                    .map(({ id, name }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedManagerId(id)
-                          setManagerSearch(name)
-                        }}
-                        className={`w-full text-left px-3 py-2 hover:bg-secondary-100 ${
-                          selectedManagerId === id ? 'bg-primary-50' : ''
-                        }`}
-                      >
-                        <span className="text-sm text-secondary-900">{name}</span>
-                        <span className="ml-2 text-xs text-secondary-500">{id}</span>
-                      </button>
-                    ))}
-                  {staffNames &&
-                    Object.keys(staffNames).length === 0 && (
-                      <div className="px-3 py-2 text-sm text-secondary-500">
-                        No staff found
-                      </div>
-                    )}
+              {/* Dropdown container for staff list */}
+              {managerSearch && !isLoadingStaffNames && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {Array.isArray(staffNames) && staffNames.length > 0 ? (
+                    staffNames
+                      .filter((staff) =>
+                        staff.name.toLowerCase().includes(managerSearch.toLowerCase())
+                      )
+                      .slice(0, 50)
+                      .map((staff) => (
+                        <button
+                          key={staff.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedManagerId(staff.id)
+                            setManagerSearch(staff.name)
+                          }}
+                          className={`w-full text-left px-3 py-2 hover:bg-secondary-100 focus:outline-none focus:bg-secondary-100 ${
+                            selectedManagerId === staff.id ? 'bg-primary-50' : ''
+                          }`}
+                        >
+                          <span className="text-sm text-secondary-900">
+                            {staff.name}
+                          </span>
+                          <span className="ml-2 text-xs text-secondary-500">
+                            {staff.id}
+                          </span>
+                        </button>
+                      ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-secondary-500">
+                      No staff found
+                    </div>
+                  )}
                 </div>
-              )}
-              {selectedManagerId && (
-                <p className="mt-2 text-xs text-secondary-600">
-                  Selected ID: {selectedManagerId}
-                </p>
               )}
             </div>
           </div>
