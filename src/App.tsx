@@ -76,6 +76,7 @@ function App() {
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="projects/:id/members" element={<ProjectMembersList />} />
         <Route path="projects/:id/members/new" element={<ProjectMemberCreate />} />
+        <Route path="projects/:id/members/:memberId/edit" element={<ProjectMemberCreate />} />
         
         {/* Task routes */}
         <Route path="tasks" element={<TaskList />} />

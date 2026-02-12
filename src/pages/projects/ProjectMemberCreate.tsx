@@ -1,18 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
 import { Search } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const ProjectMemberCreate = () => {
   const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
+  const { id, memberId } = useParams<{ id: string; memberId?: string }>()
+  const isEdit = !!memberId
 
   const [search, setSearch] = useState('')
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
   const [role, setRole] = useState('')
   const [joinedAt, setJoinedAt] = useState('')
+  const [leftAt, setLeftAt] = useState('')
 
   const { data: staffNames, isLoading } = useQuery({
     queryKey: ['staff-names'],
@@ -26,33 +29,86 @@ const ProjectMemberCreate = () => {
       ? Object.entries(staffNames).map(([id, name]) => ({ id, name: String(name) }))
       : []
 
+  const { data: existingMember } = useQuery({
+    queryKey: ['project-member', memberId],
+    queryFn: () => projectsApi.getProjectMember(memberId!),
+    enabled: isEdit,
+  })
+
+  useEffect(() => {
+    if (existingMember) {
+      setRole(existingMember.role || '')
+      setJoinedAt(existingMember.joined_at || '')
+      setSearch(existingMember.name || '')
+      setSelectedStaffId(existingMember.staff_id || '')
+    }
+  }, [existingMember])
+
   const createMutation = useMutation({
-    mutationFn: (payload: { staff_id: string; role?: string; joined_at?: string }) =>
-      projectsApi.addProjectMember(id!, payload),
+    mutationFn: (payload: { project_id: string; staff_id: string; role?: string; joined_at?: string }) =>
+      projectsApi.addProjectMember(payload),
     onSuccess: () => {
+      toast.success('Member added')
       navigate(`/projects/${id}/members`)
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to add member'
+      toast.error(message)
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: { role?: string; joined_at?: string; left_at?: string }) =>
+      projectsApi.updateProjectMember(memberId!, payload),
+    onSuccess: () => {
+      toast.success('Member updated')
+      navigate(`/projects/${id}/members`)
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to update member'
+      toast.error(message)
     },
   })
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedStaffId) return
-    createMutation.mutate({
-      staff_id: selectedStaffId,
-      role: role || undefined,
-      joined_at: joinedAt || undefined,
-    })
+    if (isEdit) {
+      updateMutation.mutate({
+        role: role || undefined,
+        joined_at: joinedAt || undefined,
+        left_at: leftAt || undefined,
+      })
+    } else {
+      if (!selectedStaffId) return
+      createMutation.mutate({
+        project_id: id!,
+        staff_id: selectedStaffId,
+        role: role || undefined,
+        joined_at: joinedAt || undefined,
+      })
+    }
   }
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="page-title">Add Project Member</h1>
-        <p className="page-description">Add a staff member to this project</p>
+        <h1 className="page-title">{isEdit ? 'Edit Project Member' : 'Add Project Member'}</h1>
+        <p className="page-description">
+          {isEdit ? 'Update role and dates for this member' : 'Add a staff member to this project'}
+        </p>
       </div>
 
       <form onSubmit={onSubmit} className="card">
         <div className="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
+          {!isEdit && (
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-secondary-700 mb-1">
               Staff
@@ -104,6 +160,7 @@ const ProjectMemberCreate = () => {
               )}
             </div>
           </div>
+          )}
 
           <input
             name="role"
@@ -120,6 +177,16 @@ const ProjectMemberCreate = () => {
             onChange={(e) => setJoinedAt(e.target.value)}
             className="input"
           />
+
+          {isEdit && (
+            <input
+              name="left_at"
+              type="datetime-local"
+              value={leftAt}
+              onChange={(e) => setLeftAt(e.target.value)}
+              className="input"
+            />
+          )}
         </div>
 
         <div className="card-footer flex justify-end gap-2">
@@ -132,10 +199,19 @@ const ProjectMemberCreate = () => {
           </button>
           <button
             type="submit"
-            disabled={createMutation.isPending || !selectedStaffId}
+            disabled={
+              (isEdit ? updateMutation.isPending : createMutation.isPending) ||
+              (!isEdit && !selectedStaffId)
+            }
             className="btn-primary"
           >
-            {createMutation.isPending ? 'Adding...' : 'Add Member'}
+            {isEdit
+              ? updateMutation.isPending
+                ? 'Updating...'
+                : 'Update Member'
+              : createMutation.isPending
+              ? 'Adding...'
+              : 'Add Member'}
           </button>
         </div>
       </form>

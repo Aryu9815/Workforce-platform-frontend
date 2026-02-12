@@ -52,7 +52,10 @@ export const projectsApi = {
   
   getProjectMembers: async (id: string): Promise<ProjectMember[]> => {
     const response = await apiClient.get(`/projects/${id}/members`)
-    console.log(response.data)
+    return response.data
+  },
+  getProjectMember: async (memberId: string): Promise<ProjectMember> => {
+    const response = await apiClient.get(`/projects/member/${memberId}`)
     return response.data
   },
   
@@ -67,11 +70,20 @@ export const projectsApi = {
   },
   
   addProjectMember: async (
-    id: string,
-    data: { staff_id: string; role?: string; joined_at?: string }
+    data: { project_id: string; staff_id: string; role?: string; joined_at?: string }
   ): Promise<ProjectMember> => {
-    const response = await apiClient.post(`/projects/${id}/members`, data)
+    const response = await apiClient.post(`/projects/member`, data)
     return response.data
+  },
+  updateProjectMember: async (
+    memberId: string,
+    data: { role?: string; joined_at?: string; left_at?: string }
+  ): Promise<ProjectMember> => {
+    const response = await apiClient.put(`/projects/member/${memberId}`, data)
+    return response.data
+  },
+  deleteProjectMember: async (memberId: string): Promise<void> => {
+    await apiClient.delete(`/projects/member/${memberId}`)  
   },
   
   deleteProject: async (id: string): Promise<void> => {
