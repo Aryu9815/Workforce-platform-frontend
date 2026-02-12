@@ -10,6 +10,7 @@ import StaffCreate from './pages/staff/StaffCreate'
 import StaffDetail from './pages/staff/StaffDetail'
 import ProjectList from './pages/projects/ProjectList'
 import ProjectDetail from './pages/projects/ProjectDetail'
+import ProjectCreate from './pages/projects/ProjectCreate'
 import TaskList from './pages/tasks/TaskList'
 import TaskDetail from './pages/tasks/TaskDetail'
 import Attendance from './pages/attendance/Attendance'
@@ -66,6 +67,7 @@ function App() {
         
         {/* Project routes */}
         <Route path="projects" element={<ProjectList />} />
+        <Route path="projects/new" element={<ProjectCreate />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
         
         {/* Task routes */}

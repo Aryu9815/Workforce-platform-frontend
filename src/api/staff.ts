@@ -70,6 +70,11 @@ export const staffApi = {
     return response.data
   },
   
+  getStaffNames: async (): Promise<Record<string, string>> => {
+    const response = await apiClient.get('/staffs/get_names')
+    return response.data
+  },
+  
   createDepartment: async (data: {
     name: string
     code?: string

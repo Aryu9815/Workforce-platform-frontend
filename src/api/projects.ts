@@ -8,7 +8,7 @@ export interface CreateProjectData {
   status?: 'planning' | 'active' | 'on_hold' | 'completed'
   priority?: 'low' | 'medium' | 'high' | 'critical'
   project_type?: string
-  project_manager_id: string
+  project_manager_id?: string
   parent_project_id?: string
   client_id?: string
   start_date?: string
