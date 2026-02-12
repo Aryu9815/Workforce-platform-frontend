@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import StaffList from './pages/staff/StaffList'
 import StaffCreate from './pages/staff/StaffCreate'
 import StaffDetail from './pages/staff/StaffDetail'
+import StaffEdit from './pages/staff/StaffEdit'
 import ProjectList from './pages/projects/ProjectList'
 import ProjectDetail from './pages/projects/ProjectDetail'
 import ProjectCreate from './pages/projects/ProjectCreate'
@@ -64,6 +65,8 @@ function App() {
         <Route path="staff" element={<StaffList />} />
         <Route path="staff/new" element={<StaffCreate />} />
         <Route path="staff/:id" element={<StaffDetail />} />
+        <Route path="/staff/:id/edit" element={<StaffEdit />} />
+
         
         {/* Project routes */}
         <Route path="projects" element={<ProjectList />} />
