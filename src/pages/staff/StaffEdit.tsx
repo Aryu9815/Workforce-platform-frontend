@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 
 import StaffForm from '../../components/staff/StaffForm'
 import { staffApi } from '../../api/staff'
+import { departmentApi } from '../../api/department'
+import { designationApi } from '../../api/designation'
 
 
 const StaffEdit = () => {
@@ -28,7 +30,7 @@ const StaffEdit = () => {
     isLoading: deptLoading
   } = useQuery({
     queryKey: ['departments'],
-    queryFn: staffApi.getDepartments
+    queryFn: () => departmentApi.getDepartments()
   })
 
   /* ------------------ Fetch Designations ------------------ */
@@ -37,7 +39,7 @@ const StaffEdit = () => {
     isLoading: desigLoading
   } = useQuery({
     queryKey: ['designations'],
-    queryFn: staffApi.getDesignations
+    queryFn: () => designationApi.getDesignations()
   })
 
   /* ------------------ Update Staff ------------------ */

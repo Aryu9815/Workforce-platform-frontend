@@ -75,9 +75,45 @@ export interface Department {
   parent_id?: string;
   head_id?: string;
   is_active: boolean;
-  staff_count: number;
-  created_at: string;
-  updated_at: string;
+  staff_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Designation {
+  id: string;
+  name: string;
+  level?: number;
+  department_id?: string;
+  description?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Staff {
+  id: string;
+  employee_code?: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  department_id: string;
+  designation_id: string;
+  department_name?: string;
+  designation_name?: string;
+  reporting_manager_id?: string;
+  employment_type: 'full_time' | 'contractor' | 'vendor';
+  join_date: string;
+  work_location?: string;
+  user_id?: string;
+  exit_date?: string;
+  exit_reason?: string;
+  skills: string[];
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Project {

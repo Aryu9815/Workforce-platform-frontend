@@ -208,6 +208,8 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import StaffForm from '../../components/staff/StaffForm'
 import { staffApi } from '../../api/staff'
+import { departmentApi } from '../../api/department'
+import { designationApi } from '../../api/designation'
 
 const StaffCreate = () => {
   const navigate = useNavigate()
@@ -216,13 +218,13 @@ const StaffCreate = () => {
   // ✅ Fetch Departments
   const { data: departments, isLoading: departmentsLoading } = useQuery({
     queryKey: ['departments'],
-    queryFn: staffApi.getDepartments,
+    queryFn: () => departmentApi.getDepartments(),
   })
 
   // ✅ Fetch Designations
   const { data: designations, isLoading: designationsLoading } = useQuery({
     queryKey: ['designations'],
-    queryFn: staffApi.getDesignations,
+    queryFn: () => designationApi.getDesignations(),
   })
 
   const mutation = useMutation({

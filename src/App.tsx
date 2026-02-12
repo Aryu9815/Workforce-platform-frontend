@@ -9,6 +9,12 @@ import StaffList from './pages/staff/StaffList'
 import StaffCreate from './pages/staff/StaffCreate'
 import StaffDetail from './pages/staff/StaffDetail'
 import StaffEdit from './pages/staff/StaffEdit'
+import DepartmentList from './pages/departments/DepartmentList'
+import DepartmentCreate from './pages/departments/DepartmentCreate'
+import DepartmentEdit from './pages/departments/DepartmentEdit'
+import DesignationList from './pages/designations/DesignationList'
+import DesignationCreate from './pages/designations/DesignationCreate'
+import DesignationEdit from './pages/designations/DesignationEdit'
 import ProjectList from './pages/projects/ProjectList'
 import ProjectDetail from './pages/projects/ProjectDetail'
 import ProjectCreate from './pages/projects/ProjectCreate'
@@ -66,6 +72,16 @@ function App() {
         <Route path="staff/new" element={<StaffCreate />} />
         <Route path="staff/:id" element={<StaffDetail />} />
         <Route path="/staff/:id/edit" element={<StaffEdit />} />
+
+        {/* Department routes */}
+        <Route path="departments" element={<DepartmentList />} />
+        <Route path="departments/new" element={<DepartmentCreate />} />
+        <Route path="departments/:id/edit" element={<DepartmentEdit />} />
+
+        {/* Designation routes */}
+        <Route path="designations" element={<DesignationList />} />
+        <Route path="designations/new" element={<DesignationCreate />} />
+        <Route path="designations/:id/edit" element={<DesignationEdit />} />
 
         
         {/* Project routes */}

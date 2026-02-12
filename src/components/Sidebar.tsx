@@ -8,6 +8,7 @@ import {
   Package,
   Receipt,
   Settings,
+  Briefcase,
   ChevronDown,
   Building2
 } from 'lucide-react'
@@ -37,7 +38,8 @@ const Sidebar = () => {
       label: 'Staff',
       children: [
         { path: '/staff', label: 'All Staff' },
-        { path: '/staff/departments', label: 'Departments' },
+        { path: '/departments', label: 'Departments' },
+        { path: '/designations', label: 'Designations' },
       ]
     },
     { path: '/projects', icon: FolderKanban, label: 'Projects' },
