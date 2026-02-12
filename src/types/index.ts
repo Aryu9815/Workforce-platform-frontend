@@ -102,6 +102,7 @@ export interface Project {
   progress_percentage: number;
   workflow_id?: string;
   location?: any;
+  project_members: ProjectMember[];
   settings: Record<string, any>;
   custom_fields: Record<string, any>;
   is_template: boolean;
@@ -109,6 +110,19 @@ export interface Project {
   manager_name?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProjectMember {
+  id: string;
+  project_id: string;
+  staff_id: string;
+  name: string;
+  role?: string;
+  designation?: string;
+  joined_at?: string;
+  left_at?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Task {
