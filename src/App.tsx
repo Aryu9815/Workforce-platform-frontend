@@ -20,6 +20,8 @@ import ProjectDetail from './pages/projects/ProjectDetail'
 import ProjectCreate from './pages/projects/ProjectCreate'
 import ProjectMembersList from './pages/projects/ProjectMembersList'
 import ProjectMemberCreate from './pages/projects/ProjectMemberCreate'
+import ProjectWorkflow from './pages/projects/ProjectWorkflow'
+import WorkflowSettings from './pages/projects/WorkflowSettings'
 import ProjectEdit from './pages/projects/ProjectEdit'
 import TaskList from './pages/tasks/TaskList'
 import TaskDetail from './pages/tasks/TaskDetail'
@@ -92,6 +94,8 @@ function App() {
         <Route path="projects/new" element={<ProjectCreate />} />
         <Route path="projects/:id" element={<ProjectDetail />} />
         <Route path="projects/:id/edit" element={<ProjectEdit />} />
+        <Route path="projects/:id/workflow" element={<ProjectWorkflow />} />
+        <Route path="projects/:id/workflow/settings" element={<WorkflowSettings />} />
         <Route path="projects/:id/members" element={<ProjectMembersList />} />
         <Route path="projects/:id/members/new" element={<ProjectMemberCreate />} />
         <Route path="projects/:id/members/:memberId/edit" element={<ProjectMemberCreate />} />

@@ -30,6 +30,7 @@ export interface UpdateProjectData {
   cost_estimate?: number
   progress_percentage?: number
   project_manager_id?: string
+  workflow_id?: string
 }
 
 export const projectsApi = {
@@ -94,4 +95,42 @@ export const projectsApi = {
     const response = await apiClient.get(`/projects/${id}/stats`)
     return response.data
   },
+  
+  getWorkflow: async (workflowId: string): Promise<any> => {
+    const response = await apiClient.get(`/workflows/${workflowId}`)
+    return response.data
+  },
+  
+  getWorkflowTransitions: async (workflowId: string): Promise<any> => {
+    const response = await apiClient.get(`/workflows/${workflowId}/transitions`)
+    console.log(response.data)
+    return response.data
+  },
+  getWorkflowStates: async (workflowId: string): Promise<any> => {
+    const response = await apiClient.get(`/workflows/${workflowId}/states`)
+    return response.data
+  },
+  createWorkflowState: async (workflowId: string, data: any): Promise<any> => {
+    const response = await apiClient.post(`/workflows/${workflowId}/states`, data)
+    return response.data
+  },
+  createWorkflowTransition: async (workflowId: string, data: any): Promise<any> => {
+    const response = await apiClient.post(`/workflows/${workflowId}/transitions`, data)
+    return response.data
+  },
+  updateWorkflowTransition: async (workflowId: string, transitionId: string, data: any): Promise<any> => {
+    const response = await apiClient.put(`/workflows/${workflowId}/transitions/${transitionId}`, data)
+    return response.data
+  },
+  updateWorkflowState: async (workflowId: string, stateId: string, data: any): Promise<any> => {
+    const response = await apiClient.put(`/workflows/${workflowId}/states/${stateId}`, data)
+    return response.data
+  },
+  deleteWorkflowState: async (workflowId: string, stateId: string): Promise<void> => {
+    await apiClient.delete(`/workflows/${workflowId}/states/${stateId}`)
+  },
+  deleteWorkflowTransition: async (workflowId: string, transitionId: string): Promise<void> => {
+    await apiClient.delete(`/workflows/${workflowId}/transitions/${transitionId}`)
+  },
 }
+

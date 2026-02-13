@@ -14,11 +14,13 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { projectsApi } from '../api/projects'
 
 const Sidebar = () => {
   const location = useLocation()
   const { tenant, user } = useAuthStore()
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['staff'])
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['staff', 'projects'])
   
   const toggleMenu = (menu: string) => {
     setExpandedMenus(prev => 
@@ -29,6 +31,11 @@ const Sidebar = () => {
   }
   
   const isActive = (path: string) => location.pathname.startsWith(path)
+  
+  const { data: projects } = useQuery({
+    queryKey: ['sidebar-projects'],
+    queryFn: () => projectsApi.getProjects({ page_size: 50 }),
+  })
   
   const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -42,7 +49,18 @@ const Sidebar = () => {
         { path: '/designations', label: 'Designations' },
       ]
     },
-    { path: '/projects', icon: FolderKanban, label: 'Projects' },
+    {
+      key: 'projects',
+      icon: FolderKanban,
+      label: 'Projects',
+      children: [
+        { path: '/projects', label: 'All Projects' },
+        ...(projects?.items || []).map((p: any) => ({
+          path: `/projects/${p.id}/workflow`,
+          label: p.name || p.code || p.id,
+        })),
+      ],
+    },
     { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
     {
       key: 'attendance',

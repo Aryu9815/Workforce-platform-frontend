@@ -72,6 +72,12 @@ const ProjectDetail = () => {
             Edit
           </button>
           <button 
+            className="btn-default"
+            onClick={() => navigate(`/projects/${id}/workflow`)}
+          >
+            My Task
+          </button>
+          <button 
             className="btn-danger" 
             onClick={() => deleteMutation.mutate()}
             disabled={deleteMutation.isPending} 
