@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
@@ -8,7 +8,6 @@ import toast from 'react-hot-toast'
 
 const ProjectWorkflow = () => {
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true)
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
 
@@ -28,7 +27,7 @@ const ProjectWorkflow = () => {
 
   const { data: tasks } = useQuery({
     queryKey: ['tasks', id],
-    queryFn: () => tasksApi.getTasks({ project_id: id!, page_size: 1000 }),
+    queryFn: () => tasksApi.getTasks({ project_id: id!, page_size: 100 }),
     enabled: !!id,
   })
 
@@ -69,50 +68,34 @@ const ProjectWorkflow = () => {
     }
   }
 
-  // Sidebar toggle integration (broadcast event + localStorage)
-  useEffect(() => {
-    const stored = localStorage.getItem('sidebarOpen')
-    if (stored !== null) {
-      setSidebarOpen(stored === 'true')
-    }
-    const handler = (e: any) => {
-      if (e?.detail?.sidebarOpen !== undefined) {
-        setSidebarOpen(e.detail.sidebarOpen)
-      }
-    }
-    window.addEventListener('sidebar-toggle', handler as EventListener)
-    return () => window.removeEventListener('sidebar-toggle', handler as EventListener)
-  }, [])
-  const toggleSidebar = () => {
-    const next = !sidebarOpen
-    localStorage.setItem('sidebarOpen', String(next))
-    const evt = new CustomEvent('sidebar-toggle', { detail: { sidebarOpen: next } })
-    window.dispatchEvent(evt)
-  }
-
   // Create Task modal
   const [showCreate, setShowCreate] = useState(false)
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<any>({
     title: '',
     description: '',
-    priority: '',
+    priority: 'medium',
     task_type: '',
-    status_id: '',
+    start_date: '',
+    due_date: '',
+    estimated_hours: '',
+    estimated_cost: '',
+    milestone: false,
+    billable: true,
+    tags: [],
+    custom_fields: {},
   })
+
   const submitCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       await tasksApi.createTask({
         project_id: id!,
-        title: newTask.title,
-        description: newTask.description || undefined,
-        priority: (newTask.priority as any) || undefined,
-        task_type: newTask.task_type || undefined,
-        status_id: newTask.status_id || undefined,
+        ...newTask,
       })
+
       toast.success('Task created')
       setShowCreate(false)
-      setNewTask({ title: '', description: '', priority: '', task_type: '', status_id: '' })
+      setNewTask({ title: '', description: '', priority: '', task_type: '' })
       queryClient.invalidateQueries(['tasks', id])
     } catch (error: any) {
       const msg =
@@ -137,9 +120,6 @@ const ProjectWorkflow = () => {
           <p className="text-secondary-500">Workflow Board</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-default" onClick={toggleSidebar}>
-            {sidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
-          </button>
           <button className="btn-default" onClick={() => navigate(`/projects/${id}/workflow/settings`)}>
             Settings
           </button>
@@ -232,69 +212,209 @@ const ProjectWorkflow = () => {
       </DragDropContext>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-secondary-900">Create Task</h3>
-              <button className="p-2 rounded-lg hover:bg-secondary-100" onClick={() => setShowCreate(false)}>
-                Close
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-6">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl">
+
+            {/* Header */}
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Create Task</h2>
+              <button
+                className="text-secondary-500 hover:text-black"
+                onClick={() => setShowCreate(false)}
+              >
+                ✕
               </button>
             </div>
-            <form onSubmit={submitCreate} className="p-4 space-y-3">
-              <input
-                className="input"
-                placeholder="Title"
-                value={newTask.title}
-                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                required
-              />
-              <textarea
-                className="input"
-                placeholder="Description"
-                value={newTask.description}
-                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                rows={3}
-              />
-              <select
-                className="input"
-                value={newTask.priority}
-                onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-              >
-                <option value="">Priority</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-              <input
-                className="input"
-                placeholder="Type"
-                value={newTask.task_type}
-                onChange={(e) => setNewTask({ ...newTask, task_type: e.target.value })}
-              />
-              <select
-                className="input"
-                value={newTask.status_id}
-                onChange={(e) => setNewTask({ ...newTask, status_id: e.target.value })}
-                required
-              >
-                <option value="">Select State</option>
-                {(workflow.workflow_states || []).map((s: any) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>
+
+            <form onSubmit={submitCreate} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+
+              {/* ================= BASIC INFO ================= */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div className="md:col-span-2">
+                    <label className="label">Title *</label>
+                    <input
+                      className="input"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="label">Description</label>
+                    <textarea
+                      className="input"
+                      rows={4}
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Priority</label>
+                    <select
+                      className="input"
+                      value={newTask.priority}
+                      onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                    >
+                      <option value="">Select</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="label">Task Type</label>
+                    <input
+                      className="input"
+                      value={newTask.task_type}
+                      onChange={(e) => setNewTask({ ...newTask, task_type: e.target.value })}
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ================= PLANNING ================= */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Planning</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div>
+                    <label className="label">Start Date</label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={newTask.start_date || ''}
+                      onChange={(e) => setNewTask({ ...newTask, start_date: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Due Date</label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={newTask.due_date || ''}
+                      onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Estimated Hours</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      className="input"
+                      value={newTask.estimated_hours || ''}
+                      onChange={(e) =>
+                        setNewTask({ ...newTask, estimated_hours: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Estimated Cost</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="input"
+                      value={newTask.estimated_cost || ''}
+                      onChange={(e) =>
+                        setNewTask({ ...newTask, estimated_cost: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ================= OPTIONS ================= */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Options</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={newTask.milestone || false}
+                      onChange={(e) =>
+                        setNewTask({ ...newTask, milestone: e.target.checked })
+                      }
+                    />
+                    Milestone
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={newTask.billable ?? true}
+                      onChange={(e) =>
+                        setNewTask({ ...newTask, billable: e.target.checked })
+                      }
+                    />
+                    Billable
+                  </label>
+
+                  <div className="md:col-span-2">
+                    <label className="label">Tags (comma separated)</label>
+                    <input
+                      className="input"
+                      value={(newTask.tags || []).join(', ')}
+                      onChange={(e) =>
+                        setNewTask({
+                          ...newTask,
+                          tags: e.target.value.split(',').map((t) => t.trim()),
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="label">Custom Fields (JSON)</label>
+                    <textarea
+                      className="input"
+                      rows={3}
+                      value={JSON.stringify(newTask.custom_fields || {}, null, 2)}
+                      onChange={(e) => {
+                        try {
+                          setNewTask({
+                            ...newTask,
+                            custom_fields: JSON.parse(e.target.value),
+                          })
+                        } catch {}
+                      }}
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowCreate(false)}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">
-                  Create
+                  Create Task
                 </button>
               </div>
+
             </form>
           </div>
         </div>
       )}
+
     </div>
   )
 }

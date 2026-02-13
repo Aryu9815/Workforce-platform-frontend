@@ -1,32 +1,20 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
-import { useEffect, useState } from 'react'
+import { useUIStore } from '../store/uiStore'
 
 const Layout = () => {
   const location = useLocation()
   const isWorkflowPage = location.pathname.includes('/workflow')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  
-  useEffect(() => {
-    const stored = localStorage.getItem('sidebarOpen')
-    if (stored !== null) setSidebarOpen(stored === 'true')
-    const handler = (e: any) => {
-      if (e?.detail?.sidebarOpen !== undefined) {
-        setSidebarOpen(e.detail.sidebarOpen)
-      }
-    }
-    window.addEventListener('sidebar-toggle', handler as EventListener)
-    return () => window.removeEventListener('sidebar-toggle', handler as EventListener)
-  }, [])
+  const { sidebarCollapsed } = useUIStore()
   
   return (
     <div className="min-h-screen bg-secondary-50 flex">
       {/* Sidebar */}
-      {sidebarOpen && <Sidebar />}
+      <Sidebar />
       
       {/* Main content */}
-      <div className={`flex-1 flex flex-col ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         {/* Header */}
         <Header />
         
