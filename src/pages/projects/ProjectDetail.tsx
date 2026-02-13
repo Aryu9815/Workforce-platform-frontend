@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Edit, Trash2, Calendar, DollarSign, User } from 'lucide-react'
 import { projectsApi } from '../../api/projects'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>()
@@ -12,7 +13,22 @@ const ProjectDetail = () => {
     queryFn: () => projectsApi.getProject(id!),
     enabled: !!id,
   })
-  
+  const deleteMutation = useMutation({
+    mutationFn: () => projectsApi.deleteProject(id!),
+    onSuccess: () => {
+      toast.success('Project deleted')
+      navigate('/projects')
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to delete project'
+      toast.error(message)
+    },
+  })
+
   if (isLoading) {
     return <div className="text-center py-8">Loading...</div>
   }
@@ -51,11 +67,15 @@ const ProjectDetail = () => {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button className="btn-secondary">
+          <button className="btn-secondary" onClick={() => navigate(`/projects/${id}/edit`)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </button>
-          <button className="btn-danger">
+          <button 
+            className="btn-danger" 
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending} 
+          >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </button>
