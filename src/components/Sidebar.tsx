@@ -10,15 +10,20 @@ import {
   Settings,
   Briefcase,
   ChevronDown,
-  Building2
+  Building2,
+  Menu
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { projectsApi } from '../api/projects'
+import { useUIStore } from '../store/uiStore'
 
 const Sidebar = () => {
   const location = useLocation()
   const { tenant, user } = useAuthStore()
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['staff'])
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['staff', 'projects'])
+  const { sidebarCollapsed, toggleSidebarCollapsed } = useUIStore()
   
   const toggleMenu = (menu: string) => {
     setExpandedMenus(prev => 
@@ -30,10 +35,16 @@ const Sidebar = () => {
   
   const isActive = (path: string) => location.pathname.startsWith(path)
   
+  const { data: projects } = useQuery({
+    queryKey: ['sidebar-projects'],
+    queryFn: () => projectsApi.getProjects({ page_size: 50 }),
+  })
+  
   const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     {
       key: 'staff',
+      path: '/staff',
       icon: Users,
       label: 'Staff',
       children: [
@@ -42,10 +53,23 @@ const Sidebar = () => {
         { path: '/designations', label: 'Designations' },
       ]
     },
-    { path: '/projects', icon: FolderKanban, label: 'Projects' },
+    {
+      key: 'projects',
+      path: '/projects',
+      icon: FolderKanban,
+      label: 'Projects',
+      children: [
+        { path: '/projects', label: 'All Projects' },
+        ...(projects?.items || []).map((p: any) => ({
+          path: `/projects/${p.id}/workflow`,
+          label: p.name || p.code || p.id,
+        })),
+      ],
+    },
     { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
     {
       key: 'attendance',
+      path: '/attendance',
       icon: Clock,
       label: 'Attendance',
       children: [
@@ -58,26 +82,47 @@ const Sidebar = () => {
   ]
   
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-secondary-200 z-50 flex flex-col">
-      {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-secondary-200">
-        <Building2 className="h-8 w-8 text-primary-600 mr-3" />
-        <div>
-          <h1 className="text-lg font-bold text-secondary-900">Platform</h1>
-          {tenant && (
-            <p className="text-xs text-secondary-500 truncate max-w-[140px]">
-              {tenant.name}
-            </p>
+    <aside className={`fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-secondary-200 z-50 flex flex-col`}>
+      {/* Top bar with toggle + logo */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-secondary-200">
+        <div className="flex items-center">
+          <Building2 className="h-8 w-8 text-primary-600" />
+          {!sidebarCollapsed && (
+            <div className="ml-3">
+              <h1 className="text-lg font-bold text-secondary-900">Platform</h1>
+              {tenant && (
+                <p className="text-xs text-secondary-500 truncate max-w-[140px]">
+                  {tenant.name}
+                </p>
+              )}
+            </div>
           )}
         </div>
+        <button
+          className="p-2 rounded-lg hover:bg-secondary-100"
+          onClick={toggleSidebarCollapsed}
+          title="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5 text-secondary-700" />
+        </button>
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
+      <nav className={`flex-1 overflow-y-auto py-4 ${sidebarCollapsed ? 'px-2' : 'px-3'}`}>
         <ul className="space-y-1">
           {menuItems.map((item) => (
-            <li key={item.path || item.key}>
-              {!item.children ? (
+            <li key={item.path || item.key} className={sidebarCollapsed ? 'flex justify-center' : ''}>
+              {sidebarCollapsed ? (
+                <NavLink
+                  to={item.path || '#'}
+                  className={({ isActive }) =>
+                    `flex items-center justify-center p-3 rounded-lg ${isActive ? 'bg-primary-50 text-primary-700' : 'text-secondary-700 hover:bg-secondary-100'}`
+                  }
+                  title={item.label}
+                >
+                  <item.icon className="h-5 w-5" />
+                </NavLink>
+              ) : !item.children ? (
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
@@ -133,20 +178,22 @@ const Sidebar = () => {
       
       {/* User section */}
       <div className="border-t border-secondary-200 p-4">
-        <div className="flex items-center">
+        <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''}`}>
           <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
             <span className="text-primary-700 font-medium">
               {user?.first_name?.[0]}{user?.last_name?.[0]}
             </span>
           </div>
-          <div className="ml-3 flex-1 min-w-0">
-            <p className="text-sm font-medium text-secondary-900 truncate">
-              {user?.full_name}
-            </p>
-            <p className="text-xs text-secondary-500 truncate">
-              {user?.email}
-            </p>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="ml-3 flex-1 min-w-0">
+              <p className="text-sm font-medium text-secondary-900 truncate">
+                {user?.full_name}
+              </p>
+              <p className="text-xs text-secondary-500 truncate">
+                {user?.email}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </aside>
