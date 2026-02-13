@@ -1,5 +1,5 @@
 import apiClient from './client'
-import { AttendanceRecord, LeaveRequest, LeaveType, PaginatedResponse } from '../types'
+import { AttendanceRecord, LeaveRequest, LeaveType, PaginatedResponse, AttendanceStats } from '../types'
 
 export interface CreateAttendanceData {
   staff_id: string
@@ -7,8 +7,8 @@ export interface CreateAttendanceData {
   shift_id?: string
   check_in?: string
   check_out?: string
-  check_in_location?: any
-  check_out_location?: any
+  check_in_location?: Record<string, any>
+  check_out_location?: Record<string, any>
   status?: 'present' | 'absent' | 'late' | 'half_day'
   notes?: string
 }
@@ -37,14 +37,14 @@ export const attendanceApi = {
     return response.data
   },
   
-  checkIn: async (staffId: string, location?: any): Promise<AttendanceRecord> => {
+  checkIn: async (staffId: string, location?: Record<string, any>): Promise<AttendanceRecord> => {
     const response = await apiClient.post('/attendance/check-in', null, {
       params: { staff_id: staffId, location }
     })
     return response.data
   },
   
-  checkOut: async (staffId: string, location?: any): Promise<AttendanceRecord> => {
+  checkOut: async (staffId: string, location?: Record<string, any>): Promise<AttendanceRecord> => {
     const response = await apiClient.post('/attendance/check-out', null, {
       params: { staff_id: staffId, location }
     })
@@ -86,7 +86,7 @@ export const attendanceApi = {
     staff_id?: string
     month?: number
     year?: number
-  }): Promise<any> => {
+  }): Promise<AttendanceStats> => {
     const response = await apiClient.get('/attendance/stats', { params })
     return response.data
   },
