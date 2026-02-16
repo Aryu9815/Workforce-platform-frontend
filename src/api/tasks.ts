@@ -12,6 +12,7 @@ export interface CreateTaskData {
   start_date?: string
   due_date?: string
   parent_task_id?: string
+  workflow_state_id?: string
   status_id?: string
   assignee_ids?: string[]
   milestone?: boolean
@@ -22,6 +23,7 @@ export interface CreateTaskData {
 export interface UpdateTaskData {
   title?: string
   description?: string
+  workflow_state_id?: string
   status_id?: string
   priority?: 'low' | 'medium' | 'high' | 'urgent'
   estimated_hours?: number
@@ -38,11 +40,12 @@ export const tasksApi = {
     page?: number
     page_size?: number
     project_id?: string
-    status_id?: string
+    workflow_state_id?: string
     priority?: string
     assignee_id?: string
   }): Promise<PaginatedResponse<Task>> => {
     const response = await apiClient.get('/tasks', { params })
+    console.log('API Response:', response.data)
     return response.data
   },
   
@@ -67,5 +70,24 @@ export const tasksApi = {
   
   assignTask: async (id: string, assigneeIds: string[]): Promise<void> => {
     await apiClient.post(`/tasks/${id}/assign`, assigneeIds)
+  },
+  
+  getTaskComments: async (taskId: string): Promise<any> => {
+    const response = await apiClient.get(`/tasks/${taskId}/comments`)
+    return response.data
+  },
+  
+  addTaskComment: async (taskId: string, data: { task_id?: string; content: string; is_internal?: boolean; parent_comment_id?: string }): Promise<any> => {
+    const response = await apiClient.post(`/tasks/${taskId}/comments`, { task_id: taskId, ...data })
+    return response.data
+  },
+  
+  updateTaskComment: async (taskId: string, commentId: string, data: { content: string; is_internal?: boolean }): Promise<any> => {
+    const response = await apiClient.put(`/tasks/${taskId}/comments/${commentId}`, data)
+    return response.data
+  },
+  
+  deleteTaskComment: async (taskId: string, commentId: string): Promise<void> => {
+    await apiClient.delete(`/tasks/${taskId}/comments/${commentId}`)
   },
 }
