@@ -200,8 +200,8 @@ export interface AttendanceRecord {
   shift_id?: string;
   check_in?: string;
   check_out?: string;
-  check_in_location?: any;
-  check_out_location?: any;
+  check_in_location?: Record<string, any>;
+  check_out_location?: Record<string, any>;
   check_in_method?: string;
   check_out_method?: string;
   work_hours?: number;
@@ -211,8 +211,8 @@ export interface AttendanceRecord {
   is_manual_entry: boolean;
   approved_by?: string;
   staff_name?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface LeaveRequest {
@@ -230,8 +230,8 @@ export interface LeaveRequest {
   documents: any[];
   staff_name?: string;
   leave_type_name?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface LeaveType {
@@ -241,10 +241,24 @@ export interface LeaveType {
   description?: string;
   is_paid: boolean;
   color?: string;
-  requires_approval: boolean;
+  requires_approval?: boolean;
   max_days_per_year?: number;
-  carry_forward: boolean;
+  carry_forward?: boolean;
   is_active: boolean;
+}
+
+export interface AttendanceStats {
+  month: number;
+  year: number;
+  staff_id: string | null;
+  total_working_days: number;
+  days_present: number;
+  days_absent: number;
+  days_late: number;
+  half_days: number;
+  total_work_hours: number;
+  overtime_hours: number;
+  leave_balance: Record<string, number>;
 }
 
 export interface InventoryItem {

@@ -19,11 +19,18 @@ const TenantSelect = () => {
         toast.error('Tenant not found')
         return
       }
-      
+      // 1️⃣ Switch tenant → get new tokens
       const response = await authApi.switchTenant(tenantId)
-      
-      setAuth({
-        user: user!,
+      // 2️⃣ Update tokens immediately
+      useAuthStore.getState().updateTokens(
+      response.access_token,
+      response.refresh_token
+    )
+    // 3️⃣ Fetch fresh identity (VERY IMPORTANT)
+    const freshUser = await authApi.getCurrentUser()
+    // 4️⃣ Replace auth state fully
+      useAuthStore.getState().setAuth({
+        user: freshUser!,
         tenant: selectedTenant,
         accessToken: response.access_token,
         refreshToken: response.refresh_token,

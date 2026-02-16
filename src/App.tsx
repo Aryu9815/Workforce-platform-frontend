@@ -32,10 +32,11 @@ import InventoryDetail from './pages/inventory/InventoryDetail'
 import ReimbursementList from './pages/reimbursements/ReimbursementList'
 import ReimbursementDetail from './pages/reimbursements/ReimbursementDetail'
 import NotFound from './pages/NotFound'
-
+// import { useBootstrap } from './hooks/useBootstrap'
+import { useBootstrap } from './hooks/useBootstrap'
 function App() {
   const { isAuthenticated, isloggedIn } = useAuthStore()
-
+  useBootstrap()
   // Protected route wrapper
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (!isAuthenticated) {
