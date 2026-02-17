@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { projectsApi } from '../../api/projects'
 import { tasksApi } from '../../api/tasks'
 import { staffApi } from '../../api/staff'
+import { sprintsApi } from '../../api/sprints'
 import toast from 'react-hot-toast'
 
 const ProjectWorkflow = () => {
@@ -26,10 +27,27 @@ const ProjectWorkflow = () => {
     enabled: !!workflowId,
   })
 
-  const { data: tasks } = useQuery({
-    queryKey: ['tasks', id],
-    queryFn: () => tasksApi.getTasks({ project_id: id!, page_size: 100 }),
+  const { data: sprints } = useQuery({
+    queryKey: ['sprints', id],
+    queryFn: () => sprintsApi.listSprints({ project_id: id! }),
     enabled: !!id,
+  })
+  const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null)
+  const activeDefault = useMemo(() => {
+    const list = sprints || []
+    console.log('Sprints:', list)
+    const active = list.find((s: any) => s.status === 'active')
+    return active?.id || (list[0]?.id ?? null)
+  }, [sprints])
+  useEffect(() => {
+    if (selectedSprintId === null && activeDefault) {
+      setSelectedSprintId(activeDefault)
+    }
+  }, [activeDefault, selectedSprintId])
+  const { data: tasks } = useQuery({
+    queryKey: ['tasks', id, selectedSprintId],
+    queryFn: () => tasksApi.getTasks({ project_id: id!, page_size: 100, sprint_id: selectedSprintId || undefined }),
+    enabled: !!id && !!selectedSprintId,
   })
   const { data: staffNames } = useQuery({
     queryKey: ['staff-names'],
@@ -80,7 +98,7 @@ const ProjectWorkflow = () => {
       })
       toast.success('Task moved')
     } catch (error: any) {
-      queryClient.setQueryData(['tasks', id], previous)
+      queryClient.setQueryData(key, previous)
       toast.error(error?.response?.data?.detail || 'Transition not allowed')
     }
   }
@@ -120,6 +138,16 @@ const ProjectWorkflow = () => {
     queryFn: () => tasksApi.getTaskComments(selectedTaskId!),
     enabled: !!selectedTaskId,
   })
+  const [showSprints, setShowSprints] = useState(false)
+  const [editingSprint, setEditingSprint] = useState<any | null>(null)
+  const [sprintForm, setSprintForm] = useState<any>({
+    name: '',
+    goal: '',
+    start_date: '',
+    end_date: '',
+    status: 'planned',
+    capacity: '',
+  })
   const [newComment, setNewComment] = useState('')
   const [newCommentInternal, setNewCommentInternal] = useState(false)
   const [editCommentId, setEditCommentId] = useState<string | null>(null)
@@ -145,7 +173,6 @@ const ProjectWorkflow = () => {
   const submitCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // Choose a default status_id: initial state or first state
       const defaultState =
         (workflow?.workflow_states || []).find((s: any) => s.is_initial) ||
         (workflow?.workflow_states || [])[0]
@@ -165,6 +192,7 @@ const ProjectWorkflow = () => {
         billable: newTask.billable || undefined,
         tags: (newTask.tags || []).length ? newTask.tags : undefined,
         workflow_state_id: defaultState?.id,
+        sprint_id: selectedSprintId || undefined,
         assignee_ids: assigneeIds.length ? assigneeIds : undefined,
       })
 
@@ -186,7 +214,7 @@ const ProjectWorkflow = () => {
       })
       setAssigneeIds([])
       setAssigneeSearch('')
-      queryClient.invalidateQueries(['tasks', id])
+      queryClient.invalidateQueries(['tasks', id, selectedSprintId])
     } catch (error: any) {
       const msg =
         error?.response?.data?.error?.message ||
@@ -203,11 +231,32 @@ const ProjectWorkflow = () => {
 
   return (
     <div className="h-[calc(100vh-96px)] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold">{project.name}</h1>
-          <p className="text-secondary-500">Workflow Board</p>
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <div>
+            <div className="text-2xl font-bold">{project.name}</div>
+            <div className="text-secondary-500">Workflow Board</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-secondary-700">Sprint</span>
+            <select
+              className="input"
+              value={selectedSprintId || ''}
+              onChange={(e) => setSelectedSprintId(e.target.value || null)}
+            >
+              {(sprints || []).map((s: any) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.status})
+                </option>
+              ))}
+            </select>
+            <button
+              className="btn-default"
+              onClick={() => setShowSprints(true)}
+            >
+              Sprints
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button className="btn-default" onClick={() => navigate(`/projects/${id}/workflow/settings`)}>
@@ -371,10 +420,23 @@ const ProjectWorkflow = () => {
                 </div>
               </div>
 
-              {/* ================= PLANNING ================= */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Planning</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="label">Sprint</label>
+                    <select
+                      className="input"
+                      value={selectedSprintId || ''}
+                      onChange={(e) => setSelectedSprintId(e.target.value || null)}
+                    >
+                      {(sprints || []).map((s: any) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.status})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div>
                     <label className="label">Start Date</label>
@@ -544,7 +606,6 @@ const ProjectWorkflow = () => {
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <button
                   type="button"
@@ -563,6 +624,164 @@ const ProjectWorkflow = () => {
         </div>
       )}
 
+      {showSprints && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
+          <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b flex items-center justify-between">
+              <div className="text-xl font-semibold">Sprints</div>
+              <button className="text-secondary-500 hover:text-black" onClick={() => { setShowSprints(false); setEditingSprint(null) }}>
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="font-semibold">Sprint List</div>
+                  <button
+                    className="btn-default"
+                    onClick={() => {
+                      setEditingSprint(null)
+                      setSprintForm({ name: '', goal: '', start_date: '', end_date: '', status: 'planned', capacity: '' })
+                    }}
+                  >
+                    New
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {(sprints || []).map((s: any) => (
+                    <button
+                      key={s.id}
+                      className={`w-full text-left p-3 rounded border ${editingSprint?.id === s.id ? 'border-primary-300 bg-primary-50' : 'border-secondary-200 hover:bg-secondary-50'}`}
+                      onClick={() => {
+                        setEditingSprint(s)
+                        setSprintForm({
+                          name: s.name || '',
+                          goal: s.goal || '',
+                          start_date: s.start_date || '',
+                          end_date: s.end_date || '',
+                          status: s.status || 'planned',
+                          capacity: s.capacity ?? '',
+                        })
+                      }}
+                    >
+                      <div className="font-medium">{s.name}</div>
+                      <div className="text-xs text-secondary-500">{s.status} • {s.start_date} → {s.end_date}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="font-semibold mb-3">{editingSprint ? 'Edit Sprint' : 'Create Sprint'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="label">Name</label>
+                    <input className="input" value={sprintForm.name} onChange={(e) => setSprintForm({ ...sprintForm, name: e.target.value })} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label">Goal</label>
+                    <textarea className="input" rows={3} value={sprintForm.goal} onChange={(e) => setSprintForm({ ...sprintForm, goal: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">Start Date</label>
+                    <input type="date" className="input" value={sprintForm.start_date} onChange={(e) => setSprintForm({ ...sprintForm, start_date: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">End Date</label>
+                    <input type="date" className="input" value={sprintForm.end_date} onChange={(e) => setSprintForm({ ...sprintForm, end_date: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">Status</label>
+                    <select className="input" value={sprintForm.status} onChange={(e) => setSprintForm({ ...sprintForm, status: e.target.value })}>
+                      <option value="planned">planned</option>
+                      <option value="active">active</option>
+                      <option value="completed">completed</option>
+                      <option value="cancelled">cancelled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Capacity</label>
+                    <input type="number" className="input" value={sprintForm.capacity} onChange={(e) => setSprintForm({ ...sprintForm, capacity: e.target.value })} />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  {editingSprint && (
+                    <button
+                      className="btn-secondary"
+                      onClick={async () => {
+                        try {
+                          await sprintsApi.deleteSprint(editingSprint.id)
+                          toast.success('Sprint deleted')
+                          setEditingSprint(null)
+                          setSprintForm({ name: '', goal: '', start_date: '', end_date: '', status: 'planned', capacity: '' })
+                          queryClient.invalidateQueries(['sprints', id])
+                          if (selectedSprintId === editingSprint.id) {
+                            setSelectedSprintId(null)
+                          }
+                        } catch (e: any) {
+                          toast.error(e?.response?.data?.message || 'Failed to delete sprint')
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    className="btn-default"
+                    onClick={() => {
+                      setEditingSprint(null)
+                      setSprintForm({ name: '', goal: '', start_date: '', end_date: '', status: 'planned', capacity: '' })
+                    }}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    className="btn-primary"
+                    onClick={async () => {
+                      try {
+                        if (editingSprint) {
+                          const payload: any = {
+                            name: sprintForm.name || undefined,
+                            goal: sprintForm.goal || undefined,
+                            start_date: sprintForm.start_date || undefined,
+                            end_date: sprintForm.end_date || undefined,
+                            status: sprintForm.status || undefined,
+                            capacity: sprintForm.capacity !== '' ? Number(sprintForm.capacity) : undefined,
+                          }
+                          await sprintsApi.updateSprint(editingSprint.id, payload)
+                          toast.success('Sprint updated')
+                        } else {
+                          const payload: any = {
+                            project_id: id!,
+                            name: sprintForm.name,
+                            goal: sprintForm.goal || undefined,
+                            start_date: sprintForm.start_date,
+                            end_date: sprintForm.end_date,
+                            status: sprintForm.status || 'planned',
+                            capacity: sprintForm.capacity !== '' ? Number(sprintForm.capacity) : undefined,
+                          }
+                          const created = await sprintsApi.createSprint(payload)
+                          toast.success('Sprint created')
+                          setSelectedSprintId(created.id)
+                        }
+                        queryClient.invalidateQueries(['sprints', id])
+                      } catch (e: any) {
+                        toast.error(e?.response?.data?.message || 'Failed to save sprint')
+                      }
+                    }}
+                  >
+                    {editingSprint ? 'Save Changes' : 'Create Sprint'}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t flex justify-end">
+              <button className="btn-secondary" onClick={() => { setShowSprints(false); setEditingSprint(null) }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Task details modal with staff and comments */}
       {selectedTask && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:p-6">
@@ -719,7 +938,7 @@ const ProjectWorkflow = () => {
                           setEditMode(false)
                           // ensure board reflects new state
                           queryClient.invalidateQueries(['task', selectedTaskId])
-                          queryClient.invalidateQueries(['tasks', id])
+                          queryClient.invalidateQueries(['tasks', id, selectedSprintId])
                         } catch (e: any) {
                           toast.error(e?.response?.data?.message || 'Failed to update task')
                         }
