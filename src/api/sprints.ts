@@ -50,4 +50,8 @@ export const sprintsApi = {
   deleteSprint: async (id: string): Promise<void> => {
     await apiClient.delete(`/sprints/${id}`)
   },
+  endSprint: async (id: string): Promise<Sprint> => {
+    const response = await apiClient.put(`/sprints/${id}/end`)
+    return response.data
+  },
 }

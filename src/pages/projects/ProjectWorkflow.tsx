@@ -262,6 +262,32 @@ const ProjectWorkflow = () => {
           <button className="btn-default" onClick={() => navigate(`/projects/${id}/workflow/settings`)}>
             Settings
           </button>
+          <button className="btn-default" onClick={() => navigate(`/projects/${id}/backlog`)}>
+            Backlog
+          </button>
+          {(() => {
+            const current = (sprints || []).find((s: any) => s.id === selectedSprintId)
+            if (current?.status === 'active') {
+              return (
+                <button
+                  className="btn-secondary"
+                  onClick={async () => {
+                    try {
+                      await sprintsApi.endSprint(String(selectedSprintId))
+                      toast.success('Sprint ended')
+                      await queryClient.invalidateQueries(['sprints', id])
+                      await queryClient.invalidateQueries(['tasks', id, selectedSprintId])
+                    } catch (e: any) {
+                      toast.error(e?.response?.data?.message || 'Failed to end sprint')
+                    }
+                  }}
+                >
+                  End Sprint
+                </button>
+              )
+            }
+            return null
+          })()}
           <button className="btn-primary" onClick={() => setShowCreate(true)}>
             Create Task
           </button>

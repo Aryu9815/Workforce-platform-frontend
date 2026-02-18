@@ -51,6 +51,11 @@ export const tasksApi = {
     return response.data
   },
   
+  getBacklogTasks: async (params?: { project_id?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<Task>> => {
+    const response = await apiClient.get('/tasks', { params })
+    return response.data
+  },
+  
   getTask: async (id: string): Promise<Task> => {
     const response = await apiClient.get(`/tasks/${id}`)
     return response.data
