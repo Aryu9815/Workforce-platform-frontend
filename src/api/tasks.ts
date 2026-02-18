@@ -47,7 +47,6 @@ export const tasksApi = {
     assignee_id?: string
   }): Promise<PaginatedResponse<Task>> => {
     const response = await apiClient.get('/tasks', { params })
-    console.log('API Response:', response.data)
     return response.data
   },
   
