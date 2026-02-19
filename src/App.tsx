@@ -32,6 +32,8 @@ import InventoryList from './pages/inventory/InventoryList'
 import InventoryDetail from './pages/inventory/InventoryDetail'
 import ReimbursementList from './pages/reimbursements/ReimbursementList'
 import ReimbursementDetail from './pages/reimbursements/ReimbursementDetail'
+import ReimbursementCreate from './pages/reimbursements/ReimbursementCreate'
+import AssetsPage from './pages/assets/AssetsPage'
 import NotFound from './pages/NotFound'
 // import { useBootstrap } from './hooks/useBootstrap'
 import { useBootstrap } from './hooks/useBootstrap'
@@ -115,8 +117,12 @@ function App() {
         <Route path="inventory" element={<InventoryList />} />
         <Route path="inventory/:id" element={<InventoryDetail />} />
         
+        {/* Asset management */}
+        <Route path="assets" element={<AssetsPage />} />
+        
         {/* Reimbursement routes */}
         <Route path="reimbursements" element={<ReimbursementList />} />
+        <Route path="reimbursements/new" element={<ReimbursementCreate />} />
         <Route path="reimbursements/:id" element={<ReimbursementDetail />} />
       </Route>
 

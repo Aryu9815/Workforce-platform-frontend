@@ -76,6 +76,7 @@ const Sidebar = () => {
       ]
     },
     { path: '/inventory', icon: Package, label: 'Inventory' },
+    { path: '/assets', icon: Briefcase, label: 'Assets' },
     { path: '/reimbursements', icon: Receipt, label: 'Reimbursements' },
   ]
 
