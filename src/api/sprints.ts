@@ -30,6 +30,8 @@ export interface SprintUpdate {
   capacity?: number
 }
 
+export type MoveOpenIssuesTo = 'backlog' | 'next_sprint' | 'new_sprint'
+
 export const sprintsApi = {
   listSprints: async (params?: { project_id?: string }): Promise<Sprint[]> => {
     const response = await apiClient.get('/sprints', { params })
@@ -50,8 +52,12 @@ export const sprintsApi = {
   deleteSprint: async (id: string): Promise<void> => {
     await apiClient.delete(`/sprints/${id}`)
   },
-  endSprint: async (id: string): Promise<Sprint> => {
-    const response = await apiClient.put(`/sprints/${id}/end`)
+  endSprint: async (
+    id: string,
+    data?: { sprint_id?: string; move_open_issues_to?: MoveOpenIssuesTo; new_sprint?: SprintCreate | null; next_sprint?: string | null }
+  ): Promise<Sprint> => {
+    const payload = { sprint_id: id, ...(data || {}) }
+    const response = await apiClient.post(`/sprints/${id}/end`, payload)
     return response.data
   },
 }

@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { projectsApi } from '../../api/projects'
 import { tasksApi } from '../../api/tasks'
 import { staffApi } from '../../api/staff'
-import { sprintsApi } from '../../api/sprints'
+import { MoveOpenIssuesTo, sprintsApi } from '../../api/sprints'
 import toast from 'react-hot-toast'
 
 const ProjectWorkflow = () => {
@@ -148,6 +148,17 @@ const ProjectWorkflow = () => {
     status: 'planned',
     capacity: '',
   })
+  const [showEndOptions, setShowEndOptions] = useState(false)
+  const [endMoveOption, setEndMoveOption] = useState<'backlog' | 'next_sprint' | 'new_sprint'>('backlog')
+  const [endNextSprintId, setEndNextSprintId] = useState<string | ''>('')
+  const [endNewSprint, setEndNewSprint] = useState<any>({
+    name: '',
+    goal: '',
+    status: 'planned',
+    capacity: '',
+    start_date: '',
+    end_date: '',
+  })
   const [newComment, setNewComment] = useState('')
   const [newCommentInternal, setNewCommentInternal] = useState(false)
   const [editCommentId, setEditCommentId] = useState<string | null>(null)
@@ -273,10 +284,20 @@ const ProjectWorkflow = () => {
                   className="btn-secondary"
                   onClick={async () => {
                     try {
-                      await sprintsApi.endSprint(String(selectedSprintId))
-                      toast.success('Sprint ended')
-                      await queryClient.invalidateQueries(['sprints', id])
-                      await queryClient.invalidateQueries(['tasks', id, selectedSprintId])
+                      const finals = new Set(
+                        (workflow?.workflow_states || [])
+                          .filter((s: any) => !!s.is_final)
+                          .map((s: any) => s.id)
+                      )
+                      const open = (tasks?.items || []).filter((t: any) => !finals.has(t.workflow_state_id))
+                      if (open.length > 0) {
+                        setShowEndOptions(true)
+                      } else {
+                        await sprintsApi.endSprint(String(selectedSprintId), { move_open_issues_to: 'backlog' })
+                        toast.success('Sprint ended')
+                        await queryClient.invalidateQueries(['sprints', id])
+                        await queryClient.invalidateQueries(['tasks', id, selectedSprintId])
+                      }
                     } catch (e: any) {
                       toast.error(e?.response?.data?.message || 'Failed to end sprint')
                     }
@@ -646,6 +667,116 @@ const ProjectWorkflow = () => {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+      {showEndOptions && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
+          <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b flex items-center justify-between">
+              <div className="text-xl font-semibold">End Sprint</div>
+              <button className="text-secondary-500 hover:text-black" onClick={() => setShowEndOptions(false)}>✕</button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto">
+              <p className="text-secondary-700">
+                Open issues detected in this sprint. Where should we move them?
+              </p>
+              <div>
+                <label className="label">Move open issues to</label>
+                <select className="input" value={endMoveOption} onChange={(e) => setEndMoveOption(e.target.value as MoveOpenIssuesTo)}>
+                  <option value="backlog">Backlog</option>
+                  <option value="next_sprint">Move to next sprint</option>
+                  <option value="new_sprint">Create new sprint and move</option>
+                </select>
+              </div>
+              {endMoveOption === 'next_sprint' && (
+                <div>
+                  <label className="label">Select Sprint</label>
+                  <select
+                    className="input"
+                    value={endNextSprintId}
+                    onChange={(e) => setEndNextSprintId(e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {(sprints || [])
+                      .filter((s: any) => (s.status === 'planned' || s.status === 'active') && s.id !== selectedSprintId)
+                      .map((s: any) => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.status})</option>
+                      ))}
+                  </select>
+                </div>
+              )}
+              {endMoveOption === 'new_sprint' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="label">Name</label>
+                    <input className="input" value={endNewSprint.name} onChange={(e) => setEndNewSprint({ ...endNewSprint, name: e.target.value })} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label">Goal</label>
+                    <textarea className="input" rows={3} value={endNewSprint.goal} onChange={(e) => setEndNewSprint({ ...endNewSprint, goal: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">Status</label>
+                    <select className="input" value={endNewSprint.status} onChange={(e) => setEndNewSprint({ ...endNewSprint, status: e.target.value })}>
+                      <option value="planned">planned</option>
+                      <option value="active">active</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Capacity</label>
+                    <input type="number" className="input" value={endNewSprint.capacity} onChange={(e) => setEndNewSprint({ ...endNewSprint, capacity: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">Start Date</label>
+                    <input type="date" className="input" value={endNewSprint.start_date} onChange={(e) => setEndNewSprint({ ...endNewSprint, start_date: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label">End Date</label>
+                    <input type="date" className="input" value={endNewSprint.end_date} onChange={(e) => setEndNewSprint({ ...endNewSprint, end_date: e.target.value })} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t flex justify-end gap-2">
+              <button className="btn-secondary" onClick={() => setShowEndOptions(false)}>Cancel</button>
+              <button
+                className="btn-primary"
+                onClick={async () => {
+                  try {
+                    const payload: any = {
+                      move_open_issues_to: endMoveOption,
+                    }
+                    if (endMoveOption === 'next_sprint') {
+                      payload.next_sprint = endNextSprintId || null
+                    }
+                    if (endMoveOption === 'new_sprint') {
+                      payload.new_sprint = {
+                        project_id: id!,
+                        name: endNewSprint.name,
+                        goal: endNewSprint.goal || undefined,
+                        start_date: endNewSprint.start_date,
+                        end_date: endNewSprint.end_date,
+                        status: endNewSprint.status || 'planned',
+                        capacity: endNewSprint.capacity !== '' ? Number(endNewSprint.capacity) : undefined,
+                      }
+                    }
+                    await sprintsApi.endSprint(String(selectedSprintId), payload)
+                    toast.success('Sprint ended')
+                    setShowEndOptions(false)
+                    await queryClient.invalidateQueries(['sprints', id])
+                    await queryClient.invalidateQueries(['tasks', id, selectedSprintId])
+                    if (endMoveOption === 'next_sprint' && endNextSprintId) {
+                      setSelectedSprintId(endNextSprintId)
+                    }
+                  } catch (e: any) {
+                    toast.error(e?.response?.data?.message || 'Failed to end sprint')
+                  }
+                }}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}
