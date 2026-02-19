@@ -10,7 +10,8 @@ import {
   Clock,
   Calendar,
   User,
-  DollarSign,
+  // DollarSign,
+  IndianRupee
 } from 'lucide-react';
 import { reimbursementsApi } from '../../api/reimbursements';
 import { Button } from '../../components/ui/Button';
@@ -173,10 +174,10 @@ const ReimbursementList = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalAmount, 'INR')}</p>
               </div>
               <div className="p-3 rounded-full bg-purple-100">
-                <DollarSign className="h-6 w-6 text-purple-600" />
+                <IndianRupee className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
@@ -187,7 +188,7 @@ const ReimbursementList = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold">{formatCurrency(pendingAmount)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(pendingAmount, 'INR')}</p>
               </div>
               <div className="p-3 rounded-full bg-yellow-100">
                 <Clock className="h-6 w-6 text-yellow-600" />
@@ -201,7 +202,7 @@ const ReimbursementList = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved/Paid</p>
-                <p className="text-2xl font-bold">{formatCurrency(approvedAmount)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(approvedAmount, 'INR')}</p>
               </div>
               <div className="p-3 rounded-full bg-green-100">
                 <CheckCircle className="h-6 w-6 text-green-600" />
@@ -309,7 +310,7 @@ const ReimbursementList = () => {
                         </td>
                         <td className="px-4 py-3">
                           <span className="font-medium">
-                            {formatCurrency(claim.total_amount)} {claim.currency}
+                            {formatCurrency(claim.total_amount, claim.currency)}
                           </span>
                         </td>
                         <td className="px-4 py-3">
