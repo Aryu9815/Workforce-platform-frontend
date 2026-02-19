@@ -1,0 +1,442 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { reimbursementsApi, CreateReimbursementItemData } from '../../api/reimbursements'
+import { staffApi } from '../../api/staff'
+import type { ExpenseCategory, Staff } from '../../types'
+import { Search } from 'lucide-react'
+
+type ItemForm = {
+  category_id: string
+  expense_date: string
+  description: string
+  amount: string
+  quantity: string
+  unit_price: string
+  tax_amount: string
+  merchant_name: string
+  merchant_location: string
+}
+
+const emptyItem: ItemForm = {
+  category_id: '',
+  expense_date: '',
+  description: '',
+  amount: '',
+  quantity: '1',
+  unit_price: '',
+  tax_amount: '0',
+  merchant_name: '',
+  merchant_location: '',
+}
+
+const ReimbursementCreate = () => {
+  const navigate = useNavigate()
+
+  const [form, setForm] = useState({
+    staff_id: '',
+    staff_search: '',
+    claim_date: new Date().toISOString().split('T')[0],
+    expense_date_start: '',
+    expense_date_end: '',
+    currency: 'USD',
+    description: '',
+  })
+
+  const [items, setItems] = useState<ItemForm[]>([{ ...emptyItem }])
+
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
+
+  const { data: categories } = useQuery<ExpenseCategory[]>({
+    queryKey: ['reimbursement-categories'],
+    queryFn: reimbursementsApi.getCategories,
+  })
+
+  const { data: staffList } = useQuery({
+    queryKey: ['staff-list-for-reimbursements'],
+    queryFn: () =>
+      staffApi.getStaffList({
+        page: 1,
+        page_size: 100,
+      }),
+  })
+
+  const createMutation = useMutation({
+    mutationFn: reimbursementsApi.createClaim,
+    onSuccess: (created) => {
+      navigate(`/reimbursements/${created.id}`)
+    },
+  })
+
+  const onChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const onStaffSearchChange = (value: string) => {
+    setForm(prev => ({ ...prev, staff_search: value }))
+  }
+
+  const onItemChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setItems(prev => {
+      const next = [...prev]
+      next[index] = { ...next[index], [name]: value }
+      return next
+    })
+  }
+
+  const addItemRow = () => {
+    setItems(prev => [...prev, { ...emptyItem }])
+  }
+
+  const removeItemRow = (index: number) => {
+    setItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const buildItemsPayload = (): CreateReimbursementItemData[] => {
+    return items
+      .filter(item => item.category_id && item.amount)
+      .map(item => ({
+        category_id: item.category_id,
+        expense_date: item.expense_date || form.claim_date,
+        description: item.description || 'Expense',
+        amount: Number(item.amount),
+        quantity: item.quantity ? Number(item.quantity) : undefined,
+        unit_price: item.unit_price ? Number(item.unit_price) : undefined,
+        tax_amount: item.tax_amount ? Number(item.tax_amount) : undefined,
+        merchant_name: item.merchant_name || undefined,
+        merchant_location: item.merchant_location || undefined,
+      }))
+  }
+
+  const computeTotalAmount = () => {
+    const parsed = buildItemsPayload()
+    if (!parsed.length) {
+      return 0
+    }
+    return parsed.reduce((sum, item) => sum + item.amount, 0)
+  }
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const payloadItems = buildItemsPayload()
+
+    if (!form.staff_id) {
+      return
+    }
+
+    if (!payloadItems.length) {
+      return
+    }
+
+    createMutation.mutate({
+      staff_id: form.staff_id,
+      claim_date: form.claim_date,
+      expense_date_start: form.expense_date_start || undefined,
+      expense_date_end: form.expense_date_end || undefined,
+      currency: form.currency || 'USD',
+      description: form.description || undefined,
+      total_amount: computeTotalAmount(),
+      items: payloadItems,
+    })
+  }
+
+  const totalAmount = computeTotalAmount()
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      <div>
+        <h1 className="page-title">New Reimbursement Claim</h1>
+        <p className="page-description">
+          Create a new reimbursement claim with one or more expense items
+        </p>
+      </div>
+
+      <form onSubmit={onSubmit} className="card">
+        <div className="card-body space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-secondary-700 mb-1">
+                Staff
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search staff by name or code"
+                  value={form.staff_search}
+                  onChange={(e) => onStaffSearchChange(e.target.value)}
+                  className="input pl-10"
+                />
+                {form.staff_search && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {staffList?.items && staffList.items.length > 0 ? (
+                      staffList.items
+                        .filter((staff: Staff) => {
+                          const query = form.staff_search.toLowerCase()
+                          return (
+                            staff.full_name.toLowerCase().includes(query) ||
+                            (staff.employee_code || '').toLowerCase().includes(query)
+                          )
+                        })
+                        .slice(0, 50)
+                        .map((staff: Staff) => (
+                          <button
+                            key={staff.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedStaff(staff)
+                              setForm(prev => ({
+                                ...prev,
+                                staff_id: staff.id,
+                                staff_search: staff.full_name,
+                              }))
+                            }}
+                            className={`w-full text-left px-3 py-2 hover:bg-secondary-100 focus:outline-none focus:bg-secondary-100 ${
+                              selectedStaff?.id === staff.id ? 'bg-primary-50' : ''
+                            }`}
+                          >
+                            <span className="text-sm text-secondary-900">
+                              {staff.full_name}
+                            </span>
+                            {staff.employee_code && (
+                              <span className="ml-2 text-xs text-secondary-500">
+                                {staff.employee_code}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-secondary-500">
+                        No staff found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">
+                Claim date
+              </label>
+              <input
+                type="date"
+                name="claim_date"
+                value={form.claim_date}
+                onChange={onChange}
+                required
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">
+                Currency
+              </label>
+              <select
+                name="currency"
+                value={form.currency}
+                onChange={onChange}
+                className="input"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="INR">INR</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">
+                Expense start date
+              </label>
+              <input
+                type="date"
+                name="expense_date_start"
+                value={form.expense_date_start}
+                onChange={onChange}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-1">
+                Expense end date
+              </label>
+              <input
+                type="date"
+                name="expense_date_end"
+                value={form.expense_date_end}
+                onChange={onChange}
+                className="input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 mb-1">
+              Claim description
+            </label>
+            <textarea
+              name="description"
+              placeholder="Describe the purpose of this claim"
+              value={form.description}
+              onChange={onChange}
+              rows={3}
+              className="input"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-secondary-700">
+                Expense items
+              </h2>
+              <button
+                type="button"
+                onClick={addItemRow}
+                className="btn-secondary"
+              >
+                Add item
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {items.map((item, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-1 md:grid-cols-6 gap-3 border border-secondary-200 rounded-md p-3"
+                >
+                  <div>
+                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      name="category_id"
+                      value={item.category_id}
+                      onChange={(e) => onItemChange(index, e)}
+                      className="input"
+                    >
+                      <option value="">Select category</option>
+                      {categories?.map((cat: ExpenseCategory) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                      Expense date
+                    </label>
+                    <input
+                      type="date"
+                      name="expense_date"
+                      value={item.expense_date}
+                      onChange={(e) => onItemChange(index, e)}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                      Description
+                    </label>
+                    <input
+                      name="description"
+                      placeholder="Description"
+                      value={item.description}
+                      onChange={(e) => onItemChange(index, e)}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                      Amount
+                    </label>
+                    <input
+                      type="number"
+                      name="amount"
+                      placeholder="Amount"
+                      value={item.amount}
+                      onChange={(e) => onItemChange(index, e)}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      placeholder="Qty"
+                      value={item.quantity}
+                      onChange={(e) => onItemChange(index, e)}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                      Tax
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        name="tax_amount"
+                        placeholder="Tax"
+                        value={item.tax_amount}
+                        onChange={(e) => onItemChange(index, e)}
+                        className="input"
+                      />
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItemRow(index)}
+                          className="btn-secondary"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-secondary-200">
+            <p className="text-sm text-secondary-700">
+              Total amount:{' '}
+              <span className="font-semibold">
+                {totalAmount.toFixed(2)} {form.currency}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div className="card-footer flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/reimbursements')}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={createMutation.isPending}
+            className="btn-primary"
+          >
+            {createMutation.isPending ? 'Creating...' : 'Create Claim'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+export default ReimbursementCreate
