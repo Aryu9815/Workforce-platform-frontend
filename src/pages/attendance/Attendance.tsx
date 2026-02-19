@@ -1,61 +1,80 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, Play, Square } from 'lucide-react'
+import {
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Play,
+  Square
+} from 'lucide-react'
 import { attendanceApi } from '../../api/attendance'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 const Attendance = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split('T')[0]
+  )
+
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
-  
+
   const { data: records, isLoading } = useQuery({
     queryKey: ['attendance', selectedDate],
-    queryFn: () => attendanceApi.getAttendanceRecords({
-      start_date: selectedDate,
-      end_date: selectedDate,
-    }),
+    queryFn: () =>
+      attendanceApi.getAttendanceRecords({
+        start_date: selectedDate,
+        end_date: selectedDate
+      })
   })
 
   const { data: stats } = useQuery({
-    queryKey: ['attendance-stats', format(new Date(selectedDate), 'MM'), format(new Date(selectedDate), 'yyyy')],
-    queryFn: () => attendanceApi.getStats({
-      month: parseInt(format(new Date(selectedDate), 'MM')),
-      year: parseInt(format(new Date(selectedDate), 'yyyy')),
-    }),
+    queryKey: [
+      'attendance-stats',
+      format(new Date(selectedDate), 'MM'),
+      format(new Date(selectedDate), 'yyyy')
+    ],
+    queryFn: () =>
+      attendanceApi.getStats({
+        month: parseInt(format(new Date(selectedDate), 'MM')),
+        year: parseInt(format(new Date(selectedDate), 'yyyy'))
+      })
   })
 
   const checkInMutation = useMutation({
     mutationFn: (staffId: string) => attendanceApi.checkIn(staffId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] })
-      queryClient.invalidateQueries({ queryKey: ['attendance-stats'] })
+      queryClient.invalidateQueries(['attendance'])
+      queryClient.invalidateQueries(['attendance-stats'])
       toast.success('Checked in successfully')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to check in')
+    onError: (e: any) => {
+      toast.error(e.response?.data?.detail || 'Failed to check in')
     }
   })
 
   const checkOutMutation = useMutation({
     mutationFn: (staffId: string) => attendanceApi.checkOut(staffId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] })
-      queryClient.invalidateQueries({ queryKey: ['attendance-stats'] })
+      queryClient.invalidateQueries(['attendance'])
+      queryClient.invalidateQueries(['attendance-stats'])
       toast.success('Checked out successfully')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to check out')
+    onError: (e: any) => {
+      toast.error(e.response?.data?.detail || 'Failed to check out')
     }
   })
 
-  // Find current user's record for today
+  // Today's record for logged-in user
   const todayStr = new Date().toISOString().split('T')[0]
   const isToday = selectedDate === todayStr
-  const myRecord = records?.items.find(r => r.staff_id === (user as any)?.staff_id)
-  
+  const myRecord = records?.items.find(
+    r => r.staff_id === (user as any)?.staff_id
+  )
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'present':
@@ -65,59 +84,76 @@ const Attendance = () => {
       case 'late':
         return <AlertCircle className="h-5 w-5 text-yellow-500" />
       default:
-        return <Clock className="h-5 w-5 text-secondary-400" />
+        return <Clock className="h-5 w-5 text-gray-400" />
     }
   }
-  
+
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      present: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800',
-      absent: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800',
-      late: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800',
-      half_day: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800',
+      present: 'bg-green-100 text-green-700',
+      absent: 'bg-red-100 text-red-700',
+      late: 'bg-yellow-100 text-yellow-700',
+      half_day: 'bg-blue-100 text-blue-700'
     }
-    return <span className={styles[status] || 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'}>{status.replace('_', ' ')}</span>
+
+    return (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          styles[status] || 'bg-gray-100 text-gray-700'
+        }`}
+      >
+        {status.replace('_', ' ')}
+      </span>
+    )
   }
-  
+
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">Attendance</h1>
-          <p className="text-secondary-500">Track and manage staff attendance</p>
+          <h1 className="text-xl font-medium text-gray-900">Attendance</h1>
+          <p className="text-sm text-gray-500">
+            Track and manage staff attendance
+          </p>
         </div>
+
         <div className="flex flex-wrap items-center gap-3">
+
+          {/* Date Picker */}
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            onChange={e => setSelectedDate(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-teal-600 focus:ring-0"
           />
-          
+
           {isToday && (user as any)?.staff_id && (
             <div className="flex gap-2">
               {!myRecord?.check_in ? (
-                <button 
-                  onClick={() => checkInMutation.mutate((user as any).staff_id)}
-                  disabled={checkInMutation.isPending}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                <button
+                  onClick={() =>
+                    checkInMutation.mutate((user as any).staff_id)
+                  }
+                  className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm"
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Check In
                 </button>
               ) : !myRecord?.check_out ? (
-                <button 
-                  onClick={() => checkOutMutation.mutate((user as any).staff_id)}
-                  disabled={checkOutMutation.isPending}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                <button
+                  onClick={() =>
+                    checkOutMutation.mutate((user as any).staff_id)
+                  }
+                  className="flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   <Square className="h-4 w-4 mr-2" />
                   Check Out
                 </button>
               ) : (
-                <span className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-50">
-                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                <span className="flex items-center px-4 py-2 text-sm border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                   Work Completed
                 </span>
               )}
@@ -125,102 +161,140 @@ const Attendance = () => {
           )}
         </div>
       </div>
-      
-      {/* Stats */}
+
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-secondary-200">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+        {[
+          {
+            label: 'Present',
+            value: stats?.days_present || 0,
+            icon: <CheckCircle className="h-5 w-5 text-green-600" />,
+            bg: 'bg-green-100'
+          },
+          {
+            label: 'Absent',
+            value: stats?.days_absent || 0,
+            icon: <XCircle className="h-5 w-5 text-red-600" />,
+            bg: 'bg-red-100'
+          },
+          {
+            label: 'Late',
+            value: stats?.days_late || 0,
+            icon: <AlertCircle className="h-5 w-5 text-yellow-600" />,
+            bg: 'bg-yellow-100'
+          },
+          {
+            label: 'Work Hours',
+            value: `${stats?.total_work_hours?.toFixed(1) || 0}h`,
+            icon: <Clock className="h-5 w-5 text-blue-600" />,
+            bg: 'bg-blue-100'
+          }
+        ].map((card, i) => (
+          <div
+            key={i}
+            className="bg-white p-4 rounded-md border border-gray-200 flex items-center"
+          >
+            <div
+              className={`h-10 w-10 rounded-md ${card.bg} flex items-center justify-center`}
+            >
+              {card.icon}
             </div>
             <div className="ml-3">
-              <p className="text-sm text-secondary-500">Present</p>
-              <p className="text-xl font-bold text-secondary-900">{stats?.days_present || 0}</p>
+              <p className="text-sm text-gray-500">{card.label}</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {card.value}
+              </p>
             </div>
           </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-secondary-200">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
-              <XCircle className="h-5 w-5 text-red-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-secondary-500">Absent</p>
-              <p className="text-xl font-bold text-secondary-900">{stats?.days_absent || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-secondary-200">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-secondary-500">Late</p>
-              <p className="text-xl font-bold text-secondary-900">{stats?.days_late || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-secondary-200">
-          <div className="flex items-center">
-            <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-secondary-500">Work Hours</p>
-              <p className="text-xl font-bold text-secondary-900">{stats?.total_work_hours?.toFixed(1) || 0}h</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
-      
-      {/* Attendance table */}
-      <div className="bg-white shadow-sm border border-secondary-200 rounded-lg overflow-hidden">
+
+      {/* Attendance Table */}
+      <div className="border border-gray-200 rounded-md bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-secondary-200">
-            <thead className="bg-secondary-50">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Check In</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Check Out</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Work Hours</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">Notes</th>
+                {[
+                  'Employee',
+                  'Status',
+                  'Check In',
+                  'Check Out',
+                  'Work Hours',
+                  'Notes'
+                ].map((h, i) => (
+                  <th
+                    key={i}
+                    className="px-6 py-3 text-left font-medium text-gray-600 uppercase text-xs"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-secondary-200">
+
+            <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-secondary-500">Loading attendance data...</td>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
+                    Loading attendance data...
+                  </td>
                 </tr>
               ) : records?.items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-secondary-500">
-                    No attendance records for {format(new Date(selectedDate), 'PPP')}
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
+                    No attendance records for{' '}
+                    {format(new Date(selectedDate), 'PPP')}
                   </td>
                 </tr>
               ) : (
-                records?.items.map((record) => (
-                  <tr key={record.id} className="hover:bg-secondary-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {getStatusIcon(record.status)}
-                        <span className="ml-3 text-sm font-medium text-secondary-900">
-                          {record.staff_name || 'Unknown Employee'}
-                        </span>
-                      </div>
+                records?.items.map(record => (
+                  <tr
+                    key={record.id}
+                    className="hover:bg-gray-50 transition"
+                  >
+                    {/* Employee */}
+                    <td className="px-6 py-4 flex items-center">
+                      {getStatusIcon(record.status)}
+                      <span className="ml-3 text-gray-900 font-medium">
+                        {record.staff_name || 'Unknown Employee'}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(record.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
-                      {record.check_in ? format(new Date(record.check_in), 'hh:mm a') : '-'}
+
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      {getStatusBadge(record.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
-                      {record.check_out ? format(new Date(record.check_out), 'hh:mm a') : '-'}
+
+                    {/* Check-in */}
+                    <td className="px-6 py-4 text-gray-600">
+                      {record.check_in
+                        ? format(new Date(record.check_in), 'hh:mm a')
+                        : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
-                      {record.work_hours ? `${record.work_hours.toFixed(2)}h` : '-'}
+
+                    {/* Check-out */}
+                    <td className="px-6 py-4 text-gray-600">
+                      {record.check_out
+                        ? format(new Date(record.check_out), 'hh:mm a')
+                        : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+
+                    {/* Work hours */}
+                    <td className="px-6 py-4 text-gray-600">
+                      {record.work_hours
+                        ? `${record.work_hours.toFixed(2)}h`
+                        : '-'}
+                    </td>
+
+                    {/* Notes */}
+                    <td className="px-6 py-4 text-gray-600">
                       {record.notes || '-'}
                     </td>
                   </tr>

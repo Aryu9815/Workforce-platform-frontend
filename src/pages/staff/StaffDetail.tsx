@@ -49,33 +49,39 @@ const StaffDetail = () => {
     }
   })
 
-  if (isLoading) return <div className="text-center py-8">Loading...</div>
-  if (!staff) return <div className="text-center py-8">Staff not found</div>
+  if (isLoading)
+    return <div className="p-6 text-center text-gray-500">Loading...</div>
+
+  if (!staff)
+    return <div className="p-6 text-center text-gray-500">Staff not found</div>
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/staff')}
-            className="mr-4 p-2 rounded-lg hover:bg-secondary-100"
+            className="p-2 rounded-md hover:bg-gray-100 transition"
           >
-            <ArrowLeft className="h-5 w-5 text-secondary-600" />
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
           </button>
+
           <div>
-            <h1 className="page-title">{staff.full_name}</h1>
-            <p className="page-description">
+            <h1 className="text-xl font-semibold text-gray-900">
+              {staff.full_name}
+            </h1>
+            <p className="text-sm text-gray-500">
               {staff.employee_code || 'No Employee ID'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(`/staff/${id}/edit`)}
-            className="btn-secondary"
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition flex items-center"
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit
@@ -83,11 +89,9 @@ const StaffDetail = () => {
 
           <button
             onClick={() => {
-              if (confirm('Are you sure?')) {
-                deleteMutation.mutate()
-              }
+              if (confirm('Are you sure?')) deleteMutation.mutate()
             }}
-            className="btn-danger"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm transition flex items-center"
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
@@ -96,105 +100,188 @@ const StaffDetail = () => {
           {!staff.user_id && (
             <button
               onClick={() => setShowUserModal(true)}
-              className="btn-primary"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition"
             >
-              Create Login Account
+              Create Login
             </button>
           )}
         </div>
       </div>
 
-      {/* Profile Card */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex items-start">
-            <div className="h-24 w-24 rounded-xl bg-primary-100 flex items-center justify-center">
-              <span className="text-3xl font-bold text-primary-700">
-                {staff.first_name?.[0]}{staff.last_name?.[0]}
+      {/* Profile Section */}
+      <div className="bg-white border border-gray-200 rounded-md p-6">
+
+        <div className="flex gap-6">
+
+          {/* Avatar */}
+          <div className="h-20 w-20 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-700 text-2xl font-semibold">
+            {staff.first_name?.[0]}
+            {staff.last_name?.[0]}
+          </div>
+
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">
+                  {staff.full_name}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {staff.designation_name || 'No Designation'}
+                </p>
+              </div>
+
+              <span
+                className={`text-sm font-medium ${
+                  staff.is_active ? 'text-green-600' : 'text-gray-500'
+                }`}
+              >
+                {staff.is_active ? 'Active' : 'Inactive'}
               </span>
             </div>
 
-            <div className="ml-6 flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-secondary-900">
-                    {staff.full_name}
-                  </h2>
-                  <p className="text-secondary-500">
-                    {staff.designation_name || 'No Designation'}
-                  </p>
-                </div>
+            {/* Structured Details */}
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-                <span className={`badge ${staff.is_active ? 'badge-success' : 'badge-default'}`}>
-                  {staff.is_active ? 'Active' : 'Inactive'}
-                </span>
+              {/* Contact Info */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                  Contact Information
+                </h4>
+
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-gray-500">Email</p>
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      {staff.email}
+                    </div>
+                  </div>
+
+                  {staff.phone && (
+                    <div>
+                      <p className="text-gray-500">Phone</p>
+                      <div className="flex items-center gap-2 text-gray-800">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        {staff.phone}
+                      </div>
+                    </div>
+                  )}
+
+                  {staff.work_location && (
+                    <div>
+                      <p className="text-gray-500">Location</p>
+                      <div className="flex items-center gap-2 text-gray-800">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        {staff.work_location}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="flex items-center text-sm">
-                  <Mail className="h-4 w-4 mr-2 text-secondary-400" />
-                  {staff.email}
-                </div>
+              {/* Employment Info */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                  Employment Details
+                </h4>
 
-                {staff.phone && (
-                  <div className="flex items-center text-sm">
-                    <Phone className="h-4 w-4 mr-2 text-secondary-400" />
-                    {staff.phone}
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-gray-500">Join Date</p>
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      {staff.join_date
+                        ? new Date(staff.join_date).toLocaleDateString()
+                        : 'N/A'}
+                    </div>
                   </div>
-                )}
 
-                {staff.work_location && (
-                  <div className="flex items-center text-sm">
-                    <MapPin className="h-4 w-4 mr-2 text-secondary-400" />
-                    {staff.work_location}
+                  <div>
+                    <p className="text-gray-500">Department</p>
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <Building2 className="h-4 w-4 text-gray-400" />
+                      {staff.department_name || 'Not Assigned'}
+                    </div>
                   </div>
-                )}
 
-                <div className="flex items-center text-sm">
-                  <Calendar className="h-4 w-4 mr-2 text-secondary-400" />
-                  {staff.join_date ? new Date(staff.join_date).toLocaleDateString() : 'N/A'}
-                </div>
-
-                <div className="flex items-center text-sm">
-                  <Building2 className="h-4 w-4 mr-2 text-secondary-400" />
-                  {staff.department_name || 'No Department'}
-                </div>
-
-                <div className="flex items-center text-sm">
-                  <Briefcase className="h-4 w-4 mr-2 text-secondary-400" />
-                  {staff.employment_type?.replace('_', ' ')}
+                  <div>
+                    <p className="text-gray-500">Employment Type</p>
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <Briefcase className="h-4 w-4 text-gray-400" />
+                      {staff.employment_type?.replace('_', ' ') || 'N/A'}
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* System Info */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                  System Information
+                </h4>
+
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-gray-500">Employee ID</p>
+                    <p className="text-gray-800 font-medium">
+                      {staff.employee_code || 'Not Assigned'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500">Account Status</p>
+                    <p
+                      className={`font-medium ${
+                        staff.is_active ? 'text-green-600' : 'text-gray-500'
+                      }`}
+                    >
+                      {staff.is_active ? 'Active' : 'Inactive'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-500">Login Account</p>
+                    <p className="text-gray-800">
+                      {staff.user_id ? 'Created' : 'Not Created'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
       </div>
 
-      {/* Skills */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="text-lg font-semibold">Skills</h3>
-        </div>
-        <div className="card-body">
-          {staff.skills?.length ? (
-            <div className="flex flex-wrap gap-2">
-              {staff.skills.map((skill: string, index: number) => (
-                <span key={index} className="px-3 py-1 bg-secondary-100 rounded-full text-sm">
-                  {skill}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p>No skills listed</p>
-          )}
-        </div>
+      {/* Skills Section */}
+      <div className="bg-white border border-gray-200 rounded-md p-6">
+        <h3 className="text-base font-medium text-gray-900 mb-4">
+          Skills
+        </h3>
+
+        {staff.skills?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {staff.skills.map((skill: string, index: number) => (
+              <span
+                key={index}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No skills listed</p>
+        )}
       </div>
 
       {/* Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-96 space-y-4">
-            <h2 className="text-lg font-bold">Create User Account</h2>
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
+          <div className="bg-white border border-gray-200 rounded-md w-96 p-6 space-y-4">
+            <h2 className="text-base font-semibold text-gray-900">
+              Create User Account
+            </h2>
 
             <input
               placeholder="Login Email"
@@ -202,7 +289,7 @@ const StaffDetail = () => {
               onChange={(e) =>
                 setUserForm(prev => ({ ...prev, login_email: e.target.value }))
               }
-              className="input w-full"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
             />
 
             <input
@@ -211,19 +298,20 @@ const StaffDetail = () => {
               onChange={(e) =>
                 setUserForm(prev => ({ ...prev, role_id: e.target.value }))
               }
-              className="input w-full"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
             />
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowUserModal(false)}
-                className="btn-secondary"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition"
               >
                 Cancel
               </button>
+
               <button
                 onClick={() => createUserMutation.mutate()}
-                className="btn-primary"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition"
               >
                 Create
               </button>
@@ -231,6 +319,7 @@ const StaffDetail = () => {
           </div>
         </div>
       )}
+
     </div>
   )
 }

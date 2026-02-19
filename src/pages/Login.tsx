@@ -77,112 +77,115 @@ const Login = () => {
       setIsLoading(false)
     }
   }
-
   return (
-    <div className="min-h-screen bg-secondary-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-xl bg-primary-600 mb-4">
-            <Building2 className="h-8 w-8 text-white" />
+    <div className="min-h-screen flex">
+      {/* LEFT SIDE - LOGIN FORM */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-8">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Velocity</h1>
           </div>
-          <h1 className="text-2xl font-bold text-secondary-900">Welcome Back</h1>
-          <p className="text-secondary-500 mt-1">Sign in to your account</p>
-        </div>
-        
-        {/* Form */}
-        <div className="card">
-          <div className="card-body">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Email */}
-              <div>
-                <label className="label">Email Address</label>
+
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            Welcome Back!
+          </h2>
+          <p className="text-gray-500 mb-6">
+            Sign in to access your dashboard
+          </p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                {...register('email', { required: 'Email is required' })}
+                className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 focus:outline-none"
+                placeholder="Enter your email"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="relative mt-1">
                 <input
-                  type="email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: 'Invalid email address',
-                    },
-                  })}
-                  className={`input ${errors.email ? 'input-error' : ''}`}
-                  placeholder="you@example.com"
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password', { required: 'Password is required' })}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-600 focus:outline-none"
+                  placeholder="Enter your password"
                 />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-gray-400"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-              
-              {/* Password */}
-              <div>
-                <label className="label">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    {...register('password', {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 8,
-                        message: 'Password must be at least 8 characters',
-                      },
-                    })}
-                    className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-                )}
-              </div>
-              
-              {/* Remember me & Forgot password */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500" />
-                  <span className="ml-2 text-sm text-secondary-600">Remember me</span>
-                </label>
-                <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
-                  Forgot password?
-                </Link>
-              </div>
-              
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn-primary w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </button>
-            </form>
-          </div>
+            </div>
+
+            {/* Forgot */}
+            <div className="flex justify-between text-sm">
+              <span></span>
+              <Link to="/forgot-password" className="text-teal-600 hover:underline">
+                Forgot Password?
+              </Link>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-teal-700 hover:bg-teal-800 text-white py-2 rounded-lg flex justify-center items-center transition"
+            >
+              {isLoading ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                "Sign In"
+              )}
+            </button>
+          </form>
+
+          <p className="text-center mt-6 text-sm text-gray-500">
+            Don’t have an account?{" "}
+            <Link to="/register" className="text-teal-600 font-medium">
+              Sign up
+            </Link>
+          </p>
         </div>
-        
-        {/* Register link */}
-        <p className="text-center mt-6 text-sm text-secondary-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-            Sign up
-          </Link>
+      </div>
+
+      {/* RIGHT SIDE - BRANDING PANEL */}
+      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-teal-800 to-teal-600 text-white p-16 flex-col justify-center">
+        <h2 className="text-4xl font-bold leading-tight mb-6">
+          Accelerate Workflows with Velocity
+        </h2>
+
+        <p className="text-lg opacity-90 mb-8">
+          Velocity empowers teams to manage projects, automate workflows,
+          and scale operations seamlessly.
         </p>
+
+        <div className="border-t border-white/30 pt-6">
+          <p className="text-sm opacity-80">
+            Trusted by growing teams worldwide
+          </p>
+        </div>
       </div>
     </div>
   )
+
 }
 
 export default Login

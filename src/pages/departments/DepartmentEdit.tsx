@@ -17,37 +17,54 @@ const DepartmentEdit = () => {
   })
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: UpdateDepartmentData) => departmentApi.updateDepartment(id!, data),
+    mutationFn: (data: UpdateDepartmentData) =>
+      departmentApi.updateDepartment(id!, data),
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] })
       queryClient.invalidateQueries({ queryKey: ['departments', id] })
+
       toast.success('Department updated successfully')
       navigate('/departments')
     },
+
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Failed to update department')
     },
   })
 
-  if (isLoading) return <div className="text-center py-8">Loading...</div>
-  if (!department) return <div className="text-center py-8">Department not found</div>
+  if (isLoading)
+    return <div className="text-center py-8 text-gray-600">Loading...</div>
+
+  if (!department)
+    return (
+      <div className="text-center py-8 text-gray-600">
+        Department not found
+      </div>
+    )
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
+    <div className="space-y-8">
+
+      {/* Header */}
+      <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/departments')}
-          className="mr-4 p-2 rounded-lg hover:bg-secondary-100"
+          className="p-2 rounded-md hover:bg-gray-100 transition"
         >
-          <ArrowLeft className="h-5 w-5 text-secondary-600" />
+          <ArrowLeft className="h-5 w-5 text-gray-700" />
         </button>
+
         <div>
-          <h1 className="page-title">Edit Department</h1>
-          <p className="page-description">Update department details</p>
+          <h1 className="text-xl font-semibold text-gray-900">Edit Department</h1>
+          <p className="text-gray-500 text-sm">
+            Update department information below
+          </p>
         </div>
       </div>
 
-      <div className="max-w-2xl">
+      {/* Form Card */}
+      <div className="max-w-3xl">
         <DepartmentForm
           defaultValues={department}
           onSubmit={mutate}

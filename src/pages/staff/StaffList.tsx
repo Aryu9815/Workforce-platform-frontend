@@ -42,181 +42,173 @@ const StaffList = () => {
     )
   }
   
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Staff</h1>
-          <p className="page-description">Manage your organization's staff members</p>
-        </div>
-        <Link to="/staff/new" className="btn-primary">
-          <Plus className="h-5 w-5 mr-2" />
-          Add Staff
-        </Link>
+ return (
+  <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+
+    {/* Header */}
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-xl font-medium text-gray-900">Staff</h1>
+        <p className="text-sm text-gray-500">
+          Manage staff members in your organization
+        </p>
       </div>
-      
-      {/* Filters */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex flex-wrap gap-4">
-            {/* Search */}
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
-                <input
-                  type="text"
-                  placeholder="Search staff..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="input pl-10"
-                />
-              </div>
-            </div>
-            
-            {/* Department filter */}
-            <div className="w-48">
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
-                <select
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="input pl-10 appearance-none"
-                >
-                  <option value="">All Departments</option>
-                  {departments?.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Staff table */}
-      <div className="table-container">
-        <table className="table">
-          <thead className="table-header">
-            <tr>
-              <th className="table-header-cell">Employee</th>
-              <th className="table-header-cell">Contact</th>
-              <th className="table-header-cell">Department</th>
-              <th className="table-header-cell">Designation</th>
-              <th className="table-header-cell">Status</th>
-              <th className="table-header-cell">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-secondary-200">
-            {isLoading ? (
-              <tr>
-                <td colSpan={6} className="table-cell text-center py-8">
-                  Loading...
-                </td>
-              </tr>
-            ) : data?.items.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="table-cell text-center py-8 text-secondary-500">
-                  No staff members found
-                </td>
-              </tr>
-            ) : (
-              data?.items.map((staff: Staff) => (
-                <tr key={staff.id} className="table-row">
-                  <td className="table-cell">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                        <span className="text-primary-700 font-medium">
-                          {staff.first_name[0]}{staff.last_name[0]}
-                        </span>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-secondary-900">
-                          {staff.full_name}
-                        </p>
-                        <p className="text-xs text-secondary-500">
-                          {staff.employee_code || 'No ID'}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm text-secondary-600">
-                        <Mail className="h-4 w-4 mr-1" />
-                        {staff.email}
-                      </div>
-                      {staff.phone && (
-                        <div className="flex items-center text-sm text-secondary-600">
-                          <Phone className="h-4 w-4 mr-1" />
-                          {staff.phone}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center text-sm text-secondary-700">
-                      <Building2 className="h-4 w-4 mr-1 text-secondary-400" />
-                      {staff.department_name || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center text-sm text-secondary-700">
-                      <Briefcase className="h-4 w-4 mr-1 text-secondary-400" />
-                      {staff.designation_name || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    {getStatusBadge(staff.is_active)}
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center space-x-2">
-                      <Link
-                        to={`/staff/${staff.id}`}
-                        className="p-2 rounded-lg hover:bg-secondary-100 text-secondary-600"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* Pagination */}
-      {data && data.pages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-secondary-500">
-            Showing {((page - 1) * 20) + 1} to {Math.min(page * 20, data.total)} of {data.total} results
-          </p>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="btn-secondary px-3 py-1 text-sm disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-secondary-600">
-              Page {page} of {data.pages}
-            </span>
-            <button
-              onClick={() => setPage(p => Math.min(data.pages, p + 1))}
-              disabled={page === data.pages}
-              className="btn-secondary px-3 py-1 text-sm disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+
+      <Link
+        to="/staff/new"
+        className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Staff
+      </Link>
     </div>
-  )
+
+    {/* Filters */}
+    <div className="border border-gray-200 rounded-md p-4 bg-white">
+      <div className="flex flex-wrap gap-6 items-center">
+
+        {/* Search */}
+        <div className="flex-1 min-w-[220px]">
+          <div className="relative">
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search staff..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-6 pr-2 py-2 border-0 border-b border-gray-300 focus:border-teal-600 focus:ring-0 text-sm outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Department Filter */}
+        <div className="w-56">
+          <select
+            value={departmentFilter}
+            onChange={(e) => setDepartmentFilter(e.target.value)}
+            className="w-full py-2 border-0 border-b border-gray-300 focus:border-teal-600 focus:ring-0 text-sm outline-none"
+          >
+            <option value="">All Departments</option>
+            {departments?.map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Table */}
+    <div className="border border-gray-200 rounded-md bg-white overflow-hidden">
+      <table className="min-w-full text-sm">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left font-medium text-gray-600">
+              Employee
+            </th>
+            <th className="px-6 py-3 text-left font-medium text-gray-600">
+              Contact
+            </th>
+            <th className="px-6 py-3 text-left font-medium text-gray-600">
+              Department
+            </th>
+            <th className="px-6 py-3 text-left font-medium text-gray-600">
+              Designation
+            </th>
+            <th className="px-6 py-3 text-left font-medium text-gray-600">
+              Status
+            </th>
+            <th className="px-6 py-3"></th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-gray-100">
+          {isLoading ? (
+            <tr>
+              <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                Loading...
+              </td>
+            </tr>
+          ) : data?.items.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                No staff members found
+              </td>
+            </tr>
+          ) : (
+            data?.items.map((staff: Staff) => (
+              <tr key={staff.id} className="hover:bg-gray-50 transition">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-teal-600 flex items-center justify-center text-white font-medium text-sm">
+                      {staff.first_name[0]}
+                      {staff.last_name[0]}
+                    </div>
+                    <div>
+                      <p className="text-base font-medium text-gray-900">
+                        {staff.full_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {staff.employee_code || 'No ID'}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                <td className="px-6 py-4 text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    {staff.email}
+                  </div>
+                  {staff.phone && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      {staff.phone}
+                    </div>
+                  )}
+                </td>
+
+                <td className="px-6 py-4 text-gray-700">
+                  {staff.department_name || 'N/A'}
+                </td>
+
+                <td className="px-6 py-4 text-gray-700">
+                  {staff.designation_name || 'N/A'}
+                </td>
+
+                <td className="px-6 py-4">
+                  <span
+                    className={`text-xs font-medium ${
+                      staff.is_active
+                        ? 'text-green-600'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {staff.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+
+                <td className="px-6 py-4 text-right">
+                  <Link
+                    to={`/staff/${staff.id}`}
+                    className="p-2 rounded-md hover:bg-gray-100 transition"
+                  >
+                    <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                  </Link>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+)
+
+
 }
 
 export default StaffList
