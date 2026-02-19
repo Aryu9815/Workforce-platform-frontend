@@ -5,6 +5,10 @@ import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
 import { Search } from 'lucide-react'
 
+const inputClass =
+  "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+const labelClass = "text-sm font-medium text-gray-700"
+
 const ProjectCreate = () => {
   const navigate = useNavigate()
 
@@ -20,19 +24,18 @@ const ProjectCreate = () => {
     budget: '',
     currency: 'USD',
   })
+
   const [managerSearch, setManagerSearch] = useState('')
   const [selectedManagerId, setSelectedManagerId] = useState<string>('')
 
-  const { data: staffNames, isLoading: isLoadingStaffNames } = useQuery({
+  const { data: staffNames, isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff-names'],
     queryFn: staffApi.getStaffNames,
   })
 
   const createMutation = useMutation({
     mutationFn: projectsApi.createProject,
-    onSuccess: () => {
-      navigate('/projects')
-    },
+    onSuccess: () => navigate('/projects')
   })
 
   const onChange = (
@@ -46,192 +49,239 @@ const ProjectCreate = () => {
     e.preventDefault()
 
     createMutation.mutate({
-      name: form.name,
-      code: form.code || undefined,
-      description: form.description || undefined,
-      status: form.status as any,
-      priority: form.priority as any,
-      project_type: form.project_type || undefined,
-      start_date: form.start_date || undefined,
-      end_date: form.end_date || undefined,
+      ...form,
       budget: form.budget ? Number(form.budget) : undefined,
-      currency: form.currency || 'USD',
       project_manager_id: selectedManagerId || undefined,
     })
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-8 max-w-3xl">
+
+      {/* Header */}
       <div>
-        <h1 className="page-title">Add Project</h1>
-        <p className="page-description">Create a new project</p>
+        <h1 className="text-xl font-semibold text-gray-900">Create Project</h1>
+        <p className="text-gray-500 text-sm">
+          Add a new project with required details
+        </p>
       </div>
 
-      <form onSubmit={onSubmit} className="card">
-        <div className="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            name="name"
-            placeholder="Project Name"
-            value={form.name}
-            onChange={onChange}
-            required
-            className="input"
-          />
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-secondary-700 mb-1">
-              Project Manager
-            </label>
+      {/* Form Container */}
+      <form
+        onSubmit={onSubmit}
+        className="bg-white shadow-sm border border-gray-200 rounded-xl p-8 space-y-10"
+      >
+
+        {/* SECTION: Basic Info */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Project Information
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* Project Name */}
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>
+                Project Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="name"
+                required
+                value={form.name}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Project Code */}
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Project Code</label>
+              <input
+                name="code"
+                value={form.code}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Project Type */}
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Project Type</label>
+              <input
+                name="project_type"
+                value={form.project_type}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Priority */}
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Priority</label>
+              <select
+                name="priority"
+                value={form.priority}
+                onChange={onChange}
+                className={inputClass}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="flex flex-col gap-2 mt-6">
+            <label className={labelClass}>Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={onChange}
+              rows={4}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        {/* SECTION: Project Manager */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Project Manager
+          </h2>
+
+          <div className="flex flex-col gap-2 relative">
+
+            <label className={labelClass}>Assign Manager</label>
+
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+
               <input
                 type="text"
-                placeholder={isLoadingStaffNames ? 'Loading staff...' : 'Search staff by name'}
                 value={managerSearch}
+                placeholder={isLoadingStaff ? 'Loading...' : 'Search staff...'}
                 onChange={(e) => setManagerSearch(e.target.value)}
-                className="input pl-10"
-                disabled={isLoadingStaffNames}
+                className={`${inputClass} pl-10`}
               />
-              {/* Dropdown container for staff list */}
-              {managerSearch && !isLoadingStaffNames && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                  {Array.isArray(staffNames) && staffNames.length > 0 ? (
-                    staffNames
-                      .filter((staff) =>
-                        staff.name.toLowerCase().includes(managerSearch.toLowerCase())
-                      )
-                      .slice(0, 50)
-                      .map((staff) => (
-                        <button
-                          key={staff.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedManagerId(staff.id)
-                            setManagerSearch(staff.name)
-                          }}
-                          className={`w-full text-left px-3 py-2 hover:bg-secondary-100 focus:outline-none focus:bg-secondary-100 ${
-                            selectedManagerId === staff.id ? 'bg-primary-50' : ''
-                          }`}
-                        >
-                          <span className="text-sm text-secondary-900">
-                            {staff.name}
-                          </span>
-                          <span className="ml-2 text-xs text-secondary-500">
-                            {staff.id}
-                          </span>
-                        </button>
-                      ))
-                  ) : (
-                    <div className="px-3 py-2 text-sm text-secondary-500">
-                      No staff found
-                    </div>
+
+              {/* Suggestions */}
+              {managerSearch && !isLoadingStaff && (
+                <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
+
+                  {staffNames
+                    ?.filter(st => st.name.toLowerCase().includes(managerSearch.toLowerCase()))
+                    ?.slice(0, 25)
+                    ?.map(st => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedManagerId(st.id)
+                          setManagerSearch(st.name)
+                        }}
+                        className="flex justify-between w-full px-3 py-2 hover:bg-indigo-50 text-left"
+                      >
+                        <span className="text-sm text-gray-800">{st.name}</span>
+                      </button>
+                    ))}
+
+                  {Array.isArray(staffNames) && staffNames.length === 0 && (
+                    <div className="px-3 py-2 text-sm text-gray-500">No staff found</div>
                   )}
                 </div>
               )}
             </div>
           </div>
-
-          <input
-            name="code"
-            placeholder="Project Code"
-            value={form.code}
-            onChange={onChange}
-            className="input"
-          />
-
-          <div className="md:col-span-2">
-            <textarea
-              name="description"
-              placeholder="Description"
-              value={form.description}
-              onChange={onChange}
-              rows={4}
-              className="input"
-            />
-          </div>
-
-          <select
-            name="status"
-            value={form.status}
-            onChange={onChange}
-            className="input"
-          >
-            <option value="planning">Planning</option>
-            <option value="active">Active</option>
-            <option value="on_hold">On Hold</option>
-            <option value="completed">Completed</option>
-          </select>
-
-          <select
-            name="priority"
-            value={form.priority}
-            onChange={onChange}
-            className="input"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
-
-          <input
-            name="project_type"
-            placeholder="Project Type"
-            value={form.project_type}
-            onChange={onChange}
-            className="input"
-          />
-
-          <input
-            name="start_date"
-            type="date"
-            value={form.start_date}
-            onChange={onChange}
-            className="input"
-          />
-
-          <input
-            name="end_date"
-            type="date"
-            value={form.end_date}
-            onChange={onChange}
-            className="input"
-          />
-
-          <input
-            name="budget"
-            type="number"
-            step="0.01"
-            placeholder="Budget"
-            value={form.budget}
-            onChange={onChange}
-            className="input"
-          />
-
-          <input
-            name="currency"
-            placeholder="Currency"
-            value={form.currency}
-            onChange={onChange}
-            className="input"
-          />
         </div>
 
-        <div className="card-footer flex justify-end gap-2">
+        {/* SECTION: Schedule */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Schedule
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Start Date</label>
+              <input
+                type="date"
+                name="start_date"
+                value={form.start_date}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>End Date</label>
+              <input
+                type="date"
+                name="end_date"
+                value={form.end_date}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+          </div>
+        </div>
+
+        {/* SECTION: Financials */}
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Budget
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Budget</label>
+              <input
+                type="number"
+                step="0.01"
+                name="budget"
+                value={form.budget}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className={labelClass}>Currency</label>
+              <input
+                name="currency"
+                value={form.currency}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
           <button
             type="button"
             onClick={() => navigate('/projects')}
-            className="btn-secondary"
+            className="px-5 py-2 rounded-md border text-gray-700 bg-white hover:bg-gray-100 text-sm"
           >
             Cancel
           </button>
+
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="btn-primary"
+            className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm disabled:opacity-50"
           >
-            {createMutation.isPending ? 'Creating...' : 'Create Project'}
+            {createMutation.isPending ? "Creating..." : "Create Project"}
           </button>
         </div>
+
       </form>
     </div>
   )

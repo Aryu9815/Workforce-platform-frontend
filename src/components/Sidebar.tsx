@@ -9,7 +9,8 @@ import {
   Receipt,
   ChevronDown,
   Building2,
-  Menu
+  Menu,
+  Briefcase
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useState } from 'react'
@@ -75,7 +76,7 @@ const Sidebar = () => {
         { path: '/attendance/leave', label: 'Leave Requests' },
       ]
     },
-    { path: '/inventory', icon: Package, label: 'Inventory' },
+    // { path: '/inventory', icon: Package, label: 'Inventory' },
     { path: '/assets', icon: Briefcase, label: 'Assets' },
     { path: '/reimbursements', icon: Receipt, label: 'Reimbursements' },
   ]
@@ -84,7 +85,7 @@ const Sidebar = () => {
     <aside
       className={`fixed left-0 top-0 h-full ${
         sidebarCollapsed ? 'w-20' : 'w-64'
-      } bg-slate-900 text-slate-200 transition-all duration-300 flex flex-col`}
+      } bg-slate-900 text-slate-200 transition-all duration-300 flex flex-col z-40`}
     >
       {/* Top Section */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">

@@ -271,124 +271,121 @@ const LeaveRequests = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+  <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
 
-            <div className="p-5 flex items-center justify-between border-b">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Request Leave
-              </h2>
-              <button
-                className="text-gray-400 hover:text-gray-600"
-                onClick={() => setIsModalOpen(false)}
-              >
-                <XCircle className="h-6 w-6" />
-              </button>
-            </div>
+    {/* Header */}
+    <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 className="text-lg font-semibold text-gray-900">
+        Request Leave
+      </h2>
+      <button
+        className="text-gray-400 hover:text-gray-600 transition"
+        onClick={() => setIsModalOpen(false)}
+      >
+        <XCircle className="h-6 w-6" />
+      </button>
+    </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="p-5 space-y-4"
-            >
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Leave Type
-                </label>
-                <select
-                  required
-                  value={formData.leave_type_id}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      leave_type_id: e.target.value
-                    })
-                  }
-                  className="mt-1 w-full border-gray-300 rounded-md text-sm focus:border-teal-600 focus:ring-0"
-                >
-                  <option value="">Select leave type</option>
-                  {leaveTypes?.map((lt: LeaveType) => (
-                    <option key={lt.id} value={lt.id}>
-                      {lt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    {/* Form */}
+    <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.start_date}
-                    onChange={e =>
-                      setFormData({
-                        ...formData,
-                        start_date: e.target.value
-                      })
-                    }
-                    className="mt-1 w-full border-gray-300 rounded-md text-sm focus:border-teal-600 focus:ring-0"
-                  />
-                </div>
+      {/* Leave Type */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">
+          Leave Type <span className="text-red-500">*</span>
+        </label>
+        <select
+          required
+          value={formData.leave_type_id}
+          onChange={(e) =>
+            setFormData({ ...formData, leave_type_id: e.target.value })
+          }
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+        >
+          <option value="">Select leave type</option>
+          {leaveTypes?.map((lt: LeaveType) => (
+            <option key={lt.id} value={lt.id}>
+              {lt.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.end_date}
-                    onChange={e =>
-                      setFormData({
-                        ...formData,
-                        end_date: e.target.value
-                      })
-                    }
-                    className="mt-1 w-full border-gray-300 rounded-md text-sm focus:border-teal-600 focus:ring-0"
-                  />
-                </div>
-              </div>
+      {/* Dates */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Reason
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.reason}
-                  onChange={e =>
-                    setFormData({ ...formData, reason: e.target.value })
-                  }
-                  className="mt-1 w-full border-gray-300 rounded-md text-sm focus:border-teal-600 focus:ring-0"
-                  placeholder="Why are you taking leave?"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 border rounded-md text-gray-700 bg-white hover:bg-gray-100 text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending}
-                  className="flex-1 px-4 py-2 rounded-md text-white bg-teal-700 hover:bg-teal-800 text-sm disabled:opacity-50"
-                >
-                  {createMutation.isPending
-                    ? 'Submitting...'
-                    : 'Submit Request'}
-                </button>
-              </div>
-
-            </form>
-          </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">
+            Start Date <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            required
+            value={formData.start_date}
+            onChange={(e) =>
+              setFormData({ ...formData, start_date: e.target.value })
+            }
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+          />
         </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">
+            End Date <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            required
+            value={formData.end_date}
+            onChange={(e) =>
+              setFormData({ ...formData, end_date: e.target.value })
+            }
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+          />
+        </div>
+
+      </div>
+
+      {/* Reason */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">
+          Reason
+        </label>
+        <textarea
+          rows={4}
+          value={formData.reason}
+          onChange={(e) =>
+            setFormData({ ...formData, reason: e.target.value })
+          }
+          placeholder="Explain why you are requesting leave"
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+        />
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 pt-4 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(false)}
+          className="flex-1 px-4 py-2 border rounded-md text-gray-700 bg-white hover:bg-gray-100 text-sm transition"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          disabled={createMutation.isPending}
+          className="flex-1 px-4 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 text-sm transition disabled:opacity-50"
+        >
+          {createMutation.isPending ? 'Submitting...' : 'Submit Request'}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
       )}
     </div>
   )

@@ -16,39 +16,49 @@ const DesignationCreate = () => {
   })
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: CreateDesignationData) => designationApi.createDesignation(data),
+    mutationFn: (data: CreateDesignationData) =>
+      designationApi.createDesignation(data),
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['designations'] })
       toast.success('Designation created successfully')
       navigate('/designations')
     },
+
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Failed to create designation')
     },
   })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center">
+    <div className="space-y-8">
+
+      {/* Header */}
+      <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/designations')}
-          className="mr-4 p-2 rounded-lg hover:bg-secondary-100"
+          className="p-2 rounded-md hover:bg-gray-100 transition"
         >
-          <ArrowLeft className="h-5 w-5 text-secondary-600" />
+          <ArrowLeft className="h-5 w-5 text-gray-700" />
         </button>
+
         <div>
-          <h1 className="page-title">Add Designation</h1>
-          <p className="page-description">Create a new designation role</p>
+          <h1 className="text-xl font-semibold text-gray-900">Add Designation</h1>
+          <p className="text-gray-500 text-sm">
+            Create a new designation role in the organization
+          </p>
         </div>
       </div>
 
-      <div className="max-w-2xl">
-        <DesignationForm 
-          onSubmit={mutate} 
-          loading={isPending} 
-          departments={departments || []} 
+      {/* Form */}
+      <div className="max-w-3xl">
+        <DesignationForm
+          onSubmit={mutate}
+          loading={isPending}
+          departments={departments || []}
         />
       </div>
+
     </div>
   )
 }

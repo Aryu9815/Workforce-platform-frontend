@@ -6,6 +6,11 @@ import { staffApi } from '../../api/staff'
 import toast from 'react-hot-toast'
 import { Search } from 'lucide-react'
 
+const inputClass =
+  "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+const labelClass =
+  "text-sm font-medium text-gray-700"
+
 const ProjectEdit = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -16,16 +21,17 @@ const ProjectEdit = () => {
     enabled: !!id,
   })
 
-  const { data: staffNames, isLoading: isLoadingStaffNames } = useQuery({
+  const { data: staffNames, isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff-names'],
     queryFn: staffApi.getStaffNames,
   })
 
+  // Normalize staff options
   const staffOptions =
     Array.isArray(staffNames)
-      ? staffNames.map((s: any) => ({ id: s.id, name: s.name }))
+      ? staffNames
       : staffNames
-      ? Object.entries(staffNames).map(([sid, name]) => ({ id: sid, name: String(name) }))
+      ? Object.entries(staffNames).map(([id, name]) => ({ id, name }))
       : []
 
   const [form, setForm] = useState({
@@ -41,8 +47,9 @@ const ProjectEdit = () => {
     cost_estimate: '',
     progress_percentage: '',
   })
+
   const [managerSearch, setManagerSearch] = useState('')
-  const [selectedManagerId, setSelectedManagerId] = useState<string>('')
+  const [selectedManagerId, setSelectedManagerId] = useState('')
 
   useEffect(() => {
     if (project) {
@@ -57,8 +64,10 @@ const ProjectEdit = () => {
         actual_end_date: project.actual_end_date || '',
         budget: project.budget != null ? String(project.budget) : '',
         cost_estimate: project.cost_estimate != null ? String(project.cost_estimate) : '',
-        progress_percentage: project.progress_percentage != null ? String(project.progress_percentage) : '',
+        progress_percentage:
+          project.progress_percentage != null ? String(project.progress_percentage) : '',
       })
+
       setSelectedManagerId(project.project_manager_id || '')
       setManagerSearch(project.manager_name || '')
     }
@@ -67,7 +76,7 @@ const ProjectEdit = () => {
   const updateMutation = useMutation({
     mutationFn: (payload: any) => projectsApi.updateProject(id!, payload),
     onSuccess: () => {
-      toast.success('Project updated')
+      toast.success('Project updated successfully')
       navigate(`/projects/${id}`)
     },
     onError: (error: any) => {
@@ -89,6 +98,7 @@ const ProjectEdit = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
     const payload = {
       name: form.name || undefined,
       description: form.description || undefined,
@@ -103,196 +113,278 @@ const ProjectEdit = () => {
       progress_percentage: form.progress_percentage ? Number(form.progress_percentage) : undefined,
       project_manager_id: selectedManagerId || undefined,
     }
+
     updateMutation.mutate(payload)
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Edit Project</h1>
-          <p className="page-description">Update project details</p>
-        </div>
+    <div className="space-y-8 max-w-4xl">
+
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">Edit Project</h1>
+        <p className="text-gray-500 text-sm">
+          Update project details and timeline
+        </p>
       </div>
 
+      {/* Loading */}
       {isLoadingProject ? (
         <div className="text-center py-8">Loading...</div>
       ) : (
-        <form onSubmit={onSubmit} className="card">
-          <div className="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              name="name"
-              placeholder="Project Name"
-              value={form.name}
-              onChange={onChange}
-              className="input"
-            />
+        <form
+          onSubmit={onSubmit}
+          className="bg-white shadow-sm border border-gray-200 rounded-xl p-8 space-y-10"
+        >
 
-            <select
-              name="status"
-              value={form.status}
-              onChange={onChange}
-              className="input"
-            >
-              <option value="">Select Status</option>
-              <option value="planning">Planning</option>
-              <option value="active">Active</option>
-              <option value="on_hold">On Hold</option>
-              <option value="completed">Completed</option>
-            </select>
+          {/* SECTION: Basic Info */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+              Project Information
+            </h2>
 
-            <select
-              name="priority"
-              value={form.priority}
-              onChange={onChange}
-              className="input"
-            >
-              <option value="">Select Priority</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <div className="md:col-span-2">
+              {/* Name */}
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Project Name</label>
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+              {/* Status */}
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Status</label>
+                <select
+                  name="status"
+                  value={form.status}
+                  onChange={onChange}
+                  className={inputClass}
+                >
+                  <option value="">Select Status</option>
+                  <option value="planning">Planning</option>
+                  <option value="active">Active</option>
+                  <option value="on_hold">On Hold</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              {/* Priority */}
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Priority</label>
+                <select
+                  name="priority"
+                  value={form.priority}
+                  onChange={onChange}
+                  className={inputClass}
+                >
+                  <option value="">Select Priority</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-2 mt-6">
+              <label className={labelClass}>Description</label>
               <textarea
                 name="description"
-                placeholder="Description"
                 value={form.description}
                 onChange={onChange}
                 rows={4}
-                className="input"
+                className={inputClass}
               />
-            </div>
-
-            <input
-              name="start_date"
-              type="date"
-              value={form.start_date || ''}
-              onChange={onChange}
-              className="input"
-            />
-
-            <input
-              name="end_date"
-              type="date"
-              value={form.end_date || ''}
-              onChange={onChange}
-              className="input"
-            />
-
-            <input
-              name="actual_start_date"
-              type="date"
-              value={form.actual_start_date || ''}
-              onChange={onChange}
-              className="input"
-            />
-
-            <input
-              name="actual_end_date"
-              type="date"
-              value={form.actual_end_date || ''}
-              onChange={onChange}
-              className="input"
-            />
-
-            <input
-              name="budget"
-              type="number"
-              step="0.01"
-              placeholder="Budget"
-              value={form.budget}
-              onChange={onChange}
-              className="input"
-            />
-
-            <input
-              name="cost_estimate"
-              type="number"
-              step="0.01"
-              placeholder="Cost Estimate"
-              value={form.cost_estimate}
-              onChange={onChange}
-              className="input"
-            />
-
-            <input
-              name="progress_percentage"
-              type="number"
-              min={0}
-              max={100}
-              placeholder="Progress %"
-              value={form.progress_percentage}
-              onChange={onChange}
-              className="input"
-            />
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Project Manager
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
-                <input
-                  type="text"
-                  placeholder={isLoadingStaffNames ? 'Loading staff...' : 'Search staff by name'}
-                  value={managerSearch}
-                  onChange={(e) => setManagerSearch(e.target.value)}
-                  className="input pl-10"
-                  disabled={isLoadingStaffNames}
-                />
-                {staffOptions && (
-                  <div className="mt-2 max-h-48 overflow-auto rounded-lg border border-secondary-200 bg-white">
-                    {staffOptions
-                      .filter(({ name }) =>
-                        managerSearch ? name.toLowerCase().includes(managerSearch.toLowerCase()) : true
-                      )
-                      .slice(0, 50)
-                      .map(({ id: sid, name }) => (
-                        <button
-                          key={sid}
-                          type="button"
-                          onClick={() => {
-                            setSelectedManagerId(sid)
-                            setManagerSearch(name)
-                          }}
-                          className={`w-full text-left px-3 py-2 hover:bg-secondary-100 ${
-                            selectedManagerId === sid ? 'bg-primary-50' : ''
-                          }`}
-                        >
-                          <span className="text-sm text-secondary-900">{name}</span>
-                          <span className="ml-2 text-xs text-secondary-500">{sid}</span>
-                        </button>
-                      ))}
-                    {staffOptions && staffOptions.length === 0 && (
-                      <div className="px-3 py-2 text-sm text-secondary-500">No staff found</div>
-                    )}
-                  </div>
-                )}
-                {selectedManagerId && (
-                  <p className="mt-2 text-xs text-secondary-600">Selected ID: {selectedManagerId}</p>
-                )}
-              </div>
             </div>
           </div>
 
-          <div className="card-footer flex justify-end gap-2">
+          {/* SECTION: Manager */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+              Project Manager
+            </h2>
+
+            <div className="flex flex-col gap-2 relative">
+              <label className={labelClass}>Assign Manager</label>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+
+                <input
+                  type="text"
+                  value={managerSearch}
+                  onChange={e => setManagerSearch(e.target.value)}
+                  placeholder={isLoadingStaff ? "Loading..." : "Search staff..."}
+                  className={`${inputClass} pl-10`}
+                />
+
+                {/* Suggestions */}
+                {managerSearch && (
+                  <div className="absolute z-20 bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-56 overflow-y-auto w-full">
+
+                    {staffOptions
+                      .filter(st => st.name.toLowerCase().includes(managerSearch.toLowerCase()))
+                      .slice(0, 30)
+                      .map(st => (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedManagerId(st.id)
+                            setManagerSearch(st.name)
+                          }}
+                          className={`w-full text-left px-3 py-2 hover:bg-indigo-50 ${
+                            selectedManagerId === st.id ? "bg-indigo-100" : ""
+                          }`}
+                        >
+                          <span className="text-sm text-gray-800">{st.name}</span>
+                        </button>
+                      ))}
+
+                    {staffOptions.length === 0 && (
+                      <div className="px-3 py-2 text-sm text-gray-500">No staff found</div>
+                    )}
+
+                  </div>
+                )}
+              </div>
+
+              {selectedManagerId && (
+                <p className="text-xs text-gray-500">
+                  Selected Manager ID: {selectedManagerId}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* SECTION: Timeline */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+              Timeline
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Planned Start</label>
+                <input
+                  name="start_date"
+                  type="date"
+                  value={form.start_date}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Planned End</label>
+                <input
+                  name="end_date"
+                  type="date"
+                  value={form.end_date}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Actual Start</label>
+                <input
+                  name="actual_start_date"
+                  type="date"
+                  value={form.actual_start_date}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Actual End</label>
+                <input
+                  name="actual_end_date"
+                  type="date"
+                  value={form.actual_end_date}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+            </div>
+          </div>
+
+          {/* SECTION: Budget */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+              Budget & Progress
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Budget</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="budget"
+                  value={form.budget}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Cost Estimate</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="cost_estimate"
+                  value={form.cost_estimate}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className={labelClass}>Progress (%)</label>
+                <input
+                  type="number"
+                  name="progress_percentage"
+                  min={0}
+                  max={100}
+                  value={form.progress_percentage}
+                  onChange={onChange}
+                  className={inputClass}
+                />
+              </div>
+
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={() => navigate(`/projects/${id}`)}
-              className="btn-secondary"
+              className="px-5 py-2 rounded-md border text-gray-700 bg-white hover:bg-gray-100 text-sm"
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="btn-primary"
+              className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm disabled:opacity-50"
             >
-              {updateMutation.isPending ? 'Updating...' : 'Update Project'}
+              {updateMutation.isPending ? "Updating..." : "Update Project"}
             </button>
           </div>
+
         </form>
       )}
     </div>

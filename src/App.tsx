@@ -23,13 +23,13 @@ import ProjectMemberCreate from './pages/projects/ProjectMemberCreate'
 import ProjectWorkflow from './pages/projects/ProjectWorkflow'
 import WorkflowSettings from './pages/projects/WorkflowSettings'
 import ProjectEdit from './pages/projects/ProjectEdit'
-import TaskList from './pages/tasks/TaskList'
-import TaskDetail from './pages/tasks/TaskDetail'
+// import TaskList from './pages/tasks/TaskList'
+// import TaskDetail from './pages/tasks/TaskDetail'
 import Backlog from './pages/tasks/Backlog'
 import Attendance from './pages/attendance/Attendance'
 import LeaveRequests from './pages/attendance/LeaveRequests'
-import InventoryList from './pages/inventory/InventoryList'
-import InventoryDetail from './pages/inventory/InventoryDetail'
+// import InventoryList from './pages/inventory/InventoryList'
+// import InventoryDetail from './pages/inventory/InventoryDetail'
 import ReimbursementList from './pages/reimbursements/ReimbursementList'
 import ReimbursementDetail from './pages/reimbursements/ReimbursementDetail'
 import ReimbursementCreate from './pages/reimbursements/ReimbursementCreate'
@@ -105,8 +105,8 @@ function App() {
         <Route path="projects/:id/members/:memberId/edit" element={<ProjectMemberCreate />} />
         
         {/* Task routes */}
-        <Route path="tasks" element={<TaskList />} />
-        <Route path="tasks/:id" element={<TaskDetail />} />
+        {/* <Route path="tasks" element={<TaskList />} />
+        <Route path="tasks/:id" element={<TaskDetail />} /> */}
         <Route path="projects/:id/backlog" element={<Backlog />} />
         
         {/* Attendance routes */}
@@ -114,8 +114,8 @@ function App() {
         <Route path="attendance/leave" element={<LeaveRequests />} />
         
         {/* Inventory routes */}
-        <Route path="inventory" element={<InventoryList />} />
-        <Route path="inventory/:id" element={<InventoryDetail />} />
+        {/* <Route path="inventory" element={<InventoryList />} />
+        <Route path="inventory/:id" element={<InventoryDetail />} /> */}
         
         {/* Asset management */}
         <Route path="assets" element={<AssetsPage />} />

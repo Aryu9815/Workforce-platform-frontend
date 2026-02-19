@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Laptop, RefreshCcw } from 'lucide-react'
 import { assetsApi } from '../../api/assets'
 import { staffApi } from '../../api/staff'
 import {
@@ -66,12 +65,12 @@ const AssetsPage = () => {
 
   const [search, setSearch] = useState('')
 
-  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryKey: ['asset-categories'],
     queryFn: () => assetsApi.getCategories(),
   })
 
-  const { data: typesData, isLoading: typesLoading } = useQuery({
+  const { data: typesData } = useQuery({
     queryKey: ['asset-types'],
     queryFn: () => assetsApi.getTypes(),
   })
@@ -97,10 +96,11 @@ const AssetsPage = () => {
         }),
     })
 
+  // -------- Mutations -------- //
   const createCategoryMutation = useMutation({
     mutationFn: assetsApi.createCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['asset-categories'] })
+      queryClient.invalidateQueries(['asset-categories'])
       setShowCreateCategory(false)
       setNewCategory({ name: '', code: '', description: '' })
     },
@@ -109,7 +109,7 @@ const AssetsPage = () => {
   const createTypeMutation = useMutation({
     mutationFn: assetsApi.createType,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['asset-types'] })
+      queryClient.invalidateQueries(['asset-types'])
       setShowCreateType(false)
       setNewType({
         category_id: '',
@@ -127,12 +127,12 @@ const AssetsPage = () => {
   const createAssetMutation = useMutation({
     mutationFn: assetsApi.createAsset,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries(['assets'])
       setShowCreateAsset(false)
       setNewAsset({
         asset_type_id: '',
         quantity: 1,
-        serial_numbers: [] as string[],
+        serial_numbers: [],
         purchase_date: '',
         purchase_price: '',
         location: '',
@@ -147,10 +147,14 @@ const AssetsPage = () => {
       data,
     }: {
       assetId: string
-      data: { staff_id: string; assigned_date: string; expected_return_date?: string }
+      data: {
+        staff_id: string
+        assigned_date: string
+        expected_return_date?: string
+      }
     }) => assetsApi.assignAsset(assetId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries(['assets'])
       setShowAssignAsset(false)
       setAssignmentForm({
         staff_id: '',
@@ -170,7 +174,7 @@ const AssetsPage = () => {
       data: { returned_date: string; condition_on_return?: string }
     }) => assetsApi.returnAsset(assetId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries(['assets'])
       setShowReturnAsset(false)
       setReturnForm({
         returned_date: '',
@@ -180,6 +184,7 @@ const AssetsPage = () => {
     },
   })
 
+  // -------- Handlers -------- //
   const handleCreateCategory = (e: React.FormEvent) => {
     e.preventDefault()
     createCategoryMutation.mutate({
@@ -210,25 +215,24 @@ const AssetsPage = () => {
   }
 
   const handleCreateAsset = (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
+    if (!newAsset.asset_type_id) return
 
-  if (!newAsset.asset_type_id) return
-
-  createAssetMutation.mutate({
-    asset_type_id: newAsset.asset_type_id,
-    quantity: newAsset.quantity,
-    serial_numbers: selectedType?.is_serialized
-      ? newAsset.serial_numbers
-      : undefined,
-    purchase_date: newAsset.purchase_date || undefined,
-    purchase_price: newAsset.purchase_price
-      ? Number(newAsset.purchase_price)
-      : undefined,
-    location: newAsset.location || undefined,
-    notes: newAsset.notes || undefined,
-  })
-}
-
+    createAssetMutation.mutate({
+      asset_type_id: newAsset.asset_type_id,
+      quantity: newAsset.quantity,
+      serial_numbers:
+        selectedType?.is_serialized === true
+          ? newAsset.serial_numbers
+          : undefined,
+      purchase_date: newAsset.purchase_date || undefined,
+      purchase_price: newAsset.purchase_price
+        ? Number(newAsset.purchase_price)
+        : undefined,
+      location: newAsset.location || undefined,
+      notes: newAsset.notes || undefined,
+    })
+  }
 
   const handleAssignAsset = (e: React.FormEvent) => {
     e.preventDefault()
@@ -248,9 +252,7 @@ const AssetsPage = () => {
 
   const handleReturnAsset = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedAsset || !returnForm.returned_date) {
-      return
-    }
+    if (!selectedAsset || !returnForm.returned_date) return
 
     returnAssetMutation.mutate({
       assetId: selectedAsset.id,
@@ -261,31 +263,30 @@ const AssetsPage = () => {
     })
   }
 
+  // -------- Filtering & grouping -------- //
   const filteredAssets = useMemo(() => {
     if (!assetsData?.items) return []
     if (!search) return assetsData.items
-    const query = search.toLowerCase()
+    const q = search.toLowerCase()
     return assetsData.items.filter(
-      (a) =>
-        a.asset_tag.toLowerCase().includes(query) ||
-        (a.serial_number || '').toLowerCase().includes(query) ||
-        (a.location || '').toLowerCase().includes(query)
+      a =>
+        a.asset_tag.toLowerCase().includes(q) ||
+        (a.serial_number || '').toLowerCase().includes(q) ||
+        (a.location || '').toLowerCase().includes(q)
     )
-  }, [assetsData, search])
+  }, [search, assetsData])
 
   const currentTypes = typesData || []
-  const selectedType = currentTypes.find(
-    (t: AssetType) => t.id === newAsset.asset_type_id
-  )
+  const selectedType = currentTypes.find((t: AssetType) => t.id === newAsset.asset_type_id)
   const currentCategories = categoriesData || []
-
   const staffOptions: Staff[] = staffData?.items || []
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     if (!assetsData?.items) return counts
-    for (const asset of assetsData.items) {
-      const key = asset.status || 'unknown'
+
+    for (const a of assetsData.items) {
+      const key = a.status || 'unknown'
       counts[key] = (counts[key] || 0) + 1
     }
     return counts
@@ -304,10 +305,10 @@ const AssetsPage = () => {
       }
     > = {}
 
-    for (const asset of filteredAssets) {
-      const key = asset.asset_type_id || 'unknown'
+    for (const a of filteredAssets) {
+      const key = a.asset_type_id || 'unknown'
       if (!groups[key]) {
-        const type = currentTypes.find((t: AssetType) => t.id === asset.asset_type_id)
+        const type = currentTypes.find((t: AssetType) => t.id === a.asset_type_id)
         groups[key] = {
           type,
           assets: [],
@@ -316,14 +317,10 @@ const AssetsPage = () => {
         }
       }
 
-      groups[key].assets.push(asset)
+      groups[key].assets.push(a)
 
-      if (asset.status === 'available') {
-        groups[key].available += 1
-      }
-      if (asset.status === 'assigned') {
-        groups[key].assigned += 1
-      }
+      if (a.status === 'available') groups[key].available++
+      if (a.status === 'assigned') groups[key].assigned++
     }
 
     return Object.entries(groups)
@@ -344,791 +341,744 @@ const AssetsPage = () => {
 
   useEffect(() => {
     refetchAssets()
-  }, [assetPage, statusFilter, assetTypeFilter, refetchAssets])
+  }, [assetPage, statusFilter, assetTypeFilter])
+
+  // ============================================================================
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-title">Assets</h1>
-          <p className="page-description">
+          <h1 className="text-xl font-medium text-gray-900">Assets</h1>
+          <p className="text-sm text-gray-500">
             Track company assets and manage assignments
           </p>
         </div>
-        <div className="flex gap-3">
+
+        <div className="flex gap-2">
           <button
-            type="button"
-            className="btn-secondary"
             onClick={() => refetchAssets()}
+            className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
           >
-            <RefreshCcw className="h-4 w-4 mr-2" />
             Refresh
           </button>
           <button
-            type="button"
-            className="btn-secondary"
             onClick={() => setShowCreateCategory(true)}
+            className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Category
+            New Category
           </button>
           <button
-            type="button"
-            className="btn-secondary"
             onClick={() => setShowCreateType(true)}
+            className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Type
+            New Type
           </button>
           <button
-            type="button"
-            className="btn-primary"
             onClick={() => setShowCreateAsset(true)}
+            className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Asset
+            New Asset
           </button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-body space-y-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="relative flex-1 min-w-[220px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
-              <input
-                type="text"
-                placeholder="Search assets..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="input pl-10"
-              />
-            </div>
-            <select
-              className="input w-48"
-              value={statusFilter || ''}
-              onChange={(e) =>
-                setStatusFilter(e.target.value || undefined)
-              }
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <select
-              className="input w-56"
-              value={assetTypeFilter || ''}
-              onChange={(e) =>
-                setAssetTypeFilter(e.target.value || undefined)
-              }
-            >
-              <option value="">All types</option>
-              {currentTypes.map((t: AssetType) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+      {/* Filters */}
+      <div className="border border-gray-200 rounded-md bg-white p-4 space-y-4">
+        <div className="flex flex-wrap items-center gap-4">
+
+          {/* Search */}
+          <div className="flex-1 min-w-[240px]">
+            <input
+              type="text"
+              placeholder="Search assets..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full px-3 py-2 border-b border-gray-300 focus:border-teal-600 outline-none text-sm"
+            />
           </div>
 
-          <div className="flex flex-wrap gap-4 text-sm text-secondary-600">
-            <div className="flex items-center gap-1">
-              <span className="uppercase text-xs text-secondary-500">Available</span>
-              <span className="font-semibold">{statusCounts['available'] || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="uppercase text-xs text-secondary-500">Assigned</span>
-              <span className="font-semibold">{statusCounts['assigned'] || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="uppercase text-xs text-secondary-500">Maintenance</span>
-              <span className="font-semibold">{statusCounts['maintenance'] || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="uppercase text-xs text-secondary-500">Lost</span>
-              <span className="font-semibold">{statusCounts['lost'] || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="uppercase text-xs text-secondary-500">Disposed</span>
-              <span className="font-semibold">{statusCounts['disposed'] || 0}</span>
-            </div>
-          </div>
+          {/* Status */}
+          <select
+            value={statusFilter || ''}
+            onChange={e => setStatusFilter(e.target.value || undefined)}
+            className="px-3 py-2 border-b border-gray-300 focus:border-teal-600 outline-none text-sm w-48"
+          >
+            {statusOptions.map(s => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
 
-          <div className="border-t border-secondary-200 pt-4">
-            {assetsLoading ? (
-              <div className="text-center py-8">Loading assets...</div>
-            ) : filteredAssets.length === 0 ? (
-              <div className="text-center py-8 text-secondary-500">
-                No assets found
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full table-auto">
-                  <thead>
-                    <tr className="text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                      <th className="px-4 py-3">Tag</th>
-                      <th className="px-4 py-3">Serial</th>
-                      <th className="px-4 py-3">Type</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Location</th>
-                      <th className="px-4 py-3">Purchase</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-secondary-200 bg-white text-sm">
-                    {groupedByType.map((group) => (
-                      <Fragment key={group.key}>
-                        <tr className="bg-secondary-50">
-                          <td
-                            className="px-4 py-2 text-xs font-semibold text-secondary-700"
-                            colSpan={7}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span>{group.type?.name || 'Unknown type'}</span>
-                              <div className="flex gap-4 text-[11px] uppercase text-secondary-500">
-                                <span>Available: {group.available}</span>
-                                <span>Assigned: {group.assigned}</span>
-                                <span>Total: {group.assets.length}</span>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                        {group.assets.map((asset) => (
-                          <tr key={asset.id}>
-                            <td className="px-4 py-3 whitespace-nowrap font-medium text-secondary-900">
-                              <div className="flex items-center gap-2">
-                                <Laptop className="h-4 w-4 text-secondary-400" />
-                                {asset.asset_tag}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {asset.serial_number || '-'}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {group.type?.name || '-'}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap capitalize">
-                              {asset.status}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {asset.location || '-'}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {asset.purchase_date || '-'}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-right">
-                              {asset.status === 'available' && (
-                                <button
-                                  type="button"
-                                  className="btn-secondary btn-sm"
-                                  onClick={() => {
-                                    setSelectedAsset(asset)
-                                    setShowAssignAsset(true)
-                                  }}
-                                >
-                                  Assign
-                                </button>
-                              )}
-                              {asset.status === 'assigned' && (
-                                <button
-                                  type="button"
-                                  className="btn-secondary btn-sm"
-                                  onClick={() => {
-                                    setSelectedAsset(asset)
-                                    setShowReturnAsset(true)
-                                  }}
-                                >
-                                  Return
-                                </button>
-                              )}
-                              {asset.status !== 'available' &&
-                                asset.status !== 'assigned' && (
-                                  <span className="text-xs text-secondary-500">
-                                    {asset.status}
-                                  </span>
-                                )}
-                            </td>
-                          </tr>
-                        ))}
-                      </Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {/* Type */}
+          <select
+            value={assetTypeFilter || ''}
+            onChange={e => setAssetTypeFilter(e.target.value || undefined)}
+            className="px-3 py-2 border-b border-gray-300 focus:border-teal-600 outline-none text-sm w-56"
+          >
+            <option value="">All Types</option>
+            {currentTypes.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Counts */}
+        <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+          <span>Available: {statusCounts['available'] || 0}</span>
+          <span>Assigned: {statusCounts['assigned'] || 0}</span>
+          <span>Maintenance: {statusCounts['maintenance'] || 0}</span>
+          <span>Lost: {statusCounts['lost'] || 0}</span>
+          <span>Disposed: {statusCounts['disposed'] || 0}</span>
         </div>
       </div>
 
+      {/* Assets Table */}
+      <div className="border border-gray-200 rounded-md bg-white overflow-hidden">
+
+        {assetsLoading ? (
+          <div className="py-10 text-center text-gray-500">
+            Loading assets...
+          </div>
+        ) : filteredAssets.length === 0 ? (
+          <div className="py-10 text-center text-gray-500">
+            No assets found
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-gray-600 font-medium">Tag</th>
+                  <th className="px-4 py-3 text-left text-gray-600 font-medium">Serial</th>
+                  <th className="px-4 py-3 text-left text-gray-600 font-medium">Type</th>
+                  <th className="px-4 py-3 text-left text-gray-600 font-medium">Status</th>
+                  <th className="px-4 py-3 text-left text-gray-600 font-medium">Location</th>
+                  <th className="px-4 py-3 text-left text-gray-600 font-medium">Purchase</th>
+                  <th className="px-4 py-3 text-right text-gray-600 font-medium">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-gray-100">
+
+                {groupedByType.map(group => (
+                  <Fragment key={group.key}>
+                    {/* Group Header */}
+                    <tr className="bg-gray-100">
+                      <td className="px-4 py-2 font-semibold text-gray-700" colSpan={7}>
+                        <div className="flex justify-between">
+                          <span>{group.type?.name || 'Unknown type'}</span>
+                          <div className="text-xs text-gray-500 flex gap-6">
+                            <span>Available: {group.available}</span>
+                            <span>Assigned: {group.assigned}</span>
+                            <span>Total: {group.assets.length}</span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Asset Rows */}
+                    {group.assets.map(asset => (
+                      <tr key={asset.id} className="hover:bg-gray-50">
+
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {asset.asset_tag}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {asset.serial_number || '-'}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {group.type?.name || '-'}
+                        </td>
+
+                        <td className="px-4 py-3 capitalize">
+                          {asset.status}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {asset.location || '-'}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {asset.purchase_date || '-'}
+                        </td>
+
+                        <td className="px-4 py-3 text-right">
+                          {asset.status === 'available' && (
+                            <button
+                              onClick={() => {
+                                setSelectedAsset(asset)
+                                setShowAssignAsset(true)
+                              }}
+                              className="text-teal-700 hover:text-teal-800 text-sm"
+                            >
+                              Assign
+                            </button>
+                          )}
+
+                          {asset.status === 'assigned' && (
+                            <button
+                              onClick={() => {
+                                setSelectedAsset(asset)
+                                setShowReturnAsset(true)
+                              }}
+                              className="text-teal-700 hover:text-teal-800 text-sm"
+                            >
+                              Return
+                            </button>
+                          )}
+
+                          {(asset.status !== 'available' &&
+                            asset.status !== 'assigned') && (
+                            <span className="text-gray-500 text-sm">
+                              {asset.status}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+
+                  </Fragment>
+                ))}
+
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* -------------------- MODALS BELOW -------------------- */}
+
+      {/* Create Category */}
       {showCreateCategory && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="card w-full max-w-md">
-            <div className="card-body space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">New Asset Category</h2>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-md p-6 w-full max-w-md border">
+
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">New Asset Category</h2>
+              <button
+                onClick={() => setShowCreateCategory(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+
+              <div>
+                <label className="text-sm text-gray-700">Name</label>
+                <input
+                  value={newCategory.name}
+                  onChange={e =>
+                    setNewCategory({ ...newCategory, name: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-700">Code</label>
+                <input
+                  value={newCategory.code}
+                  onChange={e =>
+                    setNewCategory({ ...newCategory, code: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-700">Description</label>
+                <textarea
+                  value={newCategory.description}
+                  onChange={e =>
+                    setNewCategory({ ...newCategory, description: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  className="text-secondary-500 hover:text-secondary-800"
                   onClick={() => setShowCreateCategory(false)}
+                  className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
                 >
-                  ✕
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={createCategoryMutation.isPending}
+                  className="px-4 py-2 bg-teal-700 text-white rounded-md text-sm hover:bg-teal-800"
+                >
+                  Save
                 </button>
               </div>
-              <form onSubmit={handleCreateCategory} className="space-y-3">
-                <div>
-                  <label className="form-label">Name</label>
-                  <input
-                    className="input"
-                    value={newCategory.name}
-                    onChange={(e) =>
-                      setNewCategory((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Code</label>
-                  <input
-                    className="input"
-                    value={newCategory.code}
-                    onChange={(e) =>
-                      setNewCategory((prev) => ({
-                        ...prev,
-                        code: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Description</label>
-                  <textarea
-                    className="input"
-                    value={newCategory.description}
-                    onChange={(e) =>
-                      setNewCategory((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setShowCreateCategory(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={createCategoryMutation.isPending}
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-            </div>
+
+            </form>
           </div>
         </div>
       )}
 
+      {/* Create Type */}
       {showCreateType && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="card w-full max-w-md">
-            <div className="card-body space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">New Asset Type</h2>
-                <button
-                  type="button"
-                  className="text-secondary-500 hover:text-secondary-800"
-                  onClick={() => setShowCreateType(false)}
-                >
-                  ✕
-                </button>
-              </div>
-              <form onSubmit={handleCreateType} className="space-y-3">
-                <div>
-                  <label className="form-label">Category</label>
-                  <select
-                    className="input"
-                    value={newType.category_id}
-                    onChange={(e) =>
-                      setNewType((prev) => ({
-                        ...prev,
-                        category_id: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    <option value="">Select category</option>
-                    {currentCategories.map((c: AssetCategory) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Name</label>
-                  <input
-                    className="input"
-                    value={newType.name}
-                    onChange={(e) =>
-                      setNewType((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="form-label">Brand</label>
-                    <input
-                      className="input"
-                      value={newType.brand}
-                      onChange={(e) =>
-                        setNewType((prev) => ({
-                          ...prev,
-                          brand: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Model</label>
-                    <input
-                      className="input"
-                      value={newType.model_number}
-                      onChange={(e) =>
-                        setNewType((prev) => ({
-                          ...prev,
-                          model_number: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="form-label">Purchase cost</label>
-                    <input
-                      type="number"
-                      className="input"
-                      value={newType.purchase_cost}
-                      onChange={(e) =>
-                        setNewType((prev) => ({
-                          ...prev,
-                          purchase_cost: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Warranty (months)</label>
-                    <input
-                      type="number"
-                      className="input"
-                      value={newType.warranty_months}
-                      onChange={(e) =>
-                        setNewType((prev) => ({
-                          ...prev,
-                          warranty_months: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="is_serialized"
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={newType.is_serialized}
-                    onChange={(e) =>
-                      setNewType((prev) => ({
-                        ...prev,
-                        is_serialized: e.target.checked,
-                      }))
-                    }
-                  />
-                  <label htmlFor="is_serialized" className="text-sm">
-                    Track individual units (serialized)
-                  </label>
-                </div>
-                <div>
-                  <label className="form-label">Description</label>
-                  <textarea
-                    className="input"
-                    value={newType.description}
-                    onChange={(e) =>
-                      setNewType((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setShowCreateType(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={createTypeMutation.isPending}
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-md p-6 w-full max-w-md border">
 
-      {showCreateAsset && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="card w-full max-w-md">
-            <div className="card-body space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">New Asset</h2>
-                <button
-                  type="button"
-                  className="text-secondary-500 hover:text-secondary-800"
-                  onClick={() => setShowCreateAsset(false)}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">New Asset Type</h2>
+              <button
+                onClick={() => setShowCreateType(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateType} className="space-y-4">
+
+              <div>
+                <label className="text-sm text-gray-700">Category</label>
+                <select
+                  value={newType.category_id}
+                  onChange={e => setNewType({ ...newType, category_id: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
+                  required
                 >
-                  ✕
-                </button>
+                  <option value="">Select category</option>
+                  {currentCategories.map((c: AssetCategory) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <form onSubmit={handleCreateAsset} className="space-y-3">
+
+              <div>
+                <label className="text-sm text-gray-700">Name</label>
+                <input
+                  value={newType.name}
+                  onChange={e => setNewType({ ...newType, name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="form-label">Asset type</label>
-                  <select
-                    className="input"
-                    value={newAsset.asset_type_id}
-                    onChange={(e) =>
-                      setNewAsset((prev) => ({
-                        ...prev,
-                        asset_type_id: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    <option value="">Select type</option>
-                    {currentTypes.map((t: AssetType) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="text-sm">Brand</label>
+                  <input
+                    value={newType.brand}
+                    onChange={e => setNewType({ ...newType, brand: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
                 </div>
+
                 <div>
-                  <label className="form-label">Quantity</label>
+                  <label className="text-sm">Model</label>
+                  <input
+                    value={newType.model_number}
+                    onChange={e => setNewType({ ...newType, model_number: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm">Purchase cost</label>
                   <input
                     type="number"
-                    min={1}
-                    className="input"
-                    value={newAsset.quantity}
-                    onChange={(e) => {
-                      const qty = Number(e.target.value)
-
-                        setNewAsset((prev) => ({
-                          ...prev,
-                          quantity: qty,
-                          serial_numbers: selectedType?.is_serialized
-                            ? Array.from({ length: qty }, (_, i) => prev.serial_numbers[i] || '')
-                            : [],
-                        }))
-                      }}
-
-                    required
+                    value={newType.purchase_cost}
+                    onChange={e => setNewType({ ...newType, purchase_cost: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
                   />
                 </div>
 
-                {selectedType?.is_serialized && (
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {Array.from({ length: newAsset.quantity }).map((_, index) => (
-                      <div key={index}>
-                        <label className="form-label">
-                          Serial Number {index + 1}
-                        </label>
-                        <input
-                          className="input"
-                          value={newAsset.serial_numbers[index] || ''}
-                          onChange={(e) => {
-                            const updated = [...newAsset.serial_numbers]
-                            updated[index] = e.target.value
-
-                            setNewAsset((prev) => ({
-                              ...prev,
-                              serial_numbers: updated,
-                            }))
-                          }}
-                          required
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="form-label">Purchase date</label>
-                    <input
-                      type="date"
-                      className="input"
-                      value={newAsset.purchase_date}
-                      onChange={(e) =>
-                        setNewAsset((prev) => ({
-                          ...prev,
-                          purchase_date: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Purchase price</label>
-                    <input
-                      type="number"
-                      className="input"
-                      value={newAsset.purchase_price}
-                      onChange={(e) =>
-                        setNewAsset((prev) => ({
-                          ...prev,
-                          purchase_price: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
                 <div>
-                  <label className="form-label">Location</label>
+                  <label className="text-sm">Warranty (months)</label>
                   <input
-                    className="input"
-                    value={newAsset.location}
-                    onChange={(e) =>
-                      setNewAsset((prev) => ({
-                        ...prev,
-                        location: e.target.value,
-                      }))
+                    type="number"
+                    value={newType.warranty_months}
+                    onChange={e =>
+                      setNewType({ ...newType, warranty_months: e.target.value })
                     }
+                    className="w-full px-3 py-2 border rounded-md"
                   />
                 </div>
-                <div>
-                  <label className="form-label">Notes</label>
-                  <textarea
-                    className="input"
-                    value={newAsset.notes}
-                    onChange={(e) =>
-                      setNewAsset((prev) => ({
-                        ...prev,
-                        notes: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setShowCreateAsset(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={createAssetMutation.isPending}
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="is_serialized"
+                  type="checkbox"
+                  checked={newType.is_serialized}
+                  onChange={e =>
+                    setNewType({ ...newType, is_serialized: e.target.checked })
+                  }
+                  className="h-4 w-4"
+                />
+                <label htmlFor="is_serialized" className="text-sm">
+                  Track individual units (serialized)
+                </label>
+              </div>
+
+              <div>
+                <label className="text-sm">Description</label>
+                <textarea
+                  value={newType.description}
+                  onChange={e =>
+                    setNewType({ ...newType, description: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowCreateType(false)}
+                  type="button"
+                  className="px-4 py-2 border rounded-md"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={createTypeMutation.isPending}
+                  className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800"
+                >
+                  Save
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}
 
+      {/* Create Asset */}
+      {showCreateAsset && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-md p-6 w-full max-w-md">
+
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">New Asset</h2>
+              <button
+                onClick={() => setShowCreateAsset(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAsset} className="space-y-4">
+
+              <div>
+                <label className="text-sm">Asset Type</label>
+                <select
+                  value={newAsset.asset_type_id}
+                  onChange={e =>
+                    setNewAsset({ ...newAsset, asset_type_id: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md text-sm focus:border-teal-600"
+                  required
+                >
+                  <option value="">Select type</option>
+                  {currentTypes.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm">Quantity</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={newAsset.quantity}
+                  onChange={e => {
+                    const qty = Number(e.target.value)
+                    setNewAsset(prev => ({
+                      ...prev,
+                      quantity: qty,
+                      serial_numbers: selectedType?.is_serialized
+                        ? Array.from({ length: qty }, (_, i) => prev.serial_numbers[i] || '')
+                        : [],
+                    }))
+                  }}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+
+              {/* Serial Numbers */}
+              {selectedType?.is_serialized && (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {Array.from({ length: newAsset.quantity }).map((_, i) => (
+                    <div key={i}>
+                      <label className="text-sm">Serial Number {i + 1}</label>
+                      <input
+                        value={newAsset.serial_numbers[i] || ''}
+                        onChange={e => {
+                          const updated = [...newAsset.serial_numbers]
+                          updated[i] = e.target.value
+                          setNewAsset(prev => ({ ...prev, serial_numbers: updated }))
+                        }}
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm">Purchase Date</label>
+                  <input
+                    type="date"
+                    value={newAsset.purchase_date}
+                    onChange={e =>
+                      setNewAsset({ ...newAsset, purchase_date: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm">Purchase Price</label>
+                  <input
+                    type="number"
+                    value={newAsset.purchase_price}
+                    onChange={e =>
+                      setNewAsset({ ...newAsset, purchase_price: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm">Location</label>
+                <input
+                  value={newAsset.location}
+                  onChange={e =>
+                    setNewAsset({ ...newAsset, location: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm">Notes</label>
+                <textarea
+                  value={newAsset.notes}
+                  onChange={e =>
+                    setNewAsset({ ...newAsset, notes: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowCreateAsset(false)}
+                  type="button"
+                  className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={createAssetMutation.isPending}
+                  className="px-4 py-2 bg-teal-700 text-white rounded-MD text-sm hover:bg-teal-800"
+                >
+                  Save
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Asset */}
       {showAssignAsset && selectedAsset && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="card w-full max-w-md">
-            <div className="card-body space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  Assign asset {selectedAsset.asset_tag}
-                </h2>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-md p-6 w-full max-w-md">
+
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">
+                Assign Asset – {selectedAsset.asset_tag}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowAssignAsset(false)
+                  setSelectedAsset(null)
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleAssignAsset} className="space-y-4">
+
+              <div>
+                <label className="text-sm">Staff</label>
+                <select
+                  value={assignmentForm.staff_id}
+                  onChange={e =>
+                    setAssignmentForm({ ...assignmentForm, staff_id: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  required
+                >
+                  <option value="">Select staff</option>
+                  {staffOptions.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} ({s.employee_code || s.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm">Assigned Date</label>
+                <input
+                  type="date"
+                  value={assignmentForm.assigned_date}
+                  onChange={e =>
+                    setAssignmentForm({ ...assignmentForm, assigned_date: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm">Expected Return Date</label>
+                <input
+                  type="date"
+                  value={assignmentForm.expected_return_date}
+                  onChange={e =>
+                    setAssignmentForm({ ...assignmentForm, expected_return_date: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  className="text-secondary-500 hover:text-secondary-800"
                   onClick={() => {
                     setShowAssignAsset(false)
                     setSelectedAsset(null)
                   }}
+                  className="px-4 py-2 border rounded-md"
                 >
-                  ✕
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={assignAssetMutation.isPending}
+                  className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800"
+                >
+                  Assign
                 </button>
               </div>
-              <form onSubmit={handleAssignAsset} className="space-y-3">
-                <div>
-                  <label className="form-label">Staff</label>
-                  <select
-                    className="input"
-                    value={assignmentForm.staff_id}
-                    onChange={(e) =>
-                      setAssignmentForm((prev) => ({
-                        ...prev,
-                        staff_id: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    <option value="">Select staff</option>
-                    {staffOptions.map((s: Staff) => (
-                      <option key={s.id} value={s.id}>
-                        {s.full_name} ({s.employee_code || s.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Assigned date</label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={assignmentForm.assigned_date}
-                    onChange={(e) =>
-                      setAssignmentForm((prev) => ({
-                        ...prev,
-                        assigned_date: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Expected return date</label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={assignmentForm.expected_return_date}
-                    onChange={(e) =>
-                      setAssignmentForm((prev) => ({
-                        ...prev,
-                        expected_return_date: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => {
-                      setShowAssignAsset(false)
-                      setSelectedAsset(null)
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={assignAssetMutation.isPending}
-                  >
-                    Assign
-                  </button>
-                </div>
-              </form>
-            </div>
+
+            </form>
           </div>
         </div>
       )}
+
+      {/* Return Asset */}
       {showReturnAsset && selectedAsset && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="card w-full max-w-md">
-            <div className="card-body space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  Return asset {selectedAsset.asset_tag}
-                </h2>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-md p-6 w-full max-w-md">
+
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">
+                Return Asset – {selectedAsset.asset_tag}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowReturnAsset(false)
+                  setSelectedAsset(null)
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleReturnAsset} className="space-y-4">
+
+              <div>
+                <label className="text-sm">Returned Date</label>
+                <input
+                  type="date"
+                  value={returnForm.returned_date}
+                  onChange={e =>
+                    setReturnForm({ ...returnForm, returned_date: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm">Condition on Return</label>
+                <textarea
+                  value={returnForm.condition_on_return}
+                  onChange={e =>
+                    setReturnForm({ ...returnForm, condition_on_return: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
                 <button
-                  type="button"
-                  className="text-secondary-500 hover:text-secondary-800"
                   onClick={() => {
                     setShowReturnAsset(false)
                     setSelectedAsset(null)
                   }}
+                  type="button"
+                  className="px-4 py-2 border rounded-md text-sm"
                 >
-                  ✕
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={returnAssetMutation.isPending}
+                  className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 text-sm"
+                >
+                  Return
                 </button>
               </div>
-              <form onSubmit={handleReturnAsset} className="space-y-3">
-                <div>
-                  <label className="form-label">Returned date</label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={returnForm.returned_date}
-                    onChange={(e) =>
-                      setReturnForm((prev) => ({
-                        ...prev,
-                        returned_date: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Condition on return</label>
-                  <textarea
-                    className="input"
-                    value={returnForm.condition_on_return}
-                    onChange={(e) =>
-                      setReturnForm((prev) => ({
-                        ...prev,
-                        condition_on_return: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => {
-                      setShowReturnAsset(false)
-                      setSelectedAsset(null)
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={returnAssetMutation.isPending}
-                  >
-                    Return
-                  </button>
-                </div>
-              </form>
-            </div>
+
+            </form>
           </div>
         </div>
       )}
+
     </div>
   )
 }
