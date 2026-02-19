@@ -44,8 +44,8 @@ const ReimbursementCreate = () => {
   })
 
   const [items, setItems] = useState<ItemForm[]>([{ ...emptyItem }])
-
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
+  const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false)
 
   const { data: categories } = useQuery<ExpenseCategory[]>({
     queryKey: ['reimbursement-categories'],
@@ -77,6 +77,7 @@ const ReimbursementCreate = () => {
 
   const onStaffSearchChange = (value: string) => {
     setForm(prev => ({ ...prev, staff_search: value }))
+    setIsStaffDropdownOpen(!!value)
   }
 
   const onItemChange = (
@@ -175,7 +176,7 @@ const ReimbursementCreate = () => {
                   onChange={(e) => onStaffSearchChange(e.target.value)}
                   className="input pl-10"
                 />
-                {form.staff_search && (
+                {isStaffDropdownOpen && (
                   <div className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-md shadow-lg max-h-60 overflow-auto">
                     {staffList?.items && staffList.items.length > 0 ? (
                       staffList.items
@@ -191,14 +192,15 @@ const ReimbursementCreate = () => {
                           <button
                             key={staff.id}
                             type="button"
-                            onClick={() => {
-                              setSelectedStaff(staff)
-                              setForm(prev => ({
-                                ...prev,
-                                staff_id: staff.id,
-                                staff_search: staff.full_name,
-                              }))
-                            }}
+                          onClick={() => {
+                            setSelectedStaff(staff)
+                            setForm(prev => ({
+                              ...prev,
+                              staff_id: staff.id,
+                              staff_search: staff.full_name,
+                            }))
+                            setIsStaffDropdownOpen(false)
+                          }}
                             className={`w-full text-left px-3 py-2 hover:bg-secondary-100 focus:outline-none focus:bg-secondary-100 ${
                               selectedStaff?.id === staff.id ? 'bg-primary-50' : ''
                             }`}
