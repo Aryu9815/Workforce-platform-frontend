@@ -306,6 +306,44 @@ export interface InventoryLocation {
   is_active: boolean;
 }
 
+export interface AssetCategory {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AssetType {
+  id: string;
+  category_id: string;
+  name: string;
+  brand?: string;
+  model_number?: string;
+  is_serialized: boolean;
+  purchase_cost?: number;
+  warranty_months?: number;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Asset {
+  id: string;
+  asset_tag: string;
+  asset_type_id: string;
+  serial_number?: string;
+  status: 'available' | 'assigned' | 'maintenance' | 'lost' | 'disposed';
+  location?: string;
+  purchase_date?: string;
+  purchase_price?: number;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ReimbursementClaim {
   id: string;
   claim_number: string;
