@@ -14,6 +14,7 @@ export interface CreateTaskData {
   parent_task_id?: string
   workflow_state_id?: string
   status_id?: string
+  sprint_id?: string
   assignee_ids?: string[]
   milestone?: boolean
   billable?: boolean
@@ -41,11 +42,16 @@ export const tasksApi = {
     page_size?: number
     project_id?: string
     workflow_state_id?: string
+    sprint_id?: string
     priority?: string
     assignee_id?: string
   }): Promise<PaginatedResponse<Task>> => {
     const response = await apiClient.get('/tasks', { params })
-    console.log('API Response:', response.data)
+    return response.data
+  },
+  
+  getBacklogTasks: async (params?: { project_id?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<Task>> => {
+    const response = await apiClient.get('/tasks', { params })
     return response.data
   },
   
