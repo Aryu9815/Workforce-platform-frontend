@@ -7,7 +7,6 @@ import {
   Clock,
   Package,
   Receipt,
-  Settings,
   Briefcase,
   ChevronDown,
   Building2,

@@ -7,7 +7,7 @@ import { useState } from 'react'
 
 const TenantSelect = () => {
   const navigate = useNavigate()
-  const { tenants, setAuth, user, setAuthenticated } = useAuthStore()
+  const { tenants, setAuthenticated } = useAuthStore()
   const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const handleSelectTenant = async (tenantId: string) => {

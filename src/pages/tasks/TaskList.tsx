@@ -6,7 +6,7 @@ import { tasksApi } from '../../api/tasks'
 import { Task } from '../../types'
 
 const TaskList = () => {
-  const [page, setPage] = useState(1)
+  const [page] = useState(1)
   const [search, setSearch] = useState('')
   
   const { data, isLoading } = useQuery({

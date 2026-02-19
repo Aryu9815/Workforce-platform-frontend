@@ -14,7 +14,7 @@ import {
 const AssetsPage = () => {
   const queryClient = useQueryClient()
 
-  const [assetPage, setAssetPage] = useState(1)
+  const assetPage = 1
   const [statusFilter, setStatusFilter] = useState<string | undefined>()
   const [assetTypeFilter, setAssetTypeFilter] = useState<string | undefined>()
 
@@ -66,12 +66,12 @@ const AssetsPage = () => {
 
   const [search, setSearch] = useState('')
 
-  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryKey: ['asset-categories'],
     queryFn: () => assetsApi.getCategories(),
   })
 
-  const { data: typesData, isLoading: typesLoading } = useQuery({
+  const { data: typesData } = useQuery({
     queryKey: ['asset-types'],
     queryFn: () => assetsApi.getTypes(),
   })
