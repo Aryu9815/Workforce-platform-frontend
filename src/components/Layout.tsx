@@ -7,7 +7,7 @@ const Layout = () => {
   const location = useLocation()
   const isWorkflowPage = location.pathname.includes('/workflow')
   const { sidebarCollapsed } = useUIStore()
-  
+  console.log('isWorkflowPage', isWorkflowPage)
   return (
     <div className="min-h-screen bg-secondary-50 flex">
       {/* Sidebar */}
@@ -19,8 +19,16 @@ const Layout = () => {
         <Header />
         
         {/* Page content */}
-        <main className={`flex-1 ${isWorkflowPage ? 'p-0' : 'p-6'} overflow-auto`}>
-          <div className={`${isWorkflowPage ? 'max-w-none' : 'max-w-7xl mx-auto'}`}>
+        <main
+          className={`flex-1 ${isWorkflowPage ? 'p-0' : 'p-6'}`}
+          style={{
+            overflowX: isWorkflowPage ? "hidden" : "auto",  // 🚫 no horizontal scroll
+            overflowY: "auto",                              // vertical scroll allowed
+            width: "100%",                                  // ensure no expansion
+          }}
+        >
+
+          <div className={`${isWorkflowPage ? '' : 'max-w-7xl mx-auto'}`}>
             <Outlet />
           </div>
         </main>
