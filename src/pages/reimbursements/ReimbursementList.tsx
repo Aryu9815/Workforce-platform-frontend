@@ -14,6 +14,7 @@ import {
   IndianRupee
 } from 'lucide-react';
 import { reimbursementsApi } from '../../api/reimbursements';
+import { useAuthStore } from '../../store/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -53,6 +54,8 @@ const ReimbursementList = () => {
     total: 0,
     pages: 0,
   });
+
+  const getPermissions = useAuthStore(state => state.getPermissions);
 
   useEffect(() => {
     reimbursementsApi
@@ -139,6 +142,18 @@ const ReimbursementList = () => {
     .filter(claim => claim.status === 'approved' || claim.status === 'paid')
     .reduce((sum, claim) => sum + Number(claim.total_amount), 0);
 
+  const canViewReimbursements = getPermissions('reimbursements:view' as any) || getPermissions('attendance:view');
+  const canCreateReimbursements = getPermissions('reimbursements:create' as any) || getPermissions('attendance:mark');
+  const canApproveReimbursements = getPermissions('reimbursements:approve' as any) || getPermissions('attendance:edit');
+
+  if (!canViewReimbursements) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view reimbursements.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -147,10 +162,12 @@ const ReimbursementList = () => {
           <h1 className="text-2xl font-bold">Reimbursements</h1>
           <p className="text-muted-foreground">Manage expense reimbursements and claims</p>
         </div>
-        <Button onClick={() => navigate('/reimbursements/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Reimbursement
-        </Button>
+        {canCreateReimbursements && (
+          <Button onClick={() => navigate('/reimbursements/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Reimbursement
+          </Button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -340,7 +357,7 @@ const ReimbursementList = () => {
                               }}>
                                 View Details
                               </DropdownMenuItem>
-                              {claim.status === 'submitted' && (
+                              {claim.status === 'submitted' && canApproveReimbursements && (
                                 <>
                                   <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();

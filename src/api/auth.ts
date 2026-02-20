@@ -22,6 +22,7 @@ export interface AuthResponse {
   expires_in: number
   tenant: Tenant
   multiple_tenants_found?: boolean
+  permissions?: string[]
 }
 
 export const authApi = {

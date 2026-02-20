@@ -6,6 +6,7 @@ import { projectsApi } from '../../api/projects'
 import { tasksApi } from '../../api/tasks'
 import { staffApi } from '../../api/staff'
 import { MoveOpenIssuesTo, sprintsApi } from '../../api/sprints'
+import { useAuthStore } from '../../store/authStore'
 import toast from 'react-hot-toast'
 import TaskDetailModal from './TaskDetailModal'
 
@@ -13,6 +14,7 @@ const ProjectWorkflow = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
+  const getPermissions = useAuthStore(state => state.getPermissions)
 
   const { data: project } = useQuery({
     queryKey: ['project', id],
@@ -219,6 +221,19 @@ const ProjectWorkflow = () => {
     }
   }
 
+  const canViewProject = getPermissions('project:view')
+  const canCreateTask = getPermissions('task:create')
+  const canManageSprints = getPermissions('sprint:create')
+  const canEndSprints = getPermissions('sprint:complete')
+
+  if (!canViewProject) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view this project.</p>
+      </div>
+    )
+  }
+
   if (!project || !workflow)
     return <div className="text-center py-10">Loading workflow…</div>
 
@@ -258,15 +273,19 @@ const ProjectWorkflow = () => {
 
           {/* Right: action buttons */}
           <div className="flex items-center gap-2 flex-wrap">
-            <button className="btn-primary h-8 px-3 text-xs" onClick={() => setShowCreate(true)}>
-              Create Task
-            </button>
+            {canCreateTask && (
+              <button className="btn-primary h-8 px-3 text-xs" onClick={() => setShowCreate(true)}>
+                Create Task
+              </button>
+            )}
             <button className="btn-default h-8 px-3 text-xs" onClick={() => navigate(`/projects/${id}/backlog`)}>
               Backlog
             </button>
-            <button className="btn-default h-8 px-3 text-xs" onClick={() => setShowSprints(true)}>
-              Sprints
-            </button>
+            {canManageSprints && (
+              <button className="btn-default h-8 px-3 text-xs" onClick={() => setShowSprints(true)}>
+                Sprints
+              </button>
+            )}
             <button className="btn-default h-8 px-3 text-xs" onClick={() => navigate(`/projects/${id}/workflow/settings`)}>
               Settings
             </button>
@@ -344,7 +363,7 @@ const ProjectWorkflow = () => {
       </div>
 
 
-      {showCreate && (
+      {showCreate && canCreateTask && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:p-6">
     <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 
@@ -715,7 +734,7 @@ const ProjectWorkflow = () => {
   </div>
 )}
 
-      {showEndOptions && (
+      {showEndOptions && canEndSprints && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
           <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-6 border-b flex items-center justify-between">
@@ -779,7 +798,7 @@ const ProjectWorkflow = () => {
         </div>
       )}
 
-{showSprints && (
+{showSprints && canManageSprints && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
     <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 

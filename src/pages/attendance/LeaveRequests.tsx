@@ -17,7 +17,7 @@ import { format, differenceInDays } from 'date-fns'
 const LeaveRequests = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { user } = useAuthStore()
+  const { user, getPermissions } = useAuthStore()
   const queryClient = useQueryClient()
 
   const [formData, setFormData] = useState<Partial<CreateLeaveRequestData>>({
@@ -73,6 +73,18 @@ const LeaveRequests = () => {
       toast.error(e.response?.data?.detail || 'Action failed')
     }
   })
+
+  const canViewLeave = getPermissions('attendance:view')
+  const canRequestLeave = getPermissions('attendance:mark')
+  const canApproveLeave = getPermissions('attendance:edit')
+
+  if (!canViewLeave) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view leave requests.</p>
+      </div>
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,13 +150,15 @@ const LeaveRequests = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Request Leave
-        </button>
+        {canRequestLeave && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Request Leave
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -235,7 +249,7 @@ const LeaveRequests = () => {
                 <div className="flex items-center gap-3 border-t md:border-none pt-3 md:pt-0">
                   {getStatusBadge(req.status)}
 
-                  {req.status === 'pending' && (
+                  {req.status === 'pending' && canApproveLeave && (
                     <div className="flex gap-2">
                       <button
                         onClick={() =>

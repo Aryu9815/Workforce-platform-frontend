@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Building2, ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/auth'
 import { useState } from 'react'
@@ -19,13 +19,14 @@ const TenantSelect = () => {
         toast.error('Tenant not found')
         return
       }
-      // 1️⃣ Switch tenant → get new tokens
       const response = await authApi.switchTenant(tenantId)
+      const permissions = response.permissions || []
+      console.log('Switch tenant permissions:', permissions)
       // 2️⃣ Update tokens immediately
       useAuthStore.getState().updateTokens(
-      response.access_token,
-      response.refresh_token
-    )
+        response.access_token,
+        response.refresh_token
+      )
     // 3️⃣ Fetch fresh identity (VERY IMPORTANT)
     const freshUser = await authApi.getCurrentUser()
     // 4️⃣ Replace auth state fully
@@ -34,6 +35,7 @@ const TenantSelect = () => {
         tenant: selectedTenant,
         accessToken: response.access_token,
         refreshToken: response.refresh_token,
+        permissions,
       })
       setAuthenticated()
       toast.success(`Switched to ${selectedTenant.name}`)

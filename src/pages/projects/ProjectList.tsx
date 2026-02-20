@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Plus, Search, Filter } from 'lucide-react'
 import { projectsApi } from '../../api/projects'
+import { useAuthStore } from '../../store/authStore'
 import { Project } from '../../types'
 
 const ProjectList = () => {
+  const getPermissions = useAuthStore(state => state.getPermissions)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -51,6 +53,17 @@ const ProjectList = () => {
     )
   }
 
+  const canViewProjects = getPermissions('project:view')
+  const canCreateProjects = getPermissions('project:create')
+
+  if (!canViewProjects) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view projects.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
 
@@ -61,13 +74,15 @@ const ProjectList = () => {
           <p className="text-sm text-gray-500">Manage your organization's projects</p>
         </div>
 
-        <Link
-          to="/projects/new"
-          className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Link>
+        {canCreateProjects && (
+          <Link
+            to="/projects/new"
+            className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Link>
+        )}
       </div>
 
       {/* Filters */}

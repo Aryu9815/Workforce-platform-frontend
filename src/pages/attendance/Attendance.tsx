@@ -11,7 +11,7 @@ const Attendance = () => {
     new Date().toISOString().split('T')[0]
   )
 
-  const { user } = useAuthStore()
+  const { user, getPermissions } = useAuthStore()
   const queryClient = useQueryClient()
 
   const { data: records, isLoading } = useQuery({
@@ -59,6 +59,18 @@ const Attendance = () => {
       toast.error(e.response?.data?.detail || 'Failed to check out')
     }
   })
+
+  const canViewAttendance = getPermissions('attendance:view')
+  const canMarkAttendance = getPermissions('attendance:mark')
+  const canEditAttendance = getPermissions('attendance:edit')
+
+  if (!canViewAttendance) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view attendance.</p>
+      </div>
+    )
+  }
 
   // Today's record for logged-in user
   const todayStr = new Date().toISOString().split('T')[0]
@@ -121,7 +133,7 @@ const Attendance = () => {
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-teal-600 focus:ring-0"
           />
 
-          {isToday && (user as any)?.staff_id && (
+          {isToday && (user as any)?.staff_id && canMarkAttendance && (
             <div className="flex gap-2">
               {!myRecord?.check_in ? (
                 <button

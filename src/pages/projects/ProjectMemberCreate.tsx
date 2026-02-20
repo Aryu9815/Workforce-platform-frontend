@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
+import { useAuthStore } from '../../store/authStore'
 import { Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -14,6 +15,7 @@ const ProjectMemberCreate = () => {
   const navigate = useNavigate()
   const { id, memberId } = useParams<{ id: string; memberId?: string }>()
   const isEdit = !!memberId
+  const getPermissions = useAuthStore(state => state.getPermissions)
 
   const [search, setSearch] = useState('')
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
@@ -99,6 +101,16 @@ const ProjectMemberCreate = () => {
         joined_at: joinedAt || undefined,
       })
     }
+  }
+
+  const canManageMembers = getPermissions('project:manage-members')
+
+  if (!canManageMembers) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to manage project members.</p>
+      </div>
+    )
   }
 
   return (

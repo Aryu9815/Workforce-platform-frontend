@@ -11,6 +11,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { reimbursementsApi } from '../../api/reimbursements';
+import { useAuthStore } from '../../store/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
@@ -43,6 +44,7 @@ const ReimbursementDetail = () => {
   const [notes, setNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
+  const getPermissions = useAuthStore(state => state.getPermissions);
 
   useEffect(() => {
     if (!id) return;
@@ -129,6 +131,18 @@ const ReimbursementDetail = () => {
     return category?.name || categoryId;
   };
 
+  const canViewReimbursements = getPermissions('reimbursements:view' as any) || getPermissions('attendance:view');
+  const canSubmitReimbursement = getPermissions('reimbursements:create' as any) || getPermissions('attendance:mark');
+  const canApproveReimbursements = getPermissions('reimbursements:approve' as any) || getPermissions('attendance:edit');
+
+  if (!canViewReimbursements) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view this reimbursement.</p>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -175,13 +189,13 @@ const ReimbursementDetail = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          {claim.status === 'draft' && (
+          {claim.status === 'draft' && canSubmitReimbursement && (
             <Button onClick={handleSubmit}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Submit for Approval
             </Button>
           )}
-          {claim.status === 'submitted' && (
+          {claim.status === 'submitted' && canApproveReimbursements && (
             <>
               <Button variant="outline" onClick={() => setShowApproveDialog(true)}>
                 <CheckCircle className="mr-2 h-4 w-4" />
@@ -193,7 +207,7 @@ const ReimbursementDetail = () => {
               </Button>
             </>
           )}
-          {claim.status === 'approved' && (
+          {claim.status === 'approved' && canApproveReimbursements && (
             <Button onClick={() => setShowPayDialog(true)}>
               <CreditCard className="mr-2 h-4 w-4" />
               Mark as Paid

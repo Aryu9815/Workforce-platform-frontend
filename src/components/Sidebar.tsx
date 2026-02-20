@@ -20,7 +20,7 @@ import { useUIStore } from '../store/uiStore'
 
 const Sidebar = () => {
   const location = useLocation()
-  const { tenant, user } = useAuthStore()
+  const { tenant, user, getPermissions } = useAuthStore()
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['staff', 'projects'])
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore()
 
@@ -46,6 +46,7 @@ const Sidebar = () => {
       path: '/staff',
       icon: Users,
       label: 'Staff',
+      requiredPermission: 'staff:view',
       children: [
         { path: '/staff', label: 'All Staff' },
         { path: '/departments', label: 'Departments' },
@@ -57,6 +58,7 @@ const Sidebar = () => {
       path: '/projects',
       icon: FolderKanban,
       label: 'Projects',
+      requiredPermission: 'project:view',
       children: [
         { path: '/projects', label: 'All Projects' },
         ...(projects?.items || []).map((p: any) => ({
@@ -65,19 +67,18 @@ const Sidebar = () => {
         })),
       ],
     },
-    // { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
     {
       key: 'attendance',
       path: '/attendance',
       icon: Clock,
       label: 'Attendance',
+      requiredPermission: 'attendance:view',
       children: [
         { path: '/attendance', label: 'Records' },
         { path: '/attendance/leave', label: 'Leave Requests' },
       ]
     },
-    // { path: '/inventory', icon: Package, label: 'Inventory' },
-    { path: '/assets', icon: Briefcase, label: 'Assets' },
+    { path: '/assets', icon: Briefcase, label: 'Assets', requiredPermission: 'asset:view' },
     { path: '/reimbursements', icon: Receipt, label: 'Reimbursements' },
   ]
 
@@ -120,7 +121,9 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-hide">
         <ul className="space-y-1">
-          {menuItems.map((item) => (
+          {menuItems
+            .filter(item => !('requiredPermission' in item) || !item.requiredPermission || getPermissions(item.requiredPermission))
+            .map((item) => (
             <li key={item.path || item.key}>
               {/* Collapsed Mode */}
               {sidebarCollapsed ? (

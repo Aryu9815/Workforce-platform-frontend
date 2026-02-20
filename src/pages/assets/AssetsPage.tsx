@@ -9,10 +9,10 @@ import {
   PaginatedResponse,
   Staff,
 } from '../../types'
-
+import { useAuthStore } from '@/store/authStore'
 const AssetsPage = () => {
   const queryClient = useQueryClient()
-
+  const getPermissions = useAuthStore(state => state.getPermissions)
   const assetPage = 1
   const [statusFilter, setStatusFilter] = useState<string | undefined>()
   const [assetTypeFilter, setAssetTypeFilter] = useState<string | undefined>()
@@ -344,6 +344,17 @@ const AssetsPage = () => {
   }, [assetPage, statusFilter, assetTypeFilter])
 
   // ============================================================================
+  const canViewAssets = getPermissions('asset:view')
+  const canCreateAssets = getPermissions('asset:create')
+  const canAssignAssets = getPermissions('asset:assign')
+
+  if (!canViewAssets) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view assets.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -364,24 +375,28 @@ const AssetsPage = () => {
           >
             Refresh
           </button>
-          <button
-            onClick={() => setShowCreateCategory(true)}
-            className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
-          >
-            New Category
-          </button>
-          <button
-            onClick={() => setShowCreateType(true)}
-            className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
-          >
-            New Type
-          </button>
-          <button
-            onClick={() => setShowCreateAsset(true)}
-            className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
-          >
-            New Asset
-          </button>
+          {canCreateAssets && (
+            <>
+              <button
+                onClick={() => setShowCreateCategory(true)}
+                className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
+              >
+                New Category
+              </button>
+              <button
+                onClick={() => setShowCreateType(true)}
+                className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
+              >
+                New Type
+              </button>
+              <button
+                onClick={() => setShowCreateAsset(true)}
+                className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
+              >
+                New Asset
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -511,7 +526,7 @@ const AssetsPage = () => {
                         </td>
 
                         <td className="px-4 py-3 text-right">
-                          {asset.status === 'available' && (
+                          {asset.status === 'available' && canAssignAssets && (
                             <button
                               onClick={() => {
                                 setSelectedAsset(asset)
@@ -523,7 +538,7 @@ const AssetsPage = () => {
                             </button>
                           )}
 
-                          {asset.status === 'assigned' && (
+                          {asset.status === 'assigned' && canAssignAssets && (
                             <button
                               onClick={() => {
                                 setSelectedAsset(asset)

@@ -13,8 +13,10 @@ import {
 } from 'lucide-react'
 import { staffApi } from '../../api/staff'
 import { Staff } from '../../types'
+import { useAuthStore } from '../../store/authStore'
 
 const StaffList = () => {
+  const getPermissions = useAuthStore(state => state.getPermissions)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('')
@@ -42,6 +44,17 @@ const StaffList = () => {
     )
   }
   
+  const canViewStaff = getPermissions('staff:view')
+  const canCreateStaff = getPermissions('staff:create')
+
+  if (!canViewStaff) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view staff.</p>
+      </div>
+    )
+  }
+
  return (
   <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
 
@@ -54,13 +67,15 @@ const StaffList = () => {
         </p>
       </div>
 
-      <Link
-        to="/staff/new"
-        className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Staff
-      </Link>
+      {canCreateStaff && (
+        <Link
+          to="/staff/new"
+          className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Staff
+        </Link>
+      )}
     </div>
 
     {/* Filters */}

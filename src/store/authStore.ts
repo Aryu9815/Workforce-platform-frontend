@@ -27,6 +27,7 @@ interface AuthState {
   clearAuth: () => void
   setAuthenticated: () => void
   hasPermission: (permission: string) => boolean
+  getPermissions: (value: string) => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -77,6 +78,11 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (permission) => {
         const { permissions } = get()
         return permissions.includes(permission) || permissions.includes('admin.access')
+      },
+
+      getPermissions: (value) => {
+        const { permissions } = get()
+        return permissions.includes(value)
       },
     }),
     {
