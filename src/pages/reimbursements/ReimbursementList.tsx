@@ -10,7 +10,6 @@ import {
   Clock,
   Calendar,
   User,
-  // DollarSign,
   IndianRupee
 } from 'lucide-react';
 import { reimbursementsApi } from '../../api/reimbursements';
@@ -30,10 +29,7 @@ import { formatCurrency, formatDate } from '../../lib/utils';
 import { toast } from 'sonner';
 import type { ReimbursementClaim, ExpenseCategory } from '../../types';
 
-const statusConfig: Record<
-  ReimbursementClaim['status'],
-  { label: string; variant: 'secondary' | 'warning' | 'success' | 'destructive'; icon: typeof FileText }
-> = {
+const statusConfig = {
   draft: { label: 'Draft', variant: 'secondary', icon: FileText },
   submitted: { label: 'Submitted', variant: 'warning', icon: Clock },
   approved: { label: 'Approved', variant: 'success', icon: CheckCircle },
@@ -58,10 +54,7 @@ const ReimbursementList = () => {
   const getPermissions = useAuthStore(state => state.getPermissions);
 
   useEffect(() => {
-    reimbursementsApi
-      .getCategories()
-      .then(setCategories)
-      .catch(() => {});
+    reimbursementsApi.getCategories().then(setCategories).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -71,20 +64,14 @@ const ReimbursementList = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const params: {
-        page?: number;
-        page_size?: number;
-        staff_id?: string;
-        status?: string;
-        project_id?: string;
-      } = {
+      const params: any = {
         page: pagination.page,
         page_size: pagination.page_size,
       };
-      if (activeTab !== 'all') {
-        params.status = activeTab;
-      }
+      if (activeTab !== 'all') params.status = activeTab;
+
       const response = await reimbursementsApi.getClaims(params);
+
       setClaims(response.items);
       setPagination(prev => ({
         ...prev,
@@ -119,7 +106,7 @@ const ReimbursementList = () => {
     }
   };
 
-  const categoryNameById = (categoryId: string | undefined) => {
+  const categoryNameById = (categoryId?: string) => {
     if (!categoryId) return 'N/A';
     const category = categories.find(c => c.id === categoryId);
     return category?.name || 'N/A';
@@ -155,12 +142,15 @@ const ReimbursementList = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Reimbursements</h1>
-          <p className="text-muted-foreground">Manage expense reimbursements and claims</p>
+          <h1 className="text-xl font-medium text-gray-900">Reimbursements</h1>
+          <p className="text-sm text-gray-500">
+            Manage expense reimbursements and claims
+          </p>
         </div>
         {canCreateReimbursements && (
           <Button onClick={() => navigate('/reimbursements/new')}>
@@ -172,118 +162,79 @@ const ReimbursementList = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Claims</p>
-                <p className="text-2xl font-bold">{claims.length}</p>
-              </div>
-              <div className="p-3 rounded-full bg-blue-100">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalAmount, 'INR')}</p>
-              </div>
-              <div className="p-3 rounded-full bg-purple-100">
-                <IndianRupee className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold">{formatCurrency(pendingAmount, 'INR')}</p>
-              </div>
-              <div className="p-3 rounded-full bg-yellow-100">
-                <Clock className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Approved/Paid</p>
-                <p className="text-2xl font-bold">{formatCurrency(approvedAmount, 'INR')}</p>
-              </div>
-              <div className="p-3 rounded-full bg-green-100">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {[ 
+          { label: "Total Claims", value: claims.length, icon: FileText },
+          { label: "Total Amount", value: formatCurrency(totalAmount, 'INR'), icon: IndianRupee },
+          { label: "Pending", value: formatCurrency(pendingAmount, 'INR'), icon: Clock },
+          { label: "Approved/Paid", value: formatCurrency(approvedAmount, 'INR'), icon: CheckCircle }
+        ].map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={i} className="border border-gray-200 bg-white shadow-none">
+              <CardContent className="p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+                </div>
+                <div className="p-3 rounded-full bg-teal-50">
+                  <Icon className="h-6 w-6 text-teal-600" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search reimbursements..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="submitted">Pending</TabsTrigger>
-                <TabsTrigger value="approved">Approved</TabsTrigger>
-                <TabsTrigger value="paid">Paid</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      <Card className="border border-gray-200 bg-white shadow-none">
+        <CardContent className="p-4 flex flex-col sm:flex-row gap-6 items-center">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search reimbursements..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-6 border-0 border-b border-gray-300 focus:border-teal-600 focus:ring-0 text-sm"
+            />
           </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-transparent">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="submitted">Pending</TabsTrigger>
+              <TabsTrigger value="approved">Approved</TabsTrigger>
+              <TabsTrigger value="paid">Paid</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </CardContent>
       </Card>
 
-      {/* Reimbursement Claims Table */}
-      <Card>
+      {/* Table */}
+      <Card className="border border-gray-200 bg-white shadow-none">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Claim</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Employee</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Main Category</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Amount</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                  {["Claim","Employee","Main Category","Date","Amount","Status","Actions"].map((head,i)=>(
+                    <th key={i} className="px-6 py-3 text-left font-medium text-gray-600">
+                      {head}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y">
+
+              <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center">
-                      <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      Loading...
                     </td>
                   </tr>
                 ) : filteredClaims.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                      <FileText className="mx-auto h-12 w-12 mb-4" />
-                      <p>No reimbursements found</p>
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      No reimbursements found
                     </td>
                   </tr>
                 ) : (
@@ -291,86 +242,66 @@ const ReimbursementList = () => {
                     const StatusConfig = statusConfig[claim.status];
                     const StatusIcon = StatusConfig?.icon || FileText;
                     const mainItem = claim.items[0];
+
                     return (
                       <tr
                         key={claim.id}
-                        className="hover:bg-muted/50 cursor-pointer"
+                        className="hover:bg-gray-50 transition cursor-pointer"
                         onClick={() => navigate(`/reimbursements/${claim.id}`)}
                       >
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-medium">{claim.claim_number}</p>
-                            {claim.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {claim.description.substring(0, 80)}
-                                {claim.description.length > 80 ? '...' : ''}
-                              </p>
-                            )}
-                          </div>
+                        <td className="px-6 py-4">
+                          <p className="font-medium text-gray-900">
+                            {claim.claim_number}
+                          </p>
+                          {claim.description && (
+                            <p className="text-xs text-gray-500">
+                              {claim.description.substring(0, 80)}
+                            </p>
+                          )}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span>{claim.staff_name || claim.staff_id}</span>
-                          </div>
+
+                        <td className="px-6 py-4 text-gray-600 flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          {claim.staff_name || claim.staff_id}
                         </td>
-                        <td className="px-4 py-3">
-                          <span>
-                            {mainItem ? categoryNameById(mainItem.category_id) : 'No items'}
-                          </span>
+
+                        <td className="px-6 py-4 text-gray-700">
+                          {mainItem ? categoryNameById(mainItem.category_id) : 'No items'}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>{formatDate(claim.claim_date)}</span>
-                          </div>
+
+                        <td className="px-6 py-4 text-gray-600 flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          {formatDate(claim.claim_date)}
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="font-medium">
-                            {formatCurrency(claim.total_amount, claim.currency)}
-                          </span>
+
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          {formatCurrency(claim.total_amount, claim.currency)}
                         </td>
-                        <td className="px-4 py-3">
-                          <Badge
-                            variant={StatusConfig?.variant || 'default'}
-                            className="flex items-center gap-1 w-fit"
-                          >
+
+                        <td className="px-6 py-4">
+                          <Badge className="bg-gray-100 text-gray-700 flex items-center gap-1 w-fit">
                             <StatusIcon className="h-3 w-3" />
-                            {StatusConfig?.label || claim.status}
+                            {StatusConfig?.label}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-right">
+
+                        <td className="px-6 py-4 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4 text-gray-500" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/reimbursements/${claim.id}`);
-                              }}>
+                              <DropdownMenuItem onClick={() => navigate(`/reimbursements/${claim.id}`)}>
                                 View Details
                               </DropdownMenuItem>
                               {claim.status === 'submitted' && canApproveReimbursements && (
                                 <>
-                                  <DropdownMenuItem onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleApprove(claim.id);
-                                  }}>
-                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                  <DropdownMenuItem onClick={() => handleApprove(claim.id)}>
                                     Approve
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleReject(claim.id);
-                                  }}>
-                                    <XCircle className="mr-2 h-4 w-4" />
+                                  <DropdownMenuItem onClick={() => handleReject(claim.id)}>
                                     Reject
                                   </DropdownMenuItem>
                                 </>
@@ -385,38 +316,10 @@ const ReimbursementList = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          {!loading && filteredClaims.length > 0 && (
-            <div className="flex items-center justify-between px-4 py-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.page_size + 1} to{' '}
-                {Math.min(pagination.page * pagination.page_size, pagination.total)} of {pagination.total} entries
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page === pagination.pages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
   );
-}
+};
 
 export default ReimbursementList;

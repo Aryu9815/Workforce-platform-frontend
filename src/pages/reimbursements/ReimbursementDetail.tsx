@@ -169,15 +169,19 @@ const ReimbursementDetail = () => {
   const isPaid = claim.status === 'paid';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gray-50 min-h-screen p-4 md:p-8">
+      {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate('/reimbursements')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <button
+            onClick={() => navigate('/reimbursements')}
+            className="p-2 rounded-md hover:bg-white border border-transparent hover:border-gray-200 transition"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
+          </button>
           <div>
-            <h1 className="text-2xl font-bold">{claim.claim_number}</h1>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-gray-900">{claim.claim_number}</h1>
+            <p className="text-sm text-gray-500 flex items-center gap-2">
               <span>{claim.staff_name || claim.staff_id}</span>
               {claim.created_at && (
                 <>
@@ -197,8 +201,8 @@ const ReimbursementDetail = () => {
           )}
           {claim.status === 'submitted' && canApproveReimbursements && (
             <>
-              <Button variant="outline" onClick={() => setShowApproveDialog(true)}>
-                <CheckCircle className="mr-2 h-4 w-4" />
+              <Button variant="outline" className="bg-white" onClick={() => setShowApproveDialog(true)}>
+                <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                 Approve
               </Button>
               <Button variant="destructive" onClick={() => setShowRejectDialog(true)}>
@@ -216,22 +220,15 @@ const ReimbursementDetail = () => {
         </div>
       </div>
 
-      <div
-        className={`p-4 rounded-lg border flex items-center gap-3 ${
-          isPaid
-            ? 'bg-green-50 border-green-200'
-            : claim.status === 'rejected'
-            ? 'bg-red-50 border-red-200'
-            : 'bg-yellow-50 border-yellow-200'
-        }`}
-      >
+      {/* Status Bar */}
+      <div className={`p-4 rounded-md border flex items-center gap-3 bg-white border-gray-200 shadow-sm`}>
         <StatusIcon className={`h-6 w-6 ${statusMeta?.color || 'text-gray-600'}`} />
         <div>
-          <p className={`font-medium ${statusMeta?.color || 'text-gray-700'}`}>
+          <p className="font-semibold text-gray-900">
             Status: {statusMeta?.label || claim.status}
           </p>
           {claim.approved_by && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               {claim.status === 'rejected' ? 'Rejected' : 'Approved'} by {claim.approved_by}
               {claim.approved_at && ` on ${formatDate(claim.approved_at)}`}
             </p>
@@ -242,85 +239,87 @@ const ReimbursementDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="details" className="space-y-4">
-            <TabsList>
+            <TabsList className="bg-gray-100 p-1">
               <TabsTrigger value="details">Details</TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">
-              <Card>
+              <Card className="bg-white border-gray-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Claim Details</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-gray-900">Claim Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Claim Number</p>
-                      <p>{claim.claim_number}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Claim Number</p>
+                      <p className="text-gray-900 font-medium">{claim.claim_number}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Claim Date</p>
-                      <p className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Claim Date</p>
+                      <p className="flex items-center gap-2 text-gray-900 font-medium">
+                        <Calendar className="h-4 w-4 text-gray-400" />
                         {formatDate(claim.claim_date)}
                       </p>
                     </div>
                     {claim.expense_date_start && claim.expense_date_end && (
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Expense Period</p>
-                        <p>
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Expense Period</p>
+                        <p className="text-gray-900 font-medium">
                           {formatDate(claim.expense_date_start)} - {formatDate(claim.expense_date_end)}
                         </p>
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Currency</p>
-                      <p>{claim.currency}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Currency</p>
+                      <p className="text-gray-900 font-medium">{claim.currency}</p>
                     </div>
                   </div>
                   {claim.description && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Description</p>
-                      <p className="mt-1 p-3 bg-muted rounded-lg">{claim.description}</p>
+                    <div className="pt-2">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Description</p>
+                      <p className="mt-2 p-4 bg-gray-50 border border-gray-100 rounded-md text-gray-700 italic">
+                        "{claim.description}"
+                      </p>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white border-gray-200 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Items</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-gray-900">Items</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {claim.items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No items in this claim</p>
+                    <p className="text-sm text-gray-500 text-center py-8">No items in this claim</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b">
-                            <th className="px-3 py-2 text-left">Category</th>
-                            <th className="px-3 py-2 text-left">Expense Date</th>
-                            <th className="px-3 py-2 text-left">Description</th>
-                            <th className="px-3 py-2 text-right">Quantity</th>
-                            <th className="px-3 py-2 text-right">Unit Price</th>
-                            <th className="px-3 py-2 text-right">Tax</th>
-                            <th className="px-3 py-2 text-right">Amount</th>
+                          <tr className="border-b border-gray-100 text-gray-500">
+                            <th className="px-3 py-3 text-left font-medium">Category</th>
+                            <th className="px-3 py-3 text-left font-medium">Expense Date</th>
+                            <th className="px-3 py-3 text-left font-medium">Description</th>
+                            <th className="px-3 py-3 text-right font-medium">Quantity</th>
+                            <th className="px-3 py-3 text-right font-medium">Unit Price</th>
+                            <th className="px-3 py-3 text-right font-medium">Tax</th>
+                            <th className="px-3 py-3 text-right font-medium">Amount</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y">
+                        <tbody className="divide-y divide-gray-50">
                           {claim.items.map(item => (
-                            <tr key={item.id}>
-                              <td className="px-3 py-2">{categoryNameById(item.category_id)}</td>
-                              <td className="px-3 py-2">{formatDate(item.expense_date)}</td>
-                              <td className="px-3 py-2">{item.description}</td>
-                              <td className="px-3 py-2 text-right">{item.quantity}</td>
-                              <td className="px-3 py-2 text-right">
+                            <tr key={item.id} className="text-gray-700 hover:bg-gray-50">
+                              <td className="px-3 py-3">{categoryNameById(item.category_id)}</td>
+                              <td className="px-3 py-3">{formatDate(item.expense_date)}</td>
+                              <td className="px-3 py-3">{item.description}</td>
+                              <td className="px-3 py-3 text-right">{item.quantity}</td>
+                              <td className="px-3 py-3 text-right">
                                 {item.unit_price != null ? formatCurrency(item.unit_price) : '-'}
                               </td>
-                              <td className="px-3 py-2 text-right">
+                              <td className="px-3 py-3 text-right">
                                 {item.tax_amount ? formatCurrency(item.tax_amount) : '-'}
                               </td>
-                              <td className="px-3 py-2 text-right">{formatCurrency(item.amount)}</td>
+                              <td className="px-3 py-3 text-right font-semibold text-gray-900">{formatCurrency(item.amount)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -334,153 +333,147 @@ const ReimbursementDetail = () => {
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Amount Summary</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Amount Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-4xl font-bold text-primary">
+            <CardContent>
+              <div className="p-6 bg-gray-50 rounded-md border border-gray-100 text-center">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-1">Total Amount</p>
+                <p className="text-4xl font-bold text-gray-900">
                   {formatCurrency(claim.total_amount , claim.currency)}
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Employee Information</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">Employee Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
+                  <User className="h-6 w-6 text-gray-400" />
                 </div>
                 <div>
-                  <p className="font-medium">{claim.staff_name || claim.staff_id}</p>
+                  <p className="font-semibold text-gray-900">{claim.staff_name || claim.staff_id}</p>
+                  <p className="text-xs text-gray-500">Employee ID: {claim.staff_id}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {(claim.paid_at || claim.payment_reference) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Payment Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {claim.payment_reference && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Payment Reference</p>
-                    <p>{claim.payment_reference}</p>
-                  </div>
-                )}
-                {claim.paid_at && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Paid At</p>
-                    <p>{formatDate(claim.paid_at)}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
+      {/* --- FORMS (MODALS) SECTION --- */}
+
+      {/* Approve Dialog */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Approve Reimbursement</DialogTitle>
-            <DialogDescription>
-              Approve reimbursement claim for <strong>{formatCurrency(claim.total_amount)}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="bg-white border border-gray-200 shadow-2xl rounded-lg z-50 max-w-lg p-0">
+          <div className="p-6 border-b border-gray-100">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">Approve Reimbursement</DialogTitle>
+              <DialogDescription className="text-gray-500 mt-1">
+                You are approving the claim for <span className="font-semibold text-gray-900">{formatCurrency(claim.total_amount)}</span>
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-6 space-y-4">
             <div>
-              <label className="text-sm font-medium">Approval Notes</label>
+              <label className="text-sm font-medium text-gray-700">Approval Notes</label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Add any notes about this approval..."
-                className="w-full mt-1 px-3 py-2 border rounded-md"
-                rows={3}
+                placeholder="Enter any additional notes..."
+                className="w-full mt-2 px-4 py-3 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-gray-900 min-h-[120px]"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowApproveDialog(false)}>
+          <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-lg border-t border-gray-100">
+            <Button variant="outline" className="bg-white" onClick={() => setShowApproveDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleApprove}>
+            <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700 text-white">
               <CheckCircle className="mr-2 h-4 w-4" />
-              Approve
+              Confirm Approval
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Reject Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Reimbursement</DialogTitle>
-            <DialogDescription>
-              Reject reimbursement claim for <strong>{formatCurrency(claim.total_amount)}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="bg-white border border-gray-200 shadow-2xl rounded-lg z-50 max-w-lg p-0">
+          <div className="p-6 border-b border-gray-100">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">Reject Reimbursement</DialogTitle>
+              <DialogDescription className="text-gray-500 mt-1">
+                Please provide a reason for rejecting this claim.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-6 space-y-4">
             <div>
-              <label className="text-sm font-medium">Rejection Reason</label>
+              <label className="text-sm font-medium text-gray-700">Rejection Reason *</label>
               <textarea
                 value={rejectionReason}
                 onChange={e => setRejectionReason(e.target.value)}
-                placeholder="Provide a reason for rejection..."
-                className="w-full mt-1 px-3 py-2 border rounded-md"
-                rows={3}
+                placeholder="Why is this claim being rejected?"
+                className="w-full mt-2 px-4 py-3 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition text-gray-900 min-h-[120px]"
                 required
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+          <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-lg border-t border-gray-100">
+            <Button variant="outline" className="bg-white" onClick={() => setShowRejectDialog(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleReject} disabled={!rejectionReason.trim()}>
+            <Button 
+              variant="destructive" 
+              onClick={handleReject} 
+              disabled={!rejectionReason.trim()}
+            >
               <XCircle className="mr-2 h-4 w-4" />
-              Reject
+              Confirm Rejection
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Pay Dialog */}
       <Dialog open={showPayDialog} onOpenChange={setShowPayDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Mark as Paid</DialogTitle>
-            <DialogDescription>
-              Record payment for <strong>{formatCurrency(claim.total_amount)}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="bg-white border border-gray-200 shadow-2xl rounded-lg z-50 max-w-lg p-0">
+          <div className="p-6 border-b border-gray-100">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">Mark as Paid</DialogTitle>
+              <DialogDescription className="text-gray-500 mt-1">
+                Record the payment transaction details.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-6 space-y-4">
             <div>
-              <label className="text-sm font-medium">Payment Reference</label>
+              <label className="text-sm font-medium text-gray-700">Payment Reference *</label>
               <Input
                 value={paymentReference}
                 onChange={e => setPaymentReference(e.target.value)}
-                placeholder="Enter payment reference..."
+                placeholder="Transaction ID / Cheque Number"
+                className="mt-2 bg-white border-gray-200 focus:ring-primary/20 text-gray-900"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowPayDialog(false)}>
+          <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-lg border-t border-gray-100">
+            <Button variant="outline" className="bg-white" onClick={() => setShowPayDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleMarkAsPaid} disabled={!paymentReference.trim()}>
+            <Button 
+              onClick={handleMarkAsPaid} 
+              disabled={!paymentReference.trim()}
+              className="bg-primary hover:bg-primary/90"
+            >
               <CreditCard className="mr-2 h-4 w-4" />
-              Mark as Paid
+              Confirm Payment
             </Button>
           </div>
         </DialogContent>
