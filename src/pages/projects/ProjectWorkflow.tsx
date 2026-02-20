@@ -256,7 +256,7 @@ const ProjectWorkflow = () => {
 
   return (
     <>
-    <div className="flex flex-col bg-gray-50 overflow-hidden" style={{ height: 'calc(100vh - 80px)'}}>
+    <div className="flex flex-col bg-gray-50 overflow-hidden w-full h-full" style={{ height: 'calc(100vh - 80px)', maxWidth: '100%' }}>
       <div className="flex-none bg-white border-b border-gray-200 px-6 py-3 space-y-2">
 
         {/* Row 1 – Project name */}
@@ -296,6 +296,9 @@ const ProjectWorkflow = () => {
             <button className="btn-default h-8 px-3 text-xs" onClick={() => navigate(`/projects/${id}/backlog`)}>
               Backlog
             </button>
+            <button className="btn-default h-8 px-3 text-xs" onClick={() => setShowSprints(true)}>
+              Sprints
+            </button>
             <button className="btn-default h-8 px-3 text-xs" onClick={() => navigate(`/projects/${id}/workflow/settings`)}>
               Settings
             </button>
@@ -307,8 +310,8 @@ const ProjectWorkflow = () => {
       </div>
 
       {/* Board area - add h-full to make overflow-x-auto contain properly */}
-      <div className="flex-1 min-h-0">
-        <div className="h-full overflow-x-auto overflow-y-hidden min-w-0">
+      <div className="flex-1 min-h-0 w-full overflow-hidden" style={{ maxWidth: '100%' }}>
+        <div className="h-full w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100%' }}>
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="inline-flex gap-4 p-4 h-full min-w-max">
 
@@ -374,136 +377,375 @@ const ProjectWorkflow = () => {
 
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:p-6">
-          <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:p-6">
+    <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 
-            <div className="p-6 border-b flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Create Task</h2>
-              <button className="text-secondary-500 hover:text-black" onClick={() => setShowCreate(false)}>✕</button>
+      {/* HEADER */}
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-900">Create Task</h2>
+        <button
+          className="text-gray-500 hover:text-gray-700"
+          onClick={() => setShowCreate(false)}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* FORM */}
+      <form
+        onSubmit={submitCreate}
+        className="p-6 space-y-10 flex-1 overflow-y-auto"
+      >
+
+        {/* BASIC INFO */}
+        <section>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Basic Information
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* TITLE */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.title}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, title: e.target.value })
+                }
+                required
+              />
             </div>
 
-            <form onSubmit={submitCreate} className="p-6 space-y-6 flex-1 overflow-y-auto">
+            {/* DESCRIPTION */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Description
+              </label>
+              <textarea
+                rows={4}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.description}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, description: e.target.value })
+                }
+              />
+            </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="label">Title *</label>
-                    <input className="input" value={newTask.title} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} required />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label">Description</label>
-                    <textarea className="input" rows={4} value={newTask.description} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="label">Priority</label>
-                    <select className="input" value={newTask.priority} onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}>
-                      <option value="">Select</option>
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label">Task Type</label>
-                    <input className="input" value={newTask.task_type} onChange={(e) => setNewTask({ ...newTask, task_type: e.target.value })} />
-                  </div>
-                </div>
-              </div>
+            {/* PRIORITY */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Priority
+              </label>
+              <select
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.priority}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, priority: e.target.value })
+                }
+              >
+                <option value="">Select</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Planning</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="label">Sprint</label>
-                    <select className="input" value={selectedSprintId || ''} onChange={(e) => setSelectedSprintId(e.target.value || null)}>
-                      {(sprints || []).map((s: any) => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.status})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label">Start Date</label>
-                    <input type="date" className="input" value={newTask.start_date || ''} onChange={(e) => setNewTask({ ...newTask, start_date: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="label">Due Date</label>
-                    <input type="date" className="input" value={newTask.due_date || ''} onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="label">Estimated Hours</label>
-                    <input type="number" step="0.1" className="input" value={newTask.estimated_hours || ''} onChange={(e) => setNewTask({ ...newTask, estimated_hours: Number(e.target.value) })} />
-                  </div>
-                  <div>
-                    <label className="label">Estimated Cost</label>
-                    <input type="number" step="0.01" className="input" value={newTask.estimated_cost || ''} onChange={(e) => setNewTask({ ...newTask, estimated_cost: Number(e.target.value) })} />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Options</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={newTask.milestone || false} onChange={(e) => setNewTask({ ...newTask, milestone: e.target.checked })} />
-                    Milestone
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={newTask.billable ?? true} onChange={(e) => setNewTask({ ...newTask, billable: e.target.checked })} />
-                    Billable
-                  </label>
-                  <div className="md:col-span-2">
-                    <label className="label">Tags (comma separated)</label>
-                    <input className="input" value={(newTask.tags || []).join(', ')} onChange={(e) => setNewTask({ ...newTask, tags: e.target.value.split(',').map((t) => t.trim()) })} />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label">Custom Fields (JSON)</label>
-                    <textarea className="input" rows={3} value={JSON.stringify(newTask.custom_fields || {}, null, 2)} onChange={(e) => { try { setNewTask({ ...newTask, custom_fields: JSON.parse(e.target.value) }) } catch {} }} />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Assignment</h3>
-                <div>
-                  <label className="label">Assigned To</label>
-                  <input className="input" placeholder="Search staff" value={assigneeSearch} onChange={(e) => setAssigneeSearch(e.target.value)} />
-                  <div className="mt-2 max-h-48 overflow-auto rounded-lg border border-secondary-200 bg-white">
-                    {(staffOptions || []).filter(({ name }) => assigneeSearch ? name.toLowerCase().includes(assigneeSearch.toLowerCase()) : true).slice(0, 50).map(({ id: sid, name }) => (
-                      <label key={sid} className="flex items-center gap-2 px-3 py-2 hover:bg-secondary-50">
-                        <input type="checkbox" checked={assigneeIds.includes(sid)} onChange={() => toggleAssignee(sid)} />
-                        <span className="text-sm text-secondary-900">{name}</span>
-                        <span className="ml-2 text-xs text-secondary-500">{sid}</span>
-                      </label>
-                    ))}
-                    {(staffOptions || []).length === 0 && <div className="px-3 py-2 text-sm text-secondary-500">No staff found</div>}
-                  </div>
-                  {assigneeIds.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {assigneeIds.map((sid) => {
-                        const label = (staffOptions as any[]).find((s) => s.id === sid)?.name || sid
-                        return (
-                          <span key={sid} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-secondary-100 text-secondary-800 text-xs">
-                            {label}
-                            <button type="button" className="ml-1 text-secondary-600 hover:text-secondary-900" onClick={() => toggleAssignee(sid)}>×</button>
-                          </span>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Create Task</button>
-              </div>
-
-            </form>
+            {/* TASK TYPE */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Task Type
+              </label>
+              <input
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.task_type}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, task_type: e.target.value })
+                }
+              />
+            </div>
           </div>
+        </section>
+
+        {/* PLANNING */}
+        <section>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Planning
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* SPRINT */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Sprint
+              </label>
+              <select
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={selectedSprintId || ""}
+                onChange={(e) => setSelectedSprintId(e.target.value || null)}
+              >
+                {(sprints || []).map((s: any) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* START DATE */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Start Date
+              </label>
+              <input
+                type="date"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.start_date || ""}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, start_date: e.target.value })
+                }
+              />
+            </div>
+
+            {/* DUE DATE */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Due Date
+              </label>
+              <input
+                type="date"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.due_date || ""}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, due_date: e.target.value })
+                }
+              />
+            </div>
+
+            {/* HOURS */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Estimated Hours
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.estimated_hours || ""}
+                onChange={(e) =>
+                  setNewTask({
+                    ...newTask,
+                    estimated_hours: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+
+            {/* COST */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Estimated Cost
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={newTask.estimated_cost || ""}
+                onChange={(e) =>
+                  setNewTask({
+                    ...newTask,
+                    estimated_cost: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* OPTIONS */}
+        <section>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Options
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <label className="flex items-center gap-2 text-sm text-gray-800">
+              <input
+                type="checkbox"
+                checked={newTask.milestone || false}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, milestone: e.target.checked })
+                }
+              />
+              Milestone
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-gray-800">
+              <input
+                type="checkbox"
+                checked={newTask.billable ?? true}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, billable: e.target.checked })
+                }
+              />
+              Billable
+            </label>
+
+            {/* TAGS */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Tags (comma separated)
+              </label>
+              <input
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={(newTask.tags || []).join(", ")}
+                onChange={(e) =>
+                  setNewTask({
+                    ...newTask,
+                    tags: e.target.value
+                      .split(",")
+                      .map((t) => t.trim()),
+                  })
+                }
+              />
+            </div>
+
+            {/* CUSTOM FIELDS */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Custom Fields (JSON)
+              </label>
+              <textarea
+                rows={3}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                           focus:outline-none focus:border-indigo-600"
+                value={JSON.stringify(newTask.custom_fields || {}, null, 2)}
+                onChange={(e) => {
+                  try {
+                    setNewTask({
+                      ...newTask,
+                      custom_fields: JSON.parse(e.target.value),
+                    })
+                  } catch {}
+                }}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ASSIGNMENT */}
+        <section>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            Assignment
+          </h3>
+
+          <label className="text-sm font-medium text-gray-700 mb-1 block">
+            Assigned To
+          </label>
+
+          {/* SEARCH */}
+          <input
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full
+                       focus:outline-none focus:border-indigo-600"
+            placeholder="Search staff"
+            value={assigneeSearch}
+            onChange={(e) => setAssigneeSearch(e.target.value)}
+          />
+
+          {/* STAFF LIST */}
+          <div className="mt-2 max-h-48 overflow-auto rounded-lg border border-gray-200 bg-white">
+            {(staffOptions || [])
+              .filter(({ name }) =>
+                assigneeSearch
+                  ? name.toLowerCase().includes(assigneeSearch.toLowerCase())
+                  : true
+              )
+              .slice(0, 50)
+              .map(({ id: sid, name }) => (
+                <label
+                  key={sid}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm text-gray-800"
+                >
+                  <input
+                    type="checkbox"
+                    checked={assigneeIds.includes(sid)}
+                    onChange={() => toggleAssignee(sid)}
+                  />
+                  {name}
+                  <span className="ml-2 text-xs text-gray-500">{sid}</span>
+                </label>
+              ))}
+
+            {(staffOptions || []).length === 0 && (
+              <div className="px-3 py-2 text-sm text-gray-500">
+                No staff found
+              </div>
+            )}
+          </div>
+
+          {/* SELECTED TAGS */}
+          {assigneeIds.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {assigneeIds.map((sid) => {
+                const label =
+                  (staffOptions as any[]).find((s) => s.id === sid)?.name || sid
+                return (
+                  <span
+                    key={sid}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded"
+                  >
+                    {label}
+                    <button
+                      type="button"
+                      className="ml-1 text-gray-600 hover:text-gray-900"
+                      onClick={() => toggleAssignee(sid)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ACTIONS */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            className="px-5 py-2 rounded-md border text-gray-700 bg-white hover:bg-gray-100 text-sm"
+            onClick={() => setShowCreate(false)}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+          >
+            Create Task
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
 
       {showEndOptions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
@@ -569,68 +811,269 @@ const ProjectWorkflow = () => {
         </div>
       )}
 
-      {showSprints && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
-          <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b flex items-center justify-between">
-              <div className="text-xl font-semibold">Sprints</div>
-              <button className="text-secondary-500 hover:text-black" onClick={() => { setShowSprints(false); setEditingSprint(null) }}>✕</button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-1">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="font-semibold">Sprint List</div>
-                  <button className="btn-default" onClick={() => { setEditingSprint(null); setSprintForm({ name: '', goal: '', start_date: '', end_date: '', status: 'planned', capacity: '' }) }}>New</button>
+{showSprints && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 sm:p-6">
+    <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+
+      {/* HEADER */}
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-900">Sprints</h2>
+        <button
+          className="text-gray-500 hover:text-gray-700"
+          onClick={() => {
+            setShowSprints(false)
+            setEditingSprint(null)
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* CONTENT */}
+      <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        {/* LEFT PANEL — Sprint List */}
+        <div className="md:col-span-1">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700">
+              Sprint List
+            </h3>
+
+            <button
+              className="px-3 py-1.5 text-sm bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+              onClick={() => {
+                setEditingSprint(null)
+                setSprintForm({
+                  name: "",
+                  goal: "",
+                  start_date: "",
+                  end_date: "",
+                  status: "planned",
+                  capacity: ""
+                })
+              }}
+            >
+              New
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {(sprints || []).map((s: any) => (
+              <button
+                key={s.id}
+                className={`
+                  w-full text-left p-3 rounded-md border transition
+                  ${editingSprint?.id === s.id
+                    ? "border-indigo-300 bg-indigo-50"
+                    : "border-gray-200 hover:bg-gray-50"}
+                `}
+                onClick={() => {
+                  setEditingSprint(s)
+                  setSprintForm({
+                    name: s.name || "",
+                    goal: s.goal || "",
+                    start_date: s.start_date || "",
+                    end_date: s.end_date || "",
+                    status: s.status || "planned",
+                    capacity: s.capacity ?? ""
+                  })
+                }}
+              >
+                <div className="font-medium text-gray-900">{s.name}</div>
+                <div className="text-xs text-gray-500">
+                  {s.status} • {s.start_date} → {s.end_date}
                 </div>
-                <div className="space-y-2">
-                  {(sprints || []).map((s: any) => (
-                    <button key={s.id} className={`w-full text-left p-3 rounded border ${editingSprint?.id === s.id ? 'border-primary-300 bg-primary-50' : 'border-secondary-200 hover:bg-secondary-50'}`} onClick={() => { setEditingSprint(s); setSprintForm({ name: s.name || '', goal: s.goal || '', start_date: s.start_date || '', end_date: s.end_date || '', status: s.status || 'planned', capacity: s.capacity ?? '' }) }}>
-                      <div className="font-medium">{s.name}</div>
-                      <div className="text-xs text-secondary-500">{s.status} • {s.start_date} → {s.end_date}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="md:col-span-2">
-                <div className="font-semibold mb-3">{editingSprint ? 'Edit Sprint' : 'Create Sprint'}</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2"><label className="label">Name</label><input className="input" value={sprintForm.name} onChange={(e) => setSprintForm({ ...sprintForm, name: e.target.value })} /></div>
-                  <div className="md:col-span-2"><label className="label">Goal</label><textarea className="input" rows={3} value={sprintForm.goal} onChange={(e) => setSprintForm({ ...sprintForm, goal: e.target.value })} /></div>
-                  <div><label className="label">Start Date</label><input type="date" className="input" value={sprintForm.start_date} onChange={(e) => setSprintForm({ ...sprintForm, start_date: e.target.value })} /></div>
-                  <div><label className="label">End Date</label><input type="date" className="input" value={sprintForm.end_date} onChange={(e) => setSprintForm({ ...sprintForm, end_date: e.target.value })} /></div>
-                  <div><label className="label">Status</label><select className="input" value={sprintForm.status} onChange={(e) => setSprintForm({ ...sprintForm, status: e.target.value })}><option value="planned">planned</option><option value="active">active</option><option value="completed">completed</option><option value="cancelled">cancelled</option></select></div>
-                  <div><label className="label">Capacity</label><input type="number" className="input" value={sprintForm.capacity} onChange={(e) => setSprintForm({ ...sprintForm, capacity: e.target.value })} /></div>
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                  {editingSprint && (
-                    <button className="btn-secondary" onClick={async () => { try { await sprintsApi.deleteSprint(editingSprint.id); toast.success('Sprint deleted'); setEditingSprint(null); setSprintForm({ name: '', goal: '', start_date: '', end_date: '', status: 'planned', capacity: '' }); queryClient.invalidateQueries(['sprints', id]); if (selectedSprintId === editingSprint.id) setSelectedSprintId(null) } catch (e: any) { toast.error(e?.response?.data?.message || 'Failed to delete sprint') } }}>Delete</button>
-                  )}
-                  <button className="btn-default" onClick={() => { setEditingSprint(null); setSprintForm({ name: '', goal: '', start_date: '', end_date: '', status: 'planned', capacity: '' }) }}>Reset</button>
-                  <button className="btn-primary" onClick={async () => {
-                    try {
-                      if (editingSprint) {
-                        await sprintsApi.updateSprint(editingSprint.id, { name: sprintForm.name || undefined, goal: sprintForm.goal || undefined, start_date: sprintForm.start_date || undefined, end_date: sprintForm.end_date || undefined, status: sprintForm.status || undefined, capacity: sprintForm.capacity !== '' ? Number(sprintForm.capacity) : undefined })
-                        toast.success('Sprint updated')
-                      } else {
-                        const created = await sprintsApi.createSprint({ project_id: id!, name: sprintForm.name, goal: sprintForm.goal || undefined, start_date: sprintForm.start_date, end_date: sprintForm.end_date, status: sprintForm.status || 'planned', capacity: sprintForm.capacity !== '' ? Number(sprintForm.capacity) : undefined })
-                        toast.success('Sprint created')
-                        setSelectedSprintId(created.id)
-                      }
-                      queryClient.invalidateQueries(['sprints', id])
-                    } catch (e: any) {
-                      toast.error(e?.response?.data?.message || 'Failed to save sprint')
-                    }
-                  }}>{editingSprint ? 'Save Changes' : 'Create Sprint'}</button>
-                </div>
-              </div>
-            </div>
-            <div className="p-6 border-t flex justify-end">
-              <button className="btn-secondary" onClick={() => { setShowSprints(false); setEditingSprint(null) }}>Close</button>
-            </div>
+              </button>
+            ))}
           </div>
         </div>
-      )}
 
+        {/* RIGHT PANEL — Create / Edit Form */}
+        <div className="md:col-span-2">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">
+            {editingSprint ? "Edit Sprint" : "Create Sprint"}
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* NAME */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Name</label>
+              <input
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-600"
+                value={sprintForm.name}
+                onChange={(e) =>
+                  setSprintForm({ ...sprintForm, name: e.target.value })
+                }
+              />
+            </div>
+
+            {/* GOAL */}
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Goal</label>
+              <textarea
+                rows={3}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-600"
+                value={sprintForm.goal}
+                onChange={(e) =>
+                  setSprintForm({ ...sprintForm, goal: e.target.value })
+                }
+              />
+            </div>
+
+            {/* START DATE */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Start Date</label>
+              <input
+                type="date"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-600"
+                value={sprintForm.start_date}
+                onChange={(e) =>
+                  setSprintForm({ ...sprintForm, start_date: e.target.value })
+                }
+              />
+            </div>
+
+            {/* END DATE */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">End Date</label>
+              <input
+                type="date"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-600"
+                value={sprintForm.end_date}
+                onChange={(e) =>
+                  setSprintForm({ ...sprintForm, end_date: e.target.value })
+                }
+              />
+            </div>
+
+            {/* STATUS */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Status</label>
+              <select
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-600"
+                value={sprintForm.status}
+                onChange={(e) =>
+                  setSprintForm({ ...sprintForm, status: e.target.value })
+                }
+              >
+                <option value="planned">Planned</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* CAPACITY */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Capacity</label>
+              <input
+                type="number"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-indigo-600"
+                value={sprintForm.capacity}
+                onChange={(e) =>
+                  setSprintForm({ ...sprintForm, capacity: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          {/* ACTION BUTTONS */}
+          <div className="flex justify-end gap-3 mt-6">
+
+            {editingSprint && (
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-100 text-sm"
+                onClick={async () => {
+                  try {
+                    await sprintsApi.deleteSprint(editingSprint.id)
+                    toast.success("Sprint deleted")
+                    setEditingSprint(null)
+                    setSprintForm({
+                      name: "",
+                      goal: "",
+                      start_date: "",
+                      end_date: "",
+                      status: "planned",
+                      capacity: ""
+                    })
+                    queryClient.invalidateQueries(["sprints", id])
+                    if (selectedSprintId === editingSprint.id)
+                      setSelectedSprintId(null)
+                  } catch (e: any) {
+                    toast.error(e?.response?.data?.message || "Failed to delete sprint")
+                  }
+                }}
+              >
+                Delete
+              </button>
+            )}
+
+            <button
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-100 text-sm"
+              onClick={() => {
+                setEditingSprint(null)
+                setSprintForm({
+                  name: "",
+                  goal: "",
+                  start_date: "",
+                  end_date: "",
+                  status: "planned",
+                  capacity: ""
+                })
+              }}
+            >
+              Reset
+            </button>
+
+            <button
+              className="px-5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+              onClick={async () => {
+                try {
+                  if (editingSprint) {
+                    await sprintsApi.updateSprint(editingSprint.id, {
+                      name: sprintForm.name || undefined,
+                      goal: sprintForm.goal || undefined,
+                      start_date: sprintForm.start_date || undefined,
+                      end_date: sprintForm.end_date || undefined,
+                      status: sprintForm.status || "planned",
+                      capacity:
+                        sprintForm.capacity !== ""
+                          ? Number(sprintForm.capacity)
+                          : undefined
+                    })
+                    toast.success("Sprint updated")
+                  } else {
+                    const created = await sprintsApi.createSprint({
+                      project_id: id!,
+                      name: sprintForm.name,
+                      goal: sprintForm.goal || undefined,
+                      start_date: sprintForm.start_date,
+                      end_date: sprintForm.end_date,
+                      status: sprintForm.status || "planned",
+                      capacity:
+                        sprintForm.capacity !== ""
+                          ? Number(sprintForm.capacity)
+                          : undefined
+                    })
+                    toast.success("Sprint created")
+                    setSelectedSprintId(created.id)
+                  }
+
+                  queryClient.invalidateQueries(["sprints", id])
+                } catch (e: any) {
+                  toast.error(e?.response?.data?.message || "Failed to save sprint")
+                }
+              }}
+            >
+              {editingSprint ? "Save Changes" : "Create Sprint"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
       {selectedTask && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto p-4 sm:p-6">
           <div className="bg-white rounded-xl shadow-xl w-full sm:max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
