@@ -1,14 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  Calendar,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Play,
-  Square
-} from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertCircle, Play, Square } from 'lucide-react'
 import { attendanceApi } from '../../api/attendance'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from 'sonner'

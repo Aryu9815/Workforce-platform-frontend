@@ -6,6 +6,10 @@ import { staffApi } from '../../api/staff'
 import { Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const inputClass =
+  "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+const labelClass = "text-sm font-medium text-gray-700"
+
 const ProjectMemberCreate = () => {
   const navigate = useNavigate()
   const { id, memberId } = useParams<{ id: string; memberId?: string }>()
@@ -99,111 +103,123 @@ const ProjectMemberCreate = () => {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {/* Header */}
       <div>
-        <h1 className="page-title">{isEdit ? 'Edit Project Member' : 'Add Project Member'}</h1>
-        <p className="page-description">
-          {isEdit ? 'Update role and dates for this member' : 'Add a staff member to this project'}
+        <h1 className="text-xl font-semibold text-gray-900">
+          {isEdit ? 'Edit Project Member' : 'Add Project Member'}
+        </h1>
+        <p className="text-gray-500 text-sm">
+          {isEdit ? 'Update member details' : 'Add a staff member to this project'}
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="card">
-        <div className="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Form */}
+      <form onSubmit={onSubmit} className="bg-white shadow-sm border border-gray-200 rounded-xl p-8 space-y-8">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* STAFF SEARCH */}
           {!isEdit && (
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-secondary-700 mb-1">
-              Staff
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
-              <input
-                type="text"
-                placeholder={isLoading ? 'Loading staff...' : 'Search staff by name'}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="input pl-10"
-                disabled={isLoading}
-              />
-              {staffOptions && (
-                <div className="mt-2 max-h-48 overflow-auto rounded-lg border border-secondary-200 bg-white">
-                  {staffOptions
-                    .filter(({ name }) =>
-                      search ? name.toLowerCase().includes(search.toLowerCase()) : true
-                    )
-                    .slice(0, 50)
-                    .map(({ id, name }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStaffId(id)
-                          setSearch(name)
-                        }}
-                        className={`w-full text-left px-3 py-2 hover:bg-secondary-100 ${
-                          selectedStaffId === id ? 'bg-primary-50' : ''
-                        }`}
-                      >
-                        <span className="text-sm text-secondary-900">{name}</span>
-                        <span className="ml-2 text-xs text-secondary-500">{id}</span>
-                      </button>
-                    ))}
-                  {staffOptions && staffOptions.length === 0 && (
-                    <div className="px-3 py-2 text-sm text-secondary-500">
-                      No staff found
-                    </div>
-                  )}
-                </div>
-              )}
-              {selectedStaffId && (
-                <p className="mt-2 text-xs text-secondary-600">
-                  Selected ID: {selectedStaffId}
-                </p>
-              )}
+            <div className="md:col-span-2">
+              <label className={labelClass}>Staff Member</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  value={search}
+                  disabled={isLoading}
+                  placeholder={isLoading ? 'Loading staff...' : 'Search staff...'}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={`${inputClass} pl-10`}
+                />
+
+                {/* Suggestions */}
+                {search && staffOptions.length > 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-xl max-h-56 overflow-y-auto">
+                    {staffOptions
+                      .filter(({ name }) =>
+                        search ? name.toLowerCase().includes(search.toLowerCase()) : true
+                      )
+                      .slice(0, 40)
+                      .map(({ id, name }) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedStaffId(id)
+                            setSearch(name)
+                          }}
+                          className={`w-full flex justify-between px-3 py-2 text-left hover:bg-indigo-50 ${
+                            selectedStaffId === id ? 'bg-indigo-100' : ''
+                          }`}
+                        >
+                          <span className="text-sm text-gray-800">{name}</span>
+                          <span className="text-xs text-gray-500">{id}</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+
+                {selectedStaffId && (
+                  <p className="mt-1 text-xs text-gray-500">Selected ID: {selectedStaffId}</p>
+                )}
+              </div>
             </div>
-          </div>
           )}
 
-          <input
-            name="role"
-            placeholder="Role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="input"
-          />
-
-          <input
-            name="joined_at"
-            type="datetime-local"
-            value={joinedAt}
-            onChange={(e) => setJoinedAt(e.target.value)}
-            className="input"
-          />
-
-          {isEdit && (
+          {/* ROLE */}
+          <div>
+            <label className={labelClass}>Role</label>
             <input
-              name="left_at"
-              type="datetime-local"
-              value={leftAt}
-              onChange={(e) => setLeftAt(e.target.value)}
-              className="input"
+              className={inputClass}
+              placeholder="Role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
             />
+          </div>
+
+          {/* JOINED DATE */}
+          <div>
+            <label className={labelClass}>Joined At</label>
+            <input
+              type="datetime-local"
+              className={inputClass}
+              value={joinedAt}
+              onChange={(e) => setJoinedAt(e.target.value)}
+            />
+          </div>
+
+          {/* LEFT DATE (ONLY IN EDIT) */}
+          {isEdit && (
+            <div>
+              <label className={labelClass}>Left At</label>
+              <input
+                type="datetime-local"
+                className={inputClass}
+                value={leftAt}
+                onChange={(e) => setLeftAt(e.target.value)}
+              />
+            </div>
           )}
         </div>
 
-        <div className="card-footer flex justify-end gap-2">
+        {/* ACTION BUTTONS */}
+        <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
           <button
             type="button"
             onClick={() => navigate(`/projects/${id}/members`)}
-            className="btn-secondary"
+            className="px-5 py-2 rounded-md border text-gray-700 bg-white hover:bg-gray-100 text-sm"
           >
             Cancel
           </button>
+
           <button
             type="submit"
             disabled={
               (isEdit ? updateMutation.isPending : createMutation.isPending) ||
               (!isEdit && !selectedStaffId)
             }
-            className="btn-primary"
+            className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm disabled:opacity-50"
           >
             {isEdit
               ? updateMutation.isPending

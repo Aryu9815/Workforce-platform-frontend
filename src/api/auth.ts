@@ -20,7 +20,7 @@ export interface AuthResponse {
   refresh_token: string
   token_type: string
   expires_in: number
-  tenant: {}
+  tenant: Tenant
   multiple_tenants_found?: boolean
 }
 

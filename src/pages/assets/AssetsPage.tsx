@@ -13,7 +13,7 @@ import {
 const AssetsPage = () => {
   const queryClient = useQueryClient()
 
-  const [assetPage, setAssetPage] = useState(1)
+  const assetPage = 1
   const [statusFilter, setStatusFilter] = useState<string | undefined>()
   const [assetTypeFilter, setAssetTypeFilter] = useState<string | undefined>()
 
