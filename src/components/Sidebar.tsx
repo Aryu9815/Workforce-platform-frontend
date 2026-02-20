@@ -22,7 +22,7 @@ const Sidebar = () => {
   const location = useLocation()
   const { tenant, user } = useAuthStore()
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['staff', 'projects'])
-  const { sidebarCollapsed, toggleSidebarCollapsed } = useUIStore()
+  const { sidebarCollapsed, setSidebarCollapsed } = useUIStore()
 
   const toggleMenu = (menu: string) => {
     setExpandedMenus(prev =>
@@ -86,6 +86,9 @@ const Sidebar = () => {
       className={`fixed left-0 top-0 h-full ${
         sidebarCollapsed ? 'w-20' : 'w-64'
       } bg-slate-900 text-slate-200 transition-all duration-300 flex flex-col z-40`}
+      onMouseEnter={() => {
+        if (sidebarCollapsed) setSidebarCollapsed(false)
+      }}
     >
       {/* Top Section */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
@@ -103,14 +106,15 @@ const Sidebar = () => {
           )}
         </div>
 
-        {/* Always visible toggle */}
-        <button
-          onClick={toggleSidebarCollapsed}
-          className="p-2 rounded-md hover:bg-slate-800 transition"
-          title="Toggle sidebar"
-        >
-          <Menu className="h-5 w-5 text-slate-300" />
-        </button>
+        {!sidebarCollapsed && (
+          <button
+            onClick={() => setSidebarCollapsed(true)}
+            className="p-2 rounded-md hover:bg-slate-800 transition"
+            title="Close sidebar"
+          >
+            <Menu className="h-5 w-5 text-slate-300" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
