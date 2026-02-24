@@ -131,9 +131,10 @@ const ReimbursementDetail = () => {
     return category?.name || categoryId;
   };
 
-  const canViewReimbursements = getPermissions('reimbursements:view' as any) || getPermissions('attendance:view');
-  const canSubmitReimbursement = getPermissions('reimbursements:create' as any) || getPermissions('attendance:mark');
-  const canApproveReimbursements = getPermissions('reimbursements:approve' as any) || getPermissions('attendance:edit');
+  const canViewReimbursements = getPermissions('reimbursements:view')
+  const canSubmitReimbursement = getPermissions('reimbursements:create')
+  const canApproveReimbursements = getPermissions('reimbursements:approve')
+  const canMarkPaidReimbursements = getPermissions('reimbursement:paid')
 
   if (!canViewReimbursements) {
     return (
@@ -211,7 +212,7 @@ const ReimbursementDetail = () => {
               </Button>
             </>
           )}
-          {claim.status === 'approved' && canApproveReimbursements && (
+          {claim.status === 'approved' && canMarkPaidReimbursements && (
             <Button onClick={() => setShowPayDialog(true)}>
               <CreditCard className="mr-2 h-4 w-4" />
               Mark as Paid

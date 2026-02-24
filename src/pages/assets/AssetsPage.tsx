@@ -546,7 +546,7 @@ const AssetsPage = () => {
                             </button>
                           )}
 
-                          {asset.status === 'assigned' && canAssignAssets && (
+                          {asset.status === 'assigned' && canReturnAssets && (
                             <button
                               onClick={() => {
                                 setSelectedAsset(asset)

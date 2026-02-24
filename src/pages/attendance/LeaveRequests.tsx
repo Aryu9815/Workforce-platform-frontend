@@ -77,6 +77,10 @@ const LeaveRequests = () => {
     }
   })
 
+  const canViewLeave = getPermissions('leave:view')
+  const canRequestLeave = getPermissions('leave:create')
+  const canApproveLeave = getPermissions('leave:approve')
+  
   const accrualMutation = useMutation({
     mutationFn: async () => {
       const [yearStr, monthStr] = accrualMonth.split('-')
@@ -93,9 +97,6 @@ const LeaveRequests = () => {
     },
   })
 
-  const canViewLeave = getPermissions('attendance:view')
-  const canRequestLeave = getPermissions('attendance:mark')
-  const canApproveLeave = getPermissions('attendance:edit')
 
   if (!canViewLeave) {
     return (

@@ -62,7 +62,6 @@ const Attendance = () => {
 
   const canViewAttendance = getPermissions('attendance:view')
   const canMarkAttendance = getPermissions('attendance:mark')
-  const canEditAttendance = getPermissions('attendance:edit')
 
   if (!canViewAttendance) {
     return (

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { tasksApi } from '../../api/tasks'
 import toast from 'react-hot-toast'
+import { useAuthStore } from '../../store/authStore'
 
 
 type TaskDetailModalProps = {
@@ -26,7 +27,7 @@ const TaskDetailModal = ({
 }: TaskDetailModalProps) => {
   const queryClient = useQueryClient()
   const selectedTaskId = selectedTask?.id || null
-
+  const getPermissions = useAuthStore(state => state.getPermissions)
   const { data: taskDetail } = useQuery({
     queryKey: ['task', selectedTaskId],
     queryFn: () => tasksApi.getTask(selectedTaskId!),
@@ -80,6 +81,11 @@ const TaskDetailModal = ({
     }
     return roots
   }
+  const canViewComments = getPermissions('comment:view')
+  const canEditComments = getPermissions('comment:update')
+  const canDeleteComments = getPermissions('comment:delete')
+  const canViewTask = getPermissions('task:view')
+  const canEditTask = getPermissions('task:update')
 
   const renderCommentNodes = (nodes: CommentNode[], depth = 0): JSX.Element[] => {
     return nodes.map((node) => {
@@ -147,6 +153,7 @@ const TaskDetailModal = ({
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  { canEditComments && (
                   <button
                     onClick={() => {
                       setEditCommentId(c.id)
@@ -156,6 +163,8 @@ const TaskDetailModal = ({
                   >
                     Edit
                   </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setReplyForId(c.id)
@@ -166,6 +175,7 @@ const TaskDetailModal = ({
                   >
                     Reply
                   </button>
+                  { canDeleteComments && (
                   <button
                     onClick={async () => {
                       try {
@@ -182,6 +192,7 @@ const TaskDetailModal = ({
                   >
                     Delete
                   </button>
+                  )}
                 </div>
               </div>
             )}
@@ -300,7 +311,7 @@ const TaskDetailModal = ({
 
           {taskDetail && (
             <div className="mt-4">
-              {!taskEditMode && (
+              {!taskEditMode &&  canEditTask && (
                 <div className="flex justify-end">
                   <button
                     className="px-3 py-1 text-xs border rounded hover:bg-gray-100"
@@ -590,6 +601,7 @@ const TaskDetailModal = ({
         </div>
 
         {/* COMMENTS SECTION */}
+        { canViewComments && (
         <div>
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Comments</h3>
 
@@ -644,6 +656,7 @@ const TaskDetailModal = ({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   </div>
