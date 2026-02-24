@@ -228,9 +228,9 @@ const ProjectWorkflow = () => {
   const canEditSprint = getPermissions('sprint:update')
   const canDeleteSprint = getPermissions('sprint:delete')
   const canEndSprints = getPermissions('sprint:complete')
-  const canSprintsToBacklog = getPermissions('sprint:backlog')
-  const canSprintsToNextSprint = getPermissions('sprint:next-sprint')
-  const canSprintsToNewSprint = getPermissions('sprint:new-sprint')
+  const canSprintsToBacklog = getPermissions('task:backlog')
+  const canSprintsToNextSprint = getPermissions('task:next-sprint')
+  const canSprintsToNewSprint = getPermissions('task:new-sprint')
   const canMoveTasks = getPermissions('task:state')
   const canAssignTasks = getPermissions('task:assignee')
   const canUpdateTask = getPermissions('task:update')
@@ -296,6 +296,14 @@ const ProjectWorkflow = () => {
                 Sprints
               </button>
             )}
+            {canEndSprints && currentSprint?.status === 'active' && (
+              <button
+                className="btn-default h-8 px-3 text-xs"
+                onClick={() => setShowEndOptions(true)}
+              >
+                End Sprint
+              </button>
+            )}
             <button className="btn-default h-8 px-3 text-xs" onClick={() => navigate(`/projects/${id}/workflow/settings`)}>
               Settings
             </button>
@@ -335,7 +343,13 @@ const ProjectWorkflow = () => {
 
                         {/* Column Body — vertically scrollable */}
                         <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-3">
-                          {(groupedTasks[state.id] || []).map((task: any, index: number) => (
+                          {(groupedTasks[state.id] || []).map((task: any, index: number) => {
+                            const ticketId =
+                              task.ticket ||
+                              (task.ticket_code && task.ticket_number
+                                ? `${task.ticket_code}-${task.ticket_number}`
+                                : null)
+                            return (
                             <Draggable key={task.id} draggableId={String(task.id)} index={index} isDragDisabled={!canMoveTasks}>
                               {(provided) => (
                                 <div
@@ -345,6 +359,11 @@ const ProjectWorkflow = () => {
                                   onClick={() => setSelectedTask(task)}
                                   className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition cursor-pointer"
                                 >
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <div className="text-xs font-mono text-gray-500">
+                                      {ticketId || '—'}
+                                    </div>
+                                  </div>
                                   <div className="text-sm font-medium text-gray-900">{task.title}</div>
                                   {task.description && (
                                     <p className="text-xs text-gray-600 mt-1 line-clamp-2">
@@ -360,7 +379,8 @@ const ProjectWorkflow = () => {
                                 </div>
                               )}
                             </Draggable>
-                          ))}
+                            )
+                          })}
                           {provided.placeholder}
                         </div>
                       </div>

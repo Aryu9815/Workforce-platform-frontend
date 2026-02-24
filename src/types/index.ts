@@ -165,6 +165,9 @@ export interface Task {
   id: string;
   project_id: string;
   parent_task_id?: string;
+  ticket?: string;
+  ticket_code?: string;
+  ticket_number?: string | number;
   title: string;
   description?: string;
   status_id?: string;
