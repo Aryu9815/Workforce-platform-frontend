@@ -48,9 +48,9 @@ const Sidebar = () => {
       label: 'Staff',
       requiredPermission: 'staff:view',
       children: [
-        { path: '/staff', label: 'All Staff' },
-        { path: '/departments', label: 'Departments' },
-        { path: '/designations', label: 'Designations' },
+        { path: '/staff', label: 'All Staff' , requiredPermission: 'staff:view'},
+        { path: '/departments', label: 'Departments' , requiredPermission: 'department:view'},
+        { path: '/designations', label: 'Designations' , requiredPermission: 'designation:view'},
       ]
     },
     {
@@ -60,7 +60,7 @@ const Sidebar = () => {
       label: 'Projects',
       requiredPermission: 'project:view',
       children: [
-        { path: '/projects', label: 'All Projects' },
+        { path: '/projects', label: 'All Projects' , requiredPermission: 'project:view'},
         ...(projects?.items || []).map((p: any) => ({
           path: `/projects/${p.id}/workflow`,
           label: p.name || p.code || p.id,
@@ -74,12 +74,12 @@ const Sidebar = () => {
       label: 'Attendance',
       requiredPermission: 'attendance:view',
       children: [
-        { path: '/attendance', label: 'Records' },
-        { path: '/attendance/leave', label: 'Leave Requests' },
+        { path: '/attendance', label: 'Records', requiredPermission: 'attendance:view'},
+        { path: '/attendance/leave', label: 'Leave Requests', requiredPermission: 'leave:view' },
       ]
     },
     { path: '/assets', icon: Briefcase, label: 'Assets', requiredPermission: 'asset:view' },
-    { path: '/reimbursements', icon: Receipt, label: 'Reimbursements' },
+    { path: '/reimbursements', icon: Receipt, label: 'Reimbursements', requiredPermission: 'reimbursement:view' },
   ]
 
   return (
@@ -122,8 +122,35 @@ const Sidebar = () => {
       <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-hide">
         <ul className="space-y-1">
           {menuItems
-            .filter(item => !('requiredPermission' in item) || !item.requiredPermission || getPermissions(item.requiredPermission))
-            .map((item) => (
+            .filter((item) => {
+              const hasItemPermission =
+                !('requiredPermission' in item) ||
+                !item.requiredPermission ||
+                getPermissions(item.requiredPermission)
+
+              if (hasItemPermission) return true
+
+              if (item.children && item.children.length > 0) {
+                return item.children.some(
+                  (child: any) =>
+                    !child.requiredPermission || getPermissions(child.requiredPermission)
+                )
+              }
+
+              return false
+            })
+            .map((item) => {
+              const visibleChildren =
+                item.children?.filter(
+                  (child: any) =>
+                    !child.requiredPermission || getPermissions(child.requiredPermission)
+                ) || []
+
+              const isGroupActive =
+                visibleChildren.length > 0 &&
+                visibleChildren.some((child: any) => isActive(child.path))
+
+              return (
             <li key={item.path || item.key}>
               {/* Collapsed Mode */}
               {sidebarCollapsed ? (
@@ -159,7 +186,7 @@ const Sidebar = () => {
                   <button
                     onClick={() => toggleMenu(item.key!)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg w-full transition ${
-                      item.children.some(child => isActive(child.path))
+                      isGroupActive
                         ? 'bg-slate-800 text-white'
                         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                     }`}
@@ -173,9 +200,9 @@ const Sidebar = () => {
                     />
                   </button>
 
-                  {expandedMenus.includes(item.key!) && (
+                  {expandedMenus.includes(item.key!) && visibleChildren.length > 0 && (
                     <ul className="ml-8 mt-1 space-y-1">
-                      {item.children.map((child) => (
+                      {visibleChildren.map((child: any) => (
                         <li key={child.path}>
                           <NavLink
                             to={child.path}
@@ -196,7 +223,8 @@ const Sidebar = () => {
                 </div>
               )}
             </li>
-          ))}
+              )
+            })}
         </ul>
       </nav>
 

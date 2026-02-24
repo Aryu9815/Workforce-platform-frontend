@@ -74,10 +74,10 @@ const LeaveRequests = () => {
     }
   })
 
-  const canViewLeave = getPermissions('attendance:view')
-  const canRequestLeave = getPermissions('attendance:mark')
-  const canApproveLeave = getPermissions('attendance:edit')
-
+  const canViewLeave = getPermissions('leave:view')
+  const canRequestLeave = getPermissions('leave:create')
+  const canApproveLeave = getPermissions('leave:approve')
+  
   if (!canViewLeave) {
     return (
       <div className="p-6">

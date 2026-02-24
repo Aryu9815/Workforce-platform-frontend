@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { projectsApi } from "../../api/projects"
 import toast from "react-hot-toast"
+import { useAuthStore } from '../../store/authStore'
 
 const WorkflowSettings = () => {
   const { id } = useParams<{ id: string }>()
@@ -15,6 +16,9 @@ const WorkflowSettings = () => {
   const [isStateModalOpen, setIsStateModalOpen] = useState(false)
   const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false)
 
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  const canViewTransitions = getPermissions('transition:view')
+  const canViewStates = getPermissions('state:view')
   const { data: project } = useQuery({
     queryKey: ["project", id],
     queryFn: () => projectsApi.getProject(id!),
@@ -38,7 +42,13 @@ const WorkflowSettings = () => {
   if (!project || !workflow) {
     return <div className="py-10 text-center text-gray-500">Loading...</div>
   }
-
+  if (!canViewStates && !canViewTransitions) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view states and transitions.</p>
+      </div>
+    )
+  }
   const saveState = async (data: any) => {
     try {
       data.workflow_id = workflowId
@@ -99,6 +109,14 @@ const WorkflowSettings = () => {
     toast.success("Transition removed")
   }
 
+  const canEditState = getPermissions('state:update')
+  const canEditTransition = getPermissions('transition:update')
+  const canDeleteState = getPermissions('state:delete')
+  const canDeleteTransition = getPermissions('transition:delete')
+  const canCreateState = getPermissions('state:create')
+  const canCreateTransition = getPermissions('transition:create')
+
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
 
@@ -119,6 +137,7 @@ const WorkflowSettings = () => {
 
       {/* TABS */}
       <div className="flex bg-white p-1 border border-gray-200 rounded-md w-fit gap-1">
+        {canViewTransitions && (
         <button
           onClick={() => setActiveTab("transitions")}
           className={`px-4 py-2 text-sm rounded-md ${
@@ -129,7 +148,8 @@ const WorkflowSettings = () => {
         >
           Transitions
         </button>
-
+        )}
+        {canViewStates && (
         <button
           onClick={() => setActiveTab("states")}
           className={`px-4 py-2 text-sm rounded-md ${
@@ -140,7 +160,8 @@ const WorkflowSettings = () => {
         >
           States
         </button>
-      </div>
+        )}
+        </div>
 
       <div className="border border-gray-200 rounded-md bg-white p-6">
 
@@ -148,6 +169,7 @@ const WorkflowSettings = () => {
         {activeTab === "transitions" && (
           <>
             <div className="flex justify-end mb-4">
+              {canCreateTransition && (
               <button
                 onClick={() => {
                   setSelectedTransition(null)
@@ -157,6 +179,7 @@ const WorkflowSettings = () => {
               >
                 + Add Transition
               </button>
+              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -178,6 +201,7 @@ const WorkflowSettings = () => {
                       key={tr.id}
                       className="hover:bg-gray-50 cursor-pointer"
                       onClick={() => {
+                        if (!canEditTransition) return
                         setSelectedTransition(tr)
                         setIsTransitionModalOpen(true)
                       }}
@@ -200,6 +224,7 @@ const WorkflowSettings = () => {
         {activeTab === "states" && (
           <>
             <div className="flex justify-end mb-4">
+              {canCreateState && (
               <button
                 onClick={() => {
                   setSelectedState(null)
@@ -209,6 +234,7 @@ const WorkflowSettings = () => {
               >
                 + Add State
               </button>
+              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -230,6 +256,7 @@ const WorkflowSettings = () => {
                       key={st.id}
                       className="hover:bg-gray-50 cursor-pointer"
                       onClick={() => {
+                        if (!canEditState) return
                         setSelectedState(st)
                         setIsStateModalOpen(true)
                       }}

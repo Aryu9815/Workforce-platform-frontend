@@ -129,10 +129,10 @@ const ReimbursementList = () => {
     .filter(claim => claim.status === 'approved' || claim.status === 'paid')
     .reduce((sum, claim) => sum + Number(claim.total_amount), 0);
 
-  const canViewReimbursements = getPermissions('reimbursements:view' as any) || getPermissions('attendance:view');
-  const canCreateReimbursements = getPermissions('reimbursements:create' as any) || getPermissions('attendance:mark');
-  const canApproveReimbursements = getPermissions('reimbursements:approve' as any) || getPermissions('attendance:edit');
-
+  const canViewReimbursements = getPermissions('reimbursement:view');
+  const canCreateReimbursements = getPermissions('reimbursement:create');
+  const canApproveReimbursements = getPermissions('reimbursement:approve');
+  
   if (!canViewReimbursements) {
     return (
       <div className="p-6">
