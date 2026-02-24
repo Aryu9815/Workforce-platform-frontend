@@ -17,6 +17,9 @@ import { format, differenceInDays } from 'date-fns'
 const LeaveRequests = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [accrualMonth, setAccrualMonth] = useState(
+    format(new Date(), 'yyyy-MM')
+  )
   const { user, getPermissions } = useAuthStore()
   const queryClient = useQueryClient()
 
@@ -78,6 +81,23 @@ const LeaveRequests = () => {
   const canRequestLeave = getPermissions('leave:create')
   const canApproveLeave = getPermissions('leave:approve')
   
+  const accrualMutation = useMutation({
+    mutationFn: async () => {
+      const [yearStr, monthStr] = accrualMonth.split('-')
+      const year = parseInt(yearStr, 10)
+      const month = parseInt(monthStr, 10)
+      return attendanceApi.runLeaveAccrual(year, month)
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Leave accrual executed')
+      queryClient.invalidateQueries(['leave-requests'])
+    },
+    onError: (e: any) => {
+      toast.error(e.response?.data?.detail || 'Failed to run leave accrual')
+    },
+  })
+
+
   if (!canViewLeave) {
     return (
       <div className="p-6">
@@ -150,15 +170,37 @@ const LeaveRequests = () => {
           </p>
         </div>
 
-        {canRequestLeave && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Request Leave
-          </button>
-        )}
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-2">
+            <label className="text-xs font-medium text-gray-600">
+              Accrual month
+            </label>
+            <input
+              type="month"
+              value={accrualMonth}
+              onChange={(e) => setAccrualMonth(e.target.value)}
+              className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-teal-600"
+            />
+            <button
+              type="button"
+              onClick={() => accrualMutation.mutate()}
+              disabled={accrualMutation.isPending}
+              className="text-xs px-3 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+            >
+              {accrualMutation.isPending ? 'Running...' : 'Run Accrual'}
+            </button>
+          </div>
+
+          {canRequestLeave && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Request Leave
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
