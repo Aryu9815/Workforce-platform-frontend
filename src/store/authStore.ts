@@ -44,15 +44,16 @@ export const useAuthStore = create<AuthState>()(
       permissions: [],
       
       // Actions
-      setAuth: (data) => set({
-        isloggedIn: true,
-        isAuthenticated: false,
-        user: data.user,
-        tenant: data.tenant || null,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        permissions: data.permissions || [],
-      }),
+      setAuth: (data) =>
+        set((state) => ({
+          isloggedIn: true,
+          isAuthenticated: false,
+          user: data.user,
+          tenant: data.tenant || null,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          permissions: data.permissions ?? state.permissions,
+        })),
       
       setTenant: (tenant) => set({ tenant }),
       

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { designationApi } from '../../api/designation'
 import { departmentApi } from '../../api/department'
-import { Button } from '../../components/ui/Button'
+import { useAuthStore } from '../../store/authStore'
 
 const DesignationList = () => {
   const [search, setSearch] = useState('')
@@ -41,6 +41,19 @@ const DesignationList = () => {
     desig.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  const canCreateDesignation = getPermissions('designation:create')
+  const canViewDesignation = getPermissions('designation:view')
+  const canEditDesignation = getPermissions('designation:update')
+  const canDeleteDesignation = getPermissions('designation:delete')
+
+  if (!canViewDesignation) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view designations.</p>
+      </div>
+    )
+  }
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
 
@@ -52,7 +65,7 @@ const DesignationList = () => {
             Manage staff roles and organizational levels
           </p>
         </div>
-
+        {canCreateDesignation && (
         <Link
           to="/designations/new"
           className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
@@ -60,6 +73,7 @@ const DesignationList = () => {
           <Plus className="h-4 w-4 mr-2" />
           Add Designation
         </Link>
+        )}
       </div>
 
       {/* Search */}
@@ -141,7 +155,7 @@ const DesignationList = () => {
                   {/* Actions - inline style */}
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-3">
-
+                      {canEditDesignation && (
                       <Link
                         to={`/designations/${desig.id}/edit`}
                         className="flex items-center gap-1 text-teal-700 hover:text-teal-800 transition text-sm font-medium"
@@ -149,19 +163,20 @@ const DesignationList = () => {
                         <Edit className="h-4 w-4" />
                         Edit
                       </Link>
-
-                      <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this designation?')) {
-                            deleteMutation.mutate(desig.id)
-                          }
-                        }}
-                        className="flex items-center gap-1 text-red-600 hover:text-red-700 transition text-sm font-medium"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </button>
-
+                      )}
+                      {canDeleteDesignation && (
+                        <button
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this designation?')) {
+                              deleteMutation.mutate(desig.id)
+                            }
+                          }}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700 transition text-sm font-medium"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </td>
 

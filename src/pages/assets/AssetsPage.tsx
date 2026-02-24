@@ -347,6 +347,12 @@ const AssetsPage = () => {
   const canViewAssets = getPermissions('asset:view')
   const canCreateAssets = getPermissions('asset:create')
   const canAssignAssets = getPermissions('asset:assign')
+  const canReturnAssets = getPermissions('asset:return')
+  const canDeleteAssets = getPermissions('asset:delete')
+  const canUpdateAssets = getPermissions('asset:update')
+  const canViewAllAssets = getPermissions('asset:view:all')
+  const canCreateAssetType = getPermissions('asset-type:create')
+  const canCreateAssetCategory = getPermissions('asset-category:create')
 
   if (!canViewAssets) {
     return (
@@ -375,27 +381,29 @@ const AssetsPage = () => {
           >
             Refresh
           </button>
+          {canCreateAssetCategory && (
+            <button
+              onClick={() => setShowCreateCategory(true)}
+              className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
+            >
+              New Category
+            </button>
+          )}
+          {canCreateAssetType && (
+            <button
+              onClick={() => setShowCreateType(true)}
+              className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
+            >
+              New Type
+            </button>
+          )}
           {canCreateAssets && (
-            <>
-              <button
-                onClick={() => setShowCreateCategory(true)}
-                className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
-              >
-                New Category
-              </button>
-              <button
-                onClick={() => setShowCreateType(true)}
-                className="px-4 py-2 text-sm border rounded-md bg-white hover:bg-gray-100"
-              >
-                New Type
-              </button>
-              <button
-                onClick={() => setShowCreateAsset(true)}
-                className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
-              >
-                New Asset
-              </button>
-            </>
+            <button
+              onClick={() => setShowCreateAsset(true)}
+              className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
+            >
+              New Asset
+            </button>
           )}
         </div>
       </div>

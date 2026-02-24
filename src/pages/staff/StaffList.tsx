@@ -36,13 +36,6 @@ const StaffList = () => {
     queryFn: () => staffApi.getDepartments(),
   })
   
-  const getStatusBadge = (isActive: boolean) => {
-    return isActive ? (
-      <span className="badge-success">Active</span>
-    ) : (
-      <span className="badge-default">Inactive</span>
-    )
-  }
   
   const canViewStaff = getPermissions('staff:view')
   const canCreateStaff = getPermissions('staff:create')

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import toast from 'react-hot-toast'
+import { useAuthStore } from '../../store/authStore'
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>()
@@ -52,6 +53,11 @@ const ProjectDetail = () => {
     const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
     return `${diff} days`
   }
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  const canDeleteProject = getPermissions('project:delete')
+  const canEditProject = getPermissions('project:update')
+  const canManageMembers = getPermissions('project:manage-members')
+  const canViewMembers = getPermissions('project:view-members')
 
   return (
     <div className="p-6 space-y-8 bg-gray-50">
@@ -82,21 +88,23 @@ const ProjectDetail = () => {
           >
             My Task
           </button>
-
-          <button
-            onClick={() => navigate(`/projects/${id}/edit`)}
-            className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
-          >
-            Edit
-          </button>
-
-          <button
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm disabled:opacity-50"
-          >
-            Delete
-          </button>
+          {canEditProject && (
+            <button
+              onClick={() => navigate(`/projects/${id}/edit`)}
+              className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
+            >
+              Edit
+            </button>
+          )}
+          {canDeleteProject && (
+            <button
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm disabled:opacity-50"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -203,18 +211,20 @@ const ProjectDetail = () => {
       </div>
 
       {/* FULL-WIDTH TEAM MEMBERS */}
+      {canViewMembers && (
       <div className="border bg-white rounded-lg p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
-
+          
           <div className="flex gap-2">
-            <button
-              onClick={() => navigate(`/projects/${id}/members/new`)}
-              className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
-            >
-              Add Member
-            </button>
-
+            {canManageMembers && (
+              <button
+                onClick={() => navigate(`/projects/${id}/members/new`)}
+                className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
+              >
+                Add Member
+              </button>
+            )}
             <button
               onClick={() => navigate(`/projects/${id}/members`)}
               className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 text-sm"
@@ -243,7 +253,7 @@ const ProjectDetail = () => {
           </p>
         )}
       </div>
-
+      )}
     </div>
   )
 }

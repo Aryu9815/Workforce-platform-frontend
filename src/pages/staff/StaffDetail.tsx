@@ -14,12 +14,14 @@ import {
   Trash2
 } from 'lucide-react'
 import { staffApi } from '../../api/staff'
-
+import { useAuthStore } from '../../store/authStore'
 const StaffDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  const canDeleteStaff = getPermissions('staff:delete') 
+  const canEditStaff = getPermissions('staff:update')
   const [showUserModal, setShowUserModal] = useState(false)
   const [userForm, setUserForm] = useState({
     role_id: '',
@@ -79,6 +81,7 @@ const StaffDetail = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {canEditStaff && (
           <button
             onClick={() => navigate(`/staff/${id}/edit`)}
             className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition flex items-center"
@@ -86,7 +89,8 @@ const StaffDetail = () => {
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </button>
-
+          )}
+          {canDeleteStaff && (
           <button
             onClick={() => {
               if (confirm('Are you sure?')) deleteMutation.mutate()
@@ -96,7 +100,7 @@ const StaffDetail = () => {
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </button>
-
+          )}
           {!staff.user_id && (
             <button
               onClick={() => setShowUserModal(true)}
