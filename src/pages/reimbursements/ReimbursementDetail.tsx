@@ -314,12 +314,12 @@ const ReimbursementDetail = () => {
                               <td className="px-3 py-3">{item.description}</td>
                               <td className="px-3 py-3 text-right">{item.quantity}</td>
                               <td className="px-3 py-3 text-right">
-                                {item.unit_price != null ? formatCurrency(item.unit_price) : '-'}
+                                {item.unit_price != null ? formatCurrency(item.unit_price , claim.currency) : '-'}
                               </td>
                               <td className="px-3 py-3 text-right">
-                                {item.tax_amount ? formatCurrency(item.tax_amount) : '-'}
+                                {item.tax_amount ? formatCurrency(item.tax_amount , claim.currency) : '-'}
                               </td>
-                              <td className="px-3 py-3 text-right font-semibold text-gray-900">{formatCurrency(item.amount)}</td>
+                              <td className="px-3 py-3 text-right font-semibold text-gray-900">{formatCurrency(item.amount , claim.currency)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -375,7 +375,7 @@ const ReimbursementDetail = () => {
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-gray-900">Approve Reimbursement</DialogTitle>
               <DialogDescription className="text-gray-500 mt-1">
-                You are approving the claim for <span className="font-semibold text-gray-900">{formatCurrency(claim.total_amount)}</span>
+                You are approving the claim for <span className="font-semibold text-gray-900">{formatCurrency(claim.total_amount , claim.currency)}</span>
               </DialogDescription>
             </DialogHeader>
           </div>
