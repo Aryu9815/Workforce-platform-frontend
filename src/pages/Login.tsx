@@ -43,7 +43,7 @@ const Login = () => {
       setTenants(tenants)
 
       // Multi-tenant case
-      if (tenants.length > 1) {
+      if (tenants.length > 0) {
         setAuth({
           user,
           accessToken: authResponse.access_token,
