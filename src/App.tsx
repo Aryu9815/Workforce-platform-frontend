@@ -34,6 +34,9 @@ import ReimbursementList from './pages/reimbursements/ReimbursementList'
 import ReimbursementDetail from './pages/reimbursements/ReimbursementDetail'
 import ReimbursementCreate from './pages/reimbursements/ReimbursementCreate'
 import AssetsPage from './pages/assets/AssetsPage'
+import Settings from './pages/settings/Settings'
+import RolesPage from './pages/settings/RolesPage'
+import RoleDetailsPage from './pages/settings/RoleDetailsPage'
 import NotFound from './pages/NotFound'
 // import { useBootstrap } from './hooks/useBootstrap'
 import { useBootstrap } from './hooks/useBootstrap'
@@ -124,6 +127,11 @@ function App() {
         <Route path="reimbursements" element={<ReimbursementList />} />
         <Route path="reimbursements/new" element={<ReimbursementCreate />} />
         <Route path="reimbursements/:id" element={<ReimbursementDetail />} />
+
+        {/* Settings */}
+        <Route path="settings" element={<Settings />} />
+        <Route path="settings/roles" element={<RolesPage />} />
+        <Route path="settings/roles/:id" element={<RoleDetailsPage />} />
       </Route>
 
       {/* 404 */}

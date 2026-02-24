@@ -26,20 +26,52 @@ export interface Tenant {
 }
 
 export interface Role {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   is_system: boolean;
-  permissions: Permission[];
+  is_default?: boolean;
   created_at: string;
   updated_at: string;
 }
 
+export interface RoleDetail extends Role {
+  permissions: string[]; // List of permission IDs
+}
+
+export interface CreateRoleRequest {
+  name: string;
+  description?: string;
+  is_default?: boolean;
+}
+
+export interface UpdateRoleRequest {
+  name?: string;
+  description?: string;
+  is_default?: boolean;
+  permissions?: string[];
+}
+
 export interface Permission {
-  id: number;
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
   resource: string;
   action: string;
-  description?: string;
+  is_system: boolean;
+}
+
+export interface RolePermission {
+  id: string;
+  role_id: string;
+  role_name: string;
+  permission_id: string;
+  permission_code: string;
+  permission_name: string;
+  is_active: boolean;
+  conditions?: Record<string, any>;
+  created_at: string;
 }
 
 export interface ApiResponse<T> {

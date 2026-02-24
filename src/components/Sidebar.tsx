@@ -8,7 +8,8 @@ import {
   ChevronDown,
   Building2,
   Menu,
-  Briefcase
+  Briefcase,
+  Settings as SettingsIcon
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useState } from 'react'
@@ -78,6 +79,17 @@ const Sidebar = () => {
     },
     { path: '/assets', icon: Briefcase, label: 'Assets', requiredPermission: 'asset:view' },
     { path: '/reimbursements', icon: Receipt, label: 'Reimbursements' },
+    {
+      key: 'settings',
+      path: '/settings',
+      icon: SettingsIcon,
+      label: 'Settings',
+      requiredPermission: 'role:view',
+      children: [
+        { path: '/settings', label: 'General' },
+        { path: '/settings/roles', label: 'Roles & Permissions' },
+      ]
+    },
   ]
 
   return (
