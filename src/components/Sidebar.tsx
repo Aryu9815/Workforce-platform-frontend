@@ -63,6 +63,7 @@ const Sidebar = () => {
         ...(projects?.items || []).map((p: any) => ({
           path: `/projects/${p.id}/workflow`,
           label: p.name || p.code || p.id,
+          requiredPermission: 'project:view',
         })),
       ],
     },

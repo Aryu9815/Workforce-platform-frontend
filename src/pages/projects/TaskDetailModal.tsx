@@ -268,7 +268,17 @@ const TaskDetailModal = ({
 
       {/* HEADER */}
       <div className="p-5 border-b bg-gray-50 flex items-center justify-between sticky top-0 z-10">
-        <h2 className="text-xl font-semibold text-gray-900">{taskDetail?.title}</h2>
+        <div>
+          <div className="text-xs font-mono text-gray-500">
+            {taskDetail?.ticket ||
+              (taskDetail?.ticket_code && taskDetail?.ticket_number
+                ? `${taskDetail.ticket_code}-${taskDetail.ticket_number}`
+                : '—')}
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mt-1">
+            {taskDetail?.title}
+          </h2>
+        </div>
         <button onClick={onClose} className="hover:bg-gray-200 rounded-md p-1">
           ✕
         </button>
@@ -288,6 +298,10 @@ const TaskDetailModal = ({
           <h3 className="text-sm font-semibold mb-2 text-gray-900">Task Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             {[
+              ['Ticket', taskDetail?.ticket ||
+                (taskDetail?.ticket_code && taskDetail?.ticket_number
+                  ? `${taskDetail.ticket_code}-${taskDetail.ticket_number}`
+                  : '—')],
               ['Priority', taskDetail?.priority],
               ['Type', taskDetail?.task_type],
               ['Estimated Hours', taskDetail?.estimated_hours],
