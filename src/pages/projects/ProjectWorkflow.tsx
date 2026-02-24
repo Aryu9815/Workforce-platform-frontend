@@ -222,11 +222,21 @@ const ProjectWorkflow = () => {
   }
 
   const canViewProject = getPermissions('project:view')
+  const canViewSprint = getPermissions('sprint:view')
   const canCreateTask = getPermissions('task:create')
   const canManageSprints = getPermissions('sprint:create')
+  const canEditSprint = getPermissions('sprint:update')
+  const canDeleteSprint = getPermissions('sprint:delete')
   const canEndSprints = getPermissions('sprint:complete')
+  const canSprintsToBacklog = getPermissions('sprint:backlog')
+  const canSprintsToNextSprint = getPermissions('sprint:next-sprint')
+  const canSprintsToNewSprint = getPermissions('sprint:new-sprint')
+  const canMoveTasks = getPermissions('task:state')
+  const canAssignTasks = getPermissions('task:assignee')
+  const canUpdateTask = getPermissions('task:update')
+  const canDeleteTask = getPermissions('task:delete')
 
-  if (!canViewProject) {
+  if (!canViewProject || !canViewSprint) {
     return (
       <div className="p-6">
         <p className="text-sm text-gray-500">You do not have permission to view this project.</p>
@@ -305,7 +315,7 @@ const ProjectWorkflow = () => {
               {workflow.workflow_states
                 ?.sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
                 .map((state: any) => (
-                  <Droppable droppableId={state.id} key={state.id}>
+                  <Droppable droppableId={state.id} key={state.id} isDropDisabled={!canMoveTasks}>
                     {(provided) => (
                       <div
                         ref={provided.innerRef}
@@ -326,7 +336,7 @@ const ProjectWorkflow = () => {
                         {/* Column Body — vertically scrollable */}
                         <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-3">
                           {(groupedTasks[state.id] || []).map((task: any, index: number) => (
-                            <Draggable key={task.id} draggableId={String(task.id)} index={index}>
+                            <Draggable key={task.id} draggableId={String(task.id)} index={index} isDragDisabled={!canMoveTasks}>
                               {(provided) => (
                                 <div
                                   ref={provided.innerRef}
@@ -637,6 +647,7 @@ const ProjectWorkflow = () => {
         </section>
 
         {/* ASSIGNMENT */}
+        {canAssignTasks && (
         <section>
           <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-600 mb-4">
             Assignment
@@ -711,7 +722,7 @@ const ProjectWorkflow = () => {
             </div>
           )}
         </section>
-
+        )}
         {/* ACTIONS */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <button
@@ -746,9 +757,9 @@ const ProjectWorkflow = () => {
               <div>
                 <label className="label">Move open issues to</label>
                 <select className="input" value={endMoveOption} onChange={(e) => setEndMoveOption(e.target.value as MoveOpenIssuesTo)}>
-                  <option value="backlog">Backlog</option>
-                  <option value="next_sprint">Move to next sprint</option>
-                  <option value="new_sprint">Create new sprint and move</option>
+                  {canSprintsToBacklog && <option value="backlog">Backlog</option>}
+                  {canSprintsToNextSprint && <option value="next_sprint">Move to next sprint</option>}
+                  {canSprintsToNewSprint && canManageSprints && <option value="new_sprint">Create new sprint and move</option>}
                 </select>
               </div>
               {endMoveOption === 'next_sprint' && (
@@ -968,7 +979,7 @@ const ProjectWorkflow = () => {
           {/* ACTION BUTTONS */}
           <div className="flex justify-end gap-3 mt-6">
 
-            {editingSprint && (
+            {editingSprint && canDeleteSprint && (
               <button
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-100 text-sm"
                 onClick={async () => {
@@ -1017,7 +1028,7 @@ const ProjectWorkflow = () => {
               className="px-5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
               onClick={async () => {
                 try {
-                  if (editingSprint) {
+                  if (editingSprint && canEditSprint) {
                     await sprintsApi.updateSprint(editingSprint.id, {
                       name: sprintForm.name || undefined,
                       goal: sprintForm.goal || undefined,
@@ -1053,7 +1064,7 @@ const ProjectWorkflow = () => {
                 }
               }}
             >
-              {editingSprint ? "Save Changes" : "Create Sprint"}
+              {editingSprint && canEditSprint ? "Save Changes" : "Create Sprint"}
             </button>
           </div>
         </div>

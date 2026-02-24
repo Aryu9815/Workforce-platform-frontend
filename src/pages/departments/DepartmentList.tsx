@@ -8,11 +8,15 @@ import {
   Trash2
 } from 'lucide-react'
 import { departmentApi } from '../../api/department'
-
+import { useAuthStore } from '../../store/authStore'
 const DepartmentList = () => {
   const [search, setSearch] = useState('')
   const queryClient = useQueryClient()
-
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  const canDeleteDepartment = getPermissions('department:delete') 
+  const canEditDepartment = getPermissions('department:update')
+  const canCreateDepartment = getPermissions('department:create')
+  const canViewDepartment = getPermissions('department:view')
   const { data: departments = [], isLoading } = useQuery({
     queryKey: ['departments'],
     queryFn: () => departmentApi.getDepartments(),
@@ -39,7 +43,13 @@ const DepartmentList = () => {
       </div>
     )
   }
-
+  if (!canViewDepartment) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-gray-500">You do not have permission to view departments.</p>
+      </div>
+    )
+  }
   return (
     <div className="p-8 bg-gray-50 min-h-screen space-y-8">
 
@@ -53,7 +63,7 @@ const DepartmentList = () => {
             Manage your organization's departments
           </p>
         </div>
-
+        {canCreateDepartment && (
         <Link
           to="/departments/new"
           className="flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm transition"
@@ -61,6 +71,7 @@ const DepartmentList = () => {
           <Plus className="h-4 w-4 mr-2" />
           Add Department
         </Link>
+        )}
       </div>
 
       {/* Search */}
@@ -143,7 +154,7 @@ const DepartmentList = () => {
                 {/* Actions */}
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end items-center gap-4">
-
+                    {canEditDepartment && (
                     <Link
                       to={`/departments/${dept.id}/edit`}
                       className="flex items-center text-sm text-emerald-600 hover:text-emerald-800 transition"
@@ -151,7 +162,8 @@ const DepartmentList = () => {
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Link>
-
+                    )}
+                    {canDeleteDepartment && (
                     <button
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this department?')) {
@@ -163,7 +175,7 @@ const DepartmentList = () => {
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete
                     </button>
-
+                    )}
                   </div>
                 </td>
 
