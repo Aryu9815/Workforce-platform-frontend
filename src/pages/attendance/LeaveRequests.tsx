@@ -11,9 +11,9 @@ import {
 import { attendanceApi, CreateLeaveRequestData } from '../../api/attendance'
 import { LeaveRequest, LeaveType } from '../../types'
 import { useAuthStore } from '../../store/authStore'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { format, differenceInDays } from 'date-fns'
-import { getErrorMessage } from '../../lib/utils'
+import { showApiError } from '../../lib/utils'
 
 const LeaveRequests = () => {
   const [statusFilter, setStatusFilter] = useState('')
@@ -59,7 +59,7 @@ const LeaveRequests = () => {
       })
     },
     onError: (e: any) => {
-      toast.error(getErrorMessage(e, 'Failed to submit request'))
+      showApiError(e, 'Failed to submit request')
     }
   })
 
@@ -74,7 +74,7 @@ const LeaveRequests = () => {
       toast.success(`Request ${vars.status}`)
     },
     onError: (e: any) => {
-      toast.error(getErrorMessage(e, 'Action failed'))
+      showApiError(e, 'Action failed')
     }
   })
 
@@ -94,7 +94,7 @@ const LeaveRequests = () => {
       queryClient.invalidateQueries(['leave-requests'])
     },
     onError: (e: any) => {
-      toast.error(getErrorMessage(e, 'Failed to run leave accrual'))
+      showApiError(e, 'Failed to run leave accrual')
     },
   })
 

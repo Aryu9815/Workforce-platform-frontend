@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { authApi } from '../api/auth'
-import { getErrorMessage } from '../lib/utils'
+import { showApiError } from '../lib/utils'
 
 interface RegisterForm {
   first_name: string
@@ -44,7 +44,7 @@ const Register = () => {
       toast.success('Account created successfully! Please sign in.')
       navigate('/login')
     } catch (error: any) {
-      toast.error(getErrorMessage(error, 'Registration failed'))
+      showApiError(error, 'Registration failed')
     } finally {
       setIsLoading(false)
     }

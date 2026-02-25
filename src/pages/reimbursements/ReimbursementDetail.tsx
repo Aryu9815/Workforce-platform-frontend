@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Ta
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
 import { Input } from '../../components/ui/Input';
 import { formatCurrency, formatDate, getErrorMessage } from '../../lib/utils';
-import { toast } from '../../components/ui/sonner';
+import toast from 'react-hot-toast';
 import type { ReimbursementClaim, ExpenseCategory } from '../../types';
 
 const statusConfig: Record<

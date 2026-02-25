@@ -6,6 +6,8 @@ import StaffForm from '../../components/staff/StaffForm'
 import { staffApi } from '../../api/staff'
 import { departmentApi } from '../../api/department'
 import { designationApi } from '../../api/designation'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 const StaffEdit = () => {
   const { id } = useParams<{ id: string }>()
@@ -47,7 +49,11 @@ const StaffEdit = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
       queryClient.invalidateQueries({ queryKey: ['staff', id] })
+      toast.success('Staff member updated')
       navigate(`/staff/${id}`)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to update staff member'))
     }
   })
 

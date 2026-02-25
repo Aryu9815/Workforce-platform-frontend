@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/DropdownMenu';
 import { formatCurrency, formatDate, getErrorMessage } from '../../lib/utils';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import type { ReimbursementClaim, ExpenseCategory } from '../../types';
 
 const statusConfig = {

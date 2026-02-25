@@ -5,6 +5,8 @@ import StaffForm from '../../components/staff/StaffForm'
 import { staffApi } from '../../api/staff'
 import { departmentApi } from '../../api/department'
 import { designationApi } from '../../api/designation'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 const StaffCreate = () => {
   const navigate = useNavigate()
@@ -26,7 +28,11 @@ const StaffCreate = () => {
     mutationFn: staffApi.createStaff,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
+      toast.success('Staff member created')
       navigate(`/staff/${data.id}`)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to create staff member'))
     },
   })
 

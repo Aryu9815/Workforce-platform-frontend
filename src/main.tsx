@@ -27,6 +27,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             style: {
               background: '#363636',
               color: '#fff',
+              whiteSpace: 'pre-line', // Allow multi-line errors
+              maxWidth: '400px',
             },
             success: {
               duration: 3000,

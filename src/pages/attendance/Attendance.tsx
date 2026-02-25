@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Clock, CheckCircle, XCircle, AlertCircle, Play, Square } from 'lucide-react'
 import { attendanceApi } from '../../api/attendance'
 import { useAuthStore } from '../../store/authStore'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { format } from 'date-fns'
-import { getErrorMessage } from '../../lib/utils'
+import { showApiError } from '../../lib/utils'
 
 const Attendance = () => {
   const [selectedDate, setSelectedDate] = useState(
@@ -45,7 +45,7 @@ const Attendance = () => {
       toast.success('Checked in successfully')
     },
     onError: (e: any) => {
-      toast.error(getErrorMessage(e, 'Failed to check in'))
+      showApiError(e, 'Failed to check in')
     }
   })
 
@@ -57,7 +57,7 @@ const Attendance = () => {
       toast.success('Checked out successfully')
     },
     onError: (e: any) => {
-      toast.error(getErrorMessage(e, 'Failed to check out'))
+      showApiError(e, 'Failed to check out')
     }
   })
 

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { departmentApi, UpdateDepartmentData } from '../../api/department'
 import DepartmentForm from '../../components/departments/DepartmentForm'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { getErrorMessage } from '../../lib/utils'
 
 const DepartmentEdit = () => {

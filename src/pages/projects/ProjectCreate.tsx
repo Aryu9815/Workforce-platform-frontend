@@ -5,7 +5,7 @@ import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
 import toast from 'react-hot-toast'
 import { Search } from 'lucide-react'
-import { getErrorMessage } from '../../lib/utils'
+import { showApiError } from '../../lib/utils'
 
 const inputClass =
   "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
@@ -42,7 +42,7 @@ const ProjectCreate = () => {
       navigate('/projects')
     },
     onError: (error: any) => {
-      toast.error(getErrorMessage(error, 'Failed to create project'))
+      showApiError(error, 'Failed to create project')
     },
   })
 

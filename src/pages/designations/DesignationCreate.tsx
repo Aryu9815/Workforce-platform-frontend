@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { designationApi, CreateDesignationData } from '../../api/designation'
 import { departmentApi } from '../../api/department'
 import DesignationForm from '../../components/designations/DesignationForm'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { getErrorMessage } from '../../lib/utils'
 
 const DesignationCreate = () => {

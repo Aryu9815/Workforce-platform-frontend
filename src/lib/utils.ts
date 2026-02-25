@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import toast from 'react-hot-toast'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -106,28 +107,88 @@ export function throttle<T extends (...args: any[]) => any>(
 }
 
 /**
- * Extracts a user-friendly error message from a backend error response.
- * Handles the standardized structure: { success: false, error: { message: "..." } }
+ * Extracts and displays user-friendly error messages from a backend error response.
+ * Handles standardized structure: { success: false, error: { code, message, details: { fields: {...} } } }
+ * Triggers individual toasts for validation errors.
+ */
+export function showApiError(error: any, defaultMessage = "An unexpected error occurred"): void {
+  if (!error) {
+    toast.error(defaultMessage);
+    return;
+  }
+  
+  // 1. Check for standard backend error structure
+  const errorData = error?.response?.data?.error;
+  
+  if (errorData) {
+    const { code, message, details } = errorData;
+
+    // Handle Validation Errors (ERR_VALIDATION) - Show separate toasts for each field
+    if (code === 'ERR_VALIDATION' && details?.fields) {
+      const fields = Object.entries(details.fields);
+      if (fields.length > 0) {
+        fields.forEach(([field, msg]) => {
+          toast.error(`${snakeToTitle(field)}: ${msg}`);
+        });
+        return;
+      }
+    }
+
+    // Handle other detailed errors
+    if (message) {
+      toast.error(message);
+      return;
+    }
+  }
+
+  // 2. Fallback to legacy detail field (FastAPI/Starlette)
+  const detail = error?.response?.data?.detail;
+  if (detail) {
+    toast.error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    return;
+  }
+
+  // 3. Root message fallback
+  const rootMessage = error?.response?.data?.message;
+  if (rootMessage) {
+    toast.error(rootMessage);
+    return;
+  }
+
+  // 4. Axios network error
+  if (error.message) {
+    toast.error(error.message);
+    return;
+  }
+
+  toast.error(defaultMessage);
+}
+
+/**
+ * Extracts a user-friendly error message as a string.
+ * Useful for logging or simple alerts.
  */
 export function getErrorMessage(error: any, defaultMessage = "An unexpected error occurred"): string {
   if (!error) return defaultMessage;
-  if (typeof error === 'string') return error;
-
-  // 1. Standardized structure: { success: false, error: { message: "..." } }
-  const standardMessage = error?.response?.data?.error?.message;
-  if (standardMessage) return standardMessage;
-
-  // 2. Common detail field (FastAPI/Starlette): { detail: "..." }
-  const detail = error?.response?.data?.detail;
-  if (detail) {
-    return typeof detail === 'string' ? detail : JSON.stringify(detail);
+  
+  const errorData = error?.response?.data?.error;
+  
+  if (errorData) {
+    const { code, message, details } = errorData;
+    if (code === 'ERR_VALIDATION' && details?.fields) {
+      return Object.entries(details.fields)
+        .map(([field, msg]) => `${snakeToTitle(field)}: ${msg}`)
+        .join('\n');
+    }
+    if (message) return message;
   }
 
-  // 3. Message at root: { message: "..." }
+  const detail = error?.response?.data?.detail;
+  if (detail) return typeof detail === 'string' ? detail : JSON.stringify(detail);
+
   const rootMessage = error?.response?.data?.message;
   if (rootMessage) return rootMessage;
 
-  // 4. Axios error message (e.g., network error)
   if (error.message) return error.message;
 
   return defaultMessage;

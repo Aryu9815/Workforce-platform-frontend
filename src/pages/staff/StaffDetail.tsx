@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { staffApi } from '../../api/staff'
 import { useAuthStore } from '../../store/authStore'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 const StaffDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -39,7 +41,11 @@ const StaffDetail = () => {
     mutationFn: () => staffApi.deleteStaff(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
+      toast.success('Staff member deleted')
       navigate('/staff')
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to delete staff member'))
     }
   })
 
@@ -47,7 +53,11 @@ const StaffDetail = () => {
     mutationFn: () => userApi.createFromStaff(id!, userForm),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff', id] })
+      toast.success('User account created')
       setShowUserModal(false)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to create user account'))
     }
   })
 

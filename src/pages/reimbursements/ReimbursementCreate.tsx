@@ -5,6 +5,8 @@ import { reimbursementsApi, CreateReimbursementItemData } from '../../api/reimbu
 import { staffApi } from '../../api/staff'
 import type { ExpenseCategory, Staff } from '../../types'
 import { Search } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 type ItemForm = {
   category_id: string
@@ -64,7 +66,11 @@ const ReimbursementCreate = () => {
   const createMutation = useMutation({
     mutationFn: reimbursementsApi.createClaim,
     onSuccess: (created) => {
+      toast.success('Reimbursement claim created')
       navigate(`/reimbursements/${created.id}`)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to create reimbursement claim'))
     },
   })
 
