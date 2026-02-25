@@ -100,7 +100,35 @@ export function throttle<T extends (...args: any[]) => any>(
     if (!inThrottle) {
       func(...args)
       inThrottle = true
-      setTimeout(() => (inThrottle = false), limit)
+      setTimeout(() => { inThrottle = false }, limit)
     }
   }
+}
+
+/**
+ * Extracts a user-friendly error message from a backend error response.
+ * Handles the standardized structure: { success: false, error: { message: "..." } }
+ */
+export function getErrorMessage(error: any, defaultMessage = "An unexpected error occurred"): string {
+  if (!error) return defaultMessage;
+  if (typeof error === 'string') return error;
+
+  // 1. Standardized structure: { success: false, error: { message: "..." } }
+  const standardMessage = error?.response?.data?.error?.message;
+  if (standardMessage) return standardMessage;
+
+  // 2. Common detail field (FastAPI/Starlette): { detail: "..." }
+  const detail = error?.response?.data?.detail;
+  if (detail) {
+    return typeof detail === 'string' ? detail : JSON.stringify(detail);
+  }
+
+  // 3. Message at root: { message: "..." }
+  const rootMessage = error?.response?.data?.message;
+  if (rootMessage) return rootMessage;
+
+  // 4. Axios error message (e.g., network error)
+  if (error.message) return error.message;
+
+  return defaultMessage;
 }

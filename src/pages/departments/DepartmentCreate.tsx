@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { departmentApi, CreateDepartmentData } from '../../api/department'
 import DepartmentForm from '../../components/departments/DepartmentForm'
 import { toast } from 'sonner'
+import { getErrorMessage } from '../../lib/utils'
 
 const DepartmentCreate = () => {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ const DepartmentCreate = () => {
     },
 
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to create department')
+      toast.error(getErrorMessage(error, 'Failed to create department'))
     },
   })
 

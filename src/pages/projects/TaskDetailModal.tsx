@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { tasksApi } from '../../api/tasks'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
+import { getErrorMessage } from '../../lib/utils'
 
 
 type TaskDetailModalProps = {
@@ -128,9 +129,7 @@ const TaskDetailModal = ({
                         refetchComments()
                         toast.success('Comment updated')
                       } catch (e: any) {
-                        toast.error(
-                          e?.response?.data?.message || 'Failed to update comment'
-                        )
+                        toast.error(getErrorMessage(e, 'Failed to update comment'))
                       }
                     }}
                   >
@@ -183,9 +182,7 @@ const TaskDetailModal = ({
                         refetchComments()
                         toast.success('Comment deleted')
                       } catch (e: any) {
-                        toast.error(
-                          e?.response?.data?.message || 'Failed to delete comment'
-                        )
+                        toast.error(getErrorMessage(e, 'Failed to delete comment'))
                       }
                     }}
                     className="text-xs px-2 py-1 border rounded text-red-600 hover:bg-gray-100"
@@ -240,9 +237,7 @@ const TaskDetailModal = ({
                         refetchComments()
                         toast.success('Reply added')
                       } catch (e: any) {
-                        toast.error(
-                          e?.response?.data?.message || 'Failed to add reply'
-                        )
+                        toast.error(getErrorMessage(e, 'Failed to add reply'))
                       }
                     }}
                   >
@@ -580,9 +575,7 @@ const TaskDetailModal = ({
                             sprintId,
                           ])
                         } catch (e: any) {
-                          toast.error(
-                            e?.response?.data?.message || 'Failed to update task'
-                          )
+                          toast.error(getErrorMessage(e, 'Failed to update task'))
                         }
                       }}
                     >
@@ -659,9 +652,7 @@ const TaskDetailModal = ({
                     refetchComments()
                     toast.success('Comment added')
                   } catch (e: any) {
-                    toast.error(
-                      e?.response?.data?.message || 'Failed to add comment'
-                    )
+                    toast.error(getErrorMessage(e, 'Failed to add comment'))
                   }
                 }}
               >

@@ -5,6 +5,7 @@ import { designationApi, CreateDesignationData } from '../../api/designation'
 import { departmentApi } from '../../api/department'
 import DesignationForm from '../../components/designations/DesignationForm'
 import { toast } from 'sonner'
+import { getErrorMessage } from '../../lib/utils'
 
 const DesignationCreate = () => {
   const navigate = useNavigate()
@@ -26,7 +27,7 @@ const DesignationCreate = () => {
     },
 
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to create designation')
+      toast.error(getErrorMessage(error, 'Failed to create designation'))
     },
   })
 

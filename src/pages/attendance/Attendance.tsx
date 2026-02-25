@@ -5,6 +5,7 @@ import { attendanceApi } from '../../api/attendance'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { getErrorMessage } from '../../lib/utils'
 
 const Attendance = () => {
   const [selectedDate, setSelectedDate] = useState(
@@ -44,7 +45,7 @@ const Attendance = () => {
       toast.success('Checked in successfully')
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Failed to check in')
+      toast.error(getErrorMessage(e, 'Failed to check in'))
     }
   })
 
@@ -56,7 +57,7 @@ const Attendance = () => {
       toast.success('Checked out successfully')
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Failed to check out')
+      toast.error(getErrorMessage(e, 'Failed to check out'))
     }
   })
 

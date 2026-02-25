@@ -5,6 +5,7 @@ import { designationApi, UpdateDesignationData } from '../../api/designation'
 import { departmentApi } from '../../api/department'
 import DesignationForm from '../../components/designations/DesignationForm'
 import { toast } from 'sonner'
+import { getErrorMessage } from '../../lib/utils'
 
 const DesignationEdit = () => {
   const { id } = useParams<{ id: string }>()
@@ -34,7 +35,7 @@ const DesignationEdit = () => {
     },
 
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to update designation')
+      toast.error(getErrorMessage(error, 'Failed to update designation'))
     }
   })
 

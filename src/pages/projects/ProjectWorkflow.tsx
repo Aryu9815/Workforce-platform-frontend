@@ -9,6 +9,7 @@ import { MoveOpenIssuesTo, sprintsApi } from '../../api/sprints'
 import { useAuthStore } from '../../store/authStore'
 import toast from 'react-hot-toast'
 import TaskDetailModal from './TaskDetailModal'
+import { getErrorMessage } from '../../lib/utils'
 
 const ProjectWorkflow = () => {
   const navigate = useNavigate()
@@ -98,7 +99,7 @@ const ProjectWorkflow = () => {
       toast.success('Task moved')
     } catch (error: any) {
       queryClient.setQueryData(['tasks', id, selectedSprintId], previous)
-      toast.error('Transition not allowed')
+      toast.error(getErrorMessage(error, 'Failed to move task'))
     }
   }
 
@@ -212,12 +213,7 @@ const ProjectWorkflow = () => {
       setAssigneeSearch('')
       queryClient.invalidateQueries(['tasks', id, selectedSprintId])
     } catch (error: any) {
-      const msg =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to create task'
-      toast.error(msg)
+      toast.error(getErrorMessage(error, 'Failed to create task'))
     }
   }
 
@@ -820,7 +816,7 @@ const ProjectWorkflow = () => {
                     await queryClient.invalidateQueries(['tasks', id, selectedSprintId])
                     if (endMoveOption === 'next_sprint' && endNextSprintId) setSelectedSprintId(endNextSprintId)
                   } catch (e: any) {
-                    toast.error(e?.response?.data?.message || 'Failed to end sprint')
+                    toast.error(getErrorMessage(e, 'Failed to end sprint'))
                   }
                 }}
               >OK</button>
@@ -1019,7 +1015,7 @@ const ProjectWorkflow = () => {
                     if (selectedSprintId === editingSprint.id)
                       setSelectedSprintId(null)
                   } catch (e: any) {
-                    toast.error(e?.response?.data?.message || "Failed to delete sprint")
+                    toast.error(getErrorMessage(e, 'Failed to delete sprint'))
                   }
                 }}
               >
@@ -1080,7 +1076,7 @@ const ProjectWorkflow = () => {
 
                   queryClient.invalidateQueries(["sprints", id])
                 } catch (e: any) {
-                  toast.error(e?.response?.data?.message || "Failed to save sprint")
+                  toast.error(getErrorMessage(e, 'Failed to save sprint'))
                 }
               }}
             >

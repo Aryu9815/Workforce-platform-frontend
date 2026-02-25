@@ -12,6 +12,7 @@ import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { toast } from 'react-hot-toast'
 import { Badge } from '../../components/ui/Badge'
+import { getErrorMessage } from '../../lib/utils'
 
 const RolesPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([])
@@ -32,7 +33,7 @@ const RolesPage: React.FC = () => {
       setRoles(data)
     } catch (error) {
       console.error('Failed to fetch roles:', error)
-      toast.error('Failed to load roles.')
+      toast.error(getErrorMessage(error, 'Failed to load roles.'))
     } finally {
       setLoading(false)
     }
@@ -51,7 +52,7 @@ const RolesPage: React.FC = () => {
       fetchRoles()
     } catch (error) {
       console.error('Failed to create role:', error)
-      toast.error('Failed to create role.')
+      toast.error(getErrorMessage(error, 'Failed to create role.'))
     } finally {
       setIsSubmitting(false)
     }

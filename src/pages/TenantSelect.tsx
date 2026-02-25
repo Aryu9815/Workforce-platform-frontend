@@ -4,6 +4,7 @@ import { ArrowRight, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/auth'
 import { useState } from 'react'
+import { getErrorMessage } from '../lib/utils'
 
 const TenantSelect = () => {
   const navigate = useNavigate()
@@ -41,8 +42,7 @@ const TenantSelect = () => {
       toast.success(`Switched to ${selectedTenant.name}`)
       navigate('/')
     } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to switch tenant'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Failed to switch tenant'))
     } finally {
       setIsLoading(null)
     }

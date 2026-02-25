@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
+import toast from 'react-hot-toast'
 import { Search } from 'lucide-react'
+import { getErrorMessage } from '../../lib/utils'
 
 const inputClass =
   "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
@@ -35,7 +37,13 @@ const ProjectCreate = () => {
 
   const createMutation = useMutation({
     mutationFn: projectsApi.createProject,
-    onSuccess: () => navigate('/projects')
+    onSuccess: () => {
+      toast.success('Project created successfully')
+      navigate('/projects')
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to create project'))
+    },
   })
 
   const onChange = (

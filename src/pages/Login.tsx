@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { authApi } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
+import { getErrorMessage } from '../lib/utils'
 
 interface LoginForm {
   email: string
@@ -70,8 +71,7 @@ const Login = () => {
       navigate('/')
 
     } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Login failed'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Login failed'))
       console.log("123 error: ",error)
     } finally {
       setIsLoading(false)

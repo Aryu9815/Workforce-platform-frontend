@@ -6,6 +6,7 @@ import { staffApi } from '../../api/staff'
 import { useAuthStore } from '../../store/authStore'
 import { Search } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 const inputClass =
   "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
@@ -58,12 +59,7 @@ const ProjectMemberCreate = () => {
       navigate(`/projects/${id}/members`)
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to add member'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Failed to add member'))
     },
   })
 
@@ -75,12 +71,7 @@ const ProjectMemberCreate = () => {
       navigate(`/projects/${id}/members`)
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to update member'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Failed to update member'))
     },
   })
 

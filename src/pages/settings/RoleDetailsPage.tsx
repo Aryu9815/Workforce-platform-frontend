@@ -11,6 +11,7 @@ import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { toast } from 'react-hot-toast'
 import { Badge } from '../../components/ui/Badge'
+import { getErrorMessage } from '../../lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/Dialog'
 
@@ -49,7 +50,7 @@ const RoleDetailsPage: React.FC = () => {
       })
     } catch (error) {
       console.error('Failed to fetch role details:', error)
-      toast.error('Failed to load role details.')
+      toast.error(getErrorMessage(error, 'Failed to load role details.'))
       navigate('/settings/roles')
     } finally {
       setLoading(false)
@@ -72,7 +73,7 @@ const RoleDetailsPage: React.FC = () => {
       fetchData()
     } catch (error) {
       console.error('Failed to update permissions:', error)
-      toast.error('Failed to update permissions.')
+      toast.error(getErrorMessage(error, 'Failed to update permissions.'))
     } finally {
       setIsSaving(false)
     }
@@ -88,7 +89,7 @@ const RoleDetailsPage: React.FC = () => {
       fetchData()
     } catch (error) {
       console.error('Failed to update role:', error)
-      toast.error('Failed to update role.')
+      toast.error(getErrorMessage(error, 'Failed to update role.'))
     } finally {
       setIsSaving(false)
     }
@@ -102,7 +103,7 @@ const RoleDetailsPage: React.FC = () => {
       navigate('/settings/roles')
     } catch (error) {
       console.error('Failed to delete role:', error)
-      toast.error('Failed to delete role.')
+      toast.error(getErrorMessage(error, 'Failed to delete role.'))
     } finally {
       setIsDeleting(false)
     }

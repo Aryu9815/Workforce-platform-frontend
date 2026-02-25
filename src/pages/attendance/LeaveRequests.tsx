@@ -13,6 +13,7 @@ import { LeaveRequest, LeaveType } from '../../types'
 import { useAuthStore } from '../../store/authStore'
 import { toast } from 'sonner'
 import { format, differenceInDays } from 'date-fns'
+import { getErrorMessage } from '../../lib/utils'
 
 const LeaveRequests = () => {
   const [statusFilter, setStatusFilter] = useState('')
@@ -58,7 +59,7 @@ const LeaveRequests = () => {
       })
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Failed to submit request')
+      toast.error(getErrorMessage(e, 'Failed to submit request'))
     }
   })
 
@@ -73,7 +74,7 @@ const LeaveRequests = () => {
       toast.success(`Request ${vars.status}`)
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Action failed')
+      toast.error(getErrorMessage(e, 'Action failed'))
     }
   })
 
@@ -93,7 +94,7 @@ const LeaveRequests = () => {
       queryClient.invalidateQueries(['leave-requests'])
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Failed to run leave accrual')
+      toast.error(getErrorMessage(e, 'Failed to run leave accrual'))
     },
   })
 

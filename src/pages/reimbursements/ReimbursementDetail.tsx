@@ -17,7 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
 import { Input } from '../../components/ui/Input';
-import { formatCurrency, formatDate } from '../../lib/utils';
+import { formatCurrency, formatDate, getErrorMessage } from '../../lib/utils';
 import { toast } from '../../components/ui/sonner';
 import type { ReimbursementClaim, ExpenseCategory } from '../../types';
 
@@ -56,8 +56,8 @@ const ReimbursementDetail = () => {
         ]);
         setClaim(claimResponse);
         setCategories(categoriesResponse);
-      } catch {
-        toast.error('Failed to fetch reimbursement claim');
+      } catch (error: any) {
+        toast.error(getErrorMessage(error, 'Failed to fetch reimbursement claim'));
         navigate('/reimbursements');
       } finally {
         setLoading(false);
@@ -71,8 +71,8 @@ const ReimbursementDetail = () => {
     try {
       const data = await reimbursementsApi.getClaim(id);
       setClaim(data);
-    } catch {
-      toast.error('Failed to refresh reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to refresh reimbursement claim'));
     }
   };
 
@@ -82,8 +82,8 @@ const ReimbursementDetail = () => {
       await reimbursementsApi.submitClaim(id);
       toast.success('Reimbursement claim submitted for approval');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to submit reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to submit reimbursement claim'));
     }
   };
 
@@ -95,8 +95,8 @@ const ReimbursementDetail = () => {
       setShowApproveDialog(false);
       setNotes('');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to approve reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to approve reimbursement claim'));
     }
   };
 
@@ -108,8 +108,8 @@ const ReimbursementDetail = () => {
       setShowRejectDialog(false);
       setRejectionReason('');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to reject reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to reject reimbursement claim'));
     }
   };
 
@@ -121,8 +121,8 @@ const ReimbursementDetail = () => {
       setShowPayDialog(false);
       setPaymentReference('');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to mark reimbursement claim as paid');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to mark reimbursement claim as paid'));
     }
   };
 

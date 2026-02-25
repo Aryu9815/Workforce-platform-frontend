@@ -4,6 +4,7 @@ import { useState } from "react"
 import { projectsApi } from "../../api/projects"
 import toast from "react-hot-toast"
 import { useAuthStore } from '../../store/authStore'
+import { getErrorMessage } from '../../lib/utils'
 
 const WorkflowSettings = () => {
   const { id } = useParams<{ id: string }>()
@@ -63,8 +64,8 @@ const WorkflowSettings = () => {
       queryClient.invalidateQueries(["workflow", workflowId])
       setIsStateModalOpen(false)
       setSelectedState(null)
-    } catch {
-      toast.error("Failed to save state")
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, "Failed to save state"))
     }
   }
 
@@ -82,8 +83,8 @@ const WorkflowSettings = () => {
       queryClient.invalidateQueries(["workflow-transitions", workflowId])
       setIsTransitionModalOpen(false)
       setSelectedTransition(null)
-    } catch {
-      toast.error("Failed to save transition")
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, "Failed to save transition"))
     }
   }
 

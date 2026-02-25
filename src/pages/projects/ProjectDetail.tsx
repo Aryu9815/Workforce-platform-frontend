@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
+import { getErrorMessage } from '../../lib/utils'
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>()
@@ -21,13 +22,15 @@ const ProjectDetail = () => {
       navigate('/projects')
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete project'
-      )
+      toast.error(getErrorMessage(error, 'Failed to delete project'))
     },
   })
+
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  const canDeleteProject = getPermissions('project:delete')
+  const canEditProject = getPermissions('project:update')
+  const canManageMembers = getPermissions('project:manage-members')
+  const canViewMembers = getPermissions('project:view-members')
 
   if (isLoading) return <div className="py-10 text-center text-gray-500">Loading...</div>
   if (!project) return <div className="py-10 text-center text-gray-500">Project not found</div>
@@ -53,11 +56,6 @@ const ProjectDetail = () => {
     const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
     return `${diff} days`
   }
-  const getPermissions = useAuthStore(state => state.getPermissions)
-  const canDeleteProject = getPermissions('project:delete')
-  const canEditProject = getPermissions('project:update')
-  const canManageMembers = getPermissions('project:manage-members')
-  const canViewMembers = getPermissions('project:view-members')
 
   return (
     <div className="p-6 space-y-8 bg-gray-50">
