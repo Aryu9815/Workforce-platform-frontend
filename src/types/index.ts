@@ -133,6 +133,7 @@ export interface Staff {
   phone?: string;
   department_id: string;
   designation_id: string;
+  role_id?: string;
   department_name?: string;
   designation_name?: string;
   reporting_manager_id?: string;
@@ -193,10 +194,37 @@ export interface ProjectMember {
   updated_at?: string;
 }
 
+export interface TaskLabel {
+  id: string;
+  project_id: string;
+  label: string;
+  description?: string;
+  color?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
+}
+
+export interface TaskLabelCreate {
+  project_id: string;
+  label: string;
+  description?: string;
+  color?: string;
+}
+
+export interface TaskLabelUpdate {
+  label?: string;
+  description?: string;
+  color?: string;
+}
+
 export interface Task {
   id: string;
   project_id: string;
   parent_task_id?: string;
+  task_label_id?: string;
+  task_label?: TaskLabel;
   ticket?: string;
   ticket_code?: string;
   ticket_number?: string | number;
@@ -228,6 +256,19 @@ export interface Task {
   updated_at: string;
 }
 
+export interface TaskWorkSession {
+  id: string;
+  attendance_id: string;
+  task_id: string;
+  staff_id: string;
+  check_in: string;
+  check_out?: string;
+  duration_hours?: number;
+  sequence: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AttendanceRecord {
   id: string;
   staff_id: string;
@@ -243,6 +284,7 @@ export interface AttendanceRecord {
   overtime_hours: number;
   status: 'present' | 'absent' | 'late' | 'half_day';
   notes?: string;
+  task_work_sessions?: any[];
   is_manual_entry: boolean;
   approved_by?: string;
   staff_name?: string;
@@ -358,11 +400,12 @@ export interface AssetType {
   brand?: string;
   model_number?: string;
   is_serialized: boolean;
-  purchase_cost?: number;
+  // purchase_cost?: number;
   warranty_months?: number;
   description?: string;
   created_at?: string;
   updated_at?: string;
+  tag_prefix?: string;
 }
 
 export interface Asset {
@@ -377,6 +420,43 @@ export interface Asset {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface AssignmentHistoryItem {
+  id: string;
+  staff_id: string;
+  staff_name: string;
+  assigned_date: string;
+  expected_return_date?: string;
+  returned_date?: string;
+  condition_on_assign?: string;
+  condition_on_return?: string;
+  is_active: boolean;
+}
+
+export interface AssetHistoryResponse {
+  id: string;
+  asset_tag: string;
+  serial_number?: string;
+  status: string;
+  location?: string;
+  purchase_date?: string;
+  purchase_price?: number;
+  asset_type: {
+    id: string;
+    name: string;
+    brand?: string;
+    model_number?: string;
+    tag_prefix?: string;
+  };
+  category: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  total_assignments: number;
+  current_assignment?: AssignmentHistoryItem;
+  assignment_history: AssignmentHistoryItem[];
 }
 
 export interface ReimbursementClaim {

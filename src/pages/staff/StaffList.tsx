@@ -213,6 +213,31 @@ const StaffList = () => {
       </table>
     </div>
 
+    {/* Pagination */}
+    {(data?.pages || 1) > 1 && (
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-gray-600">
+          Page {page} of {data?.pages || 1}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="px-3 py-2 border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setPage((p) => Math.min((data?.pages || 1), p + 1))}
+            disabled={page >= (data?.pages || 1)}
+            className="px-3 py-2 border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )}
+
   </div>
 )
 

@@ -11,15 +11,17 @@ const ProjectList = () => {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['projects', page, search, statusFilter],
+    queryKey: ['projects', page, search, statusFilter, priorityFilter],
     queryFn: () =>
       projectsApi.getProjects({
         page,
         page_size: 20,
         search: search || undefined,
-        status: statusFilter || undefined
+        status: statusFilter || undefined,
+        priority: priorityFilter || undefined
       })
   })
 
@@ -75,13 +77,21 @@ const ProjectList = () => {
         </div>
 
         {canCreateProjects && (
-          <Link
-            to="/projects/new"
-            className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/task-labels"
+              className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition"
+            >
+              All Task Label
+            </Link>
+            <Link
+              to="/projects/new"
+              className="flex items-center bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-md text-sm transition"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Link>
+          </div>
         )}
       </div>
 
@@ -117,6 +127,24 @@ const ProjectList = () => {
                 <option value="active">Active</option>
                 <option value="on_hold">On Hold</option>
                 <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Priority Filter */}
+          <div className="w-48">
+            <div className="relative">
+              <Filter className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="w-full pl-6 pr-2 py-2 border-0 border-b border-gray-300 focus:border-teal-600 focus:ring-0 text-sm outline-none appearance-none"
+              >
+                <option value="">All Priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
               </select>
             </div>
           </div>

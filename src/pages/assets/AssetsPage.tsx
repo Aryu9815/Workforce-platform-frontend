@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { assetsApi } from '../../api/assets'
 import { staffApi } from '../../api/staff'
@@ -10,6 +11,7 @@ import {
   Staff,
 } from '../../types'
 import { useAuthStore } from '@/store/authStore'
+import { showApiError } from '../../lib/utils'
 const AssetsPage = () => {
   const queryClient = useQueryClient()
   const getPermissions = useAuthStore(state => state.getPermissions)
@@ -37,9 +39,10 @@ const AssetsPage = () => {
     brand: '',
     model_number: '',
     is_serialized: true,
-    purchase_cost: '',
+    // purchase_cost: '',
     warranty_months: '',
     description: '',
+    tag_prefix: '',
   })
 
   const [newAsset, setNewAsset] = useState({
@@ -64,6 +67,7 @@ const AssetsPage = () => {
   })
 
   const [search, setSearch] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: categoriesData } = useQuery({
     queryKey: ['asset-categories'],
@@ -103,7 +107,11 @@ const AssetsPage = () => {
       queryClient.invalidateQueries(['asset-categories'])
       setShowCreateCategory(false)
       setNewCategory({ name: '', code: '', description: '' })
+      setErrors({})
     },
+    onError: (error) => {
+      showApiError(error, 'Failed to create category')
+    }
   })
 
   const createTypeMutation = useMutation({
@@ -117,11 +125,15 @@ const AssetsPage = () => {
         brand: '',
         model_number: '',
         is_serialized: true,
-        purchase_cost: '',
+        // purchase_cost: '',
         warranty_months: '',
         description: '',
       })
+      setErrors({})
     },
+    onError: (error) => {
+      showApiError(error, 'Failed to create asset type')
+    }
   })
 
   const createAssetMutation = useMutation({
@@ -138,7 +150,11 @@ const AssetsPage = () => {
         location: '',
         notes: '',
       })
+      setErrors({})
     },
+    onError: (error) => {
+      showApiError(error, 'Failed to create asset')
+    }
   })
 
   const assignAssetMutation = useMutation({
@@ -162,7 +178,11 @@ const AssetsPage = () => {
         expected_return_date: '',
       })
       setSelectedAsset(null)
+      setErrors({})
     },
+    onError: (error) => {
+      showApiError(error, 'Failed to assign asset')
+    }
   })
 
   const returnAssetMutation = useMutation({
@@ -181,12 +201,27 @@ const AssetsPage = () => {
         condition_on_return: '',
       })
       setSelectedAsset(null)
+      setErrors({})
     },
+    onError: (error) => {
+      showApiError(error, 'Failed to return asset')
+    }
   })
 
   // -------- Handlers -------- //
   const handleCreateCategory = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!newCategory.name.trim()) newErrors.cat_name = 'Name is required'
+    if (!newCategory.code.trim()) newErrors.cat_code = 'Code is required'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
     createCategoryMutation.mutate({
       name: newCategory.name,
       code: newCategory.code,
@@ -196,17 +231,38 @@ const AssetsPage = () => {
 
   const handleCreateType = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newType.category_id) return
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!newType.category_id) newErrors.type_category = 'Category is required'
+    if (!newType.name.trim()) newErrors.type_name = 'Name is required'
+    if (!newType.tag_prefix.trim()) {
+      newErrors.type_tag_prefix = 'Tag prefix is required'
+    } else if (newType.tag_prefix.length > 4) {
+      newErrors.type_tag_prefix = 'Tag prefix must be 4 characters or less'
+    }
+    // if (newType.purchase_cost && Number(newType.purchase_cost) < 0) {
+    //   newErrors.type_cost = 'Purchase cost cannot be negative'
+    // }
+    if (newType.warranty_months && Number(newType.warranty_months) < 0) {
+      newErrors.type_warranty = 'Warranty months cannot be negative'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
 
     createTypeMutation.mutate({
       category_id: newType.category_id,
       name: newType.name,
+      tag_prefix: newType.tag_prefix,
       brand: newType.brand || undefined,
       model_number: newType.model_number || undefined,
       is_serialized: newType.is_serialized,
-      purchase_cost: newType.purchase_cost
-        ? Number(newType.purchase_cost)
-        : undefined,
+      // purchase_cost: newType.purchase_cost
+      //   ? Number(newType.purchase_cost)
+      //   : undefined,
       warranty_months: newType.warranty_months
         ? Number(newType.warranty_months)
         : undefined,
@@ -216,7 +272,32 @@ const AssetsPage = () => {
 
   const handleCreateAsset = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newAsset.asset_type_id) return
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!newAsset.asset_type_id) newErrors.asset_type = 'Asset type is required'
+    if (newAsset.quantity < 1) newErrors.asset_qty = 'Quantity must be at least 1'
+    
+    if (selectedType?.is_serialized) {
+      const serialErrors: string[] = []
+      for (let i = 0; i < newAsset.quantity; i++) {
+        if (!newAsset.serial_numbers[i]?.trim()) {
+          serialErrors.push(`Serial number ${i + 1} is required`)
+        }
+      }
+      if (serialErrors.length > 0) {
+        newErrors.asset_serials = serialErrors.join(', ')
+      }
+    }
+
+    if (newAsset.purchase_price && Number(newAsset.purchase_price) < 0) {
+      newErrors.asset_price = 'Purchase price cannot be negative'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
 
     createAssetMutation.mutate({
       asset_type_id: newAsset.asset_type_id,
@@ -236,9 +317,18 @@ const AssetsPage = () => {
 
   const handleAssignAsset = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedAsset || !assignmentForm.staff_id || !assignmentForm.assigned_date) {
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!assignmentForm.staff_id) newErrors.assign_staff = 'Staff is required'
+    if (!assignmentForm.assigned_date) newErrors.assign_date = 'Assigned date is required'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
+
+    if (!selectedAsset) return
 
     assignAssetMutation.mutate({
       assetId: selectedAsset.id,
@@ -252,7 +342,17 @@ const AssetsPage = () => {
 
   const handleReturnAsset = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedAsset || !returnForm.returned_date) return
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!returnForm.returned_date) newErrors.return_date = 'Returned date is required'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    if (!selectedAsset) return
 
     returnAssetMutation.mutate({
       assetId: selectedAsset.id,
@@ -509,8 +609,10 @@ const AssetsPage = () => {
                     {group.assets.map(asset => (
                       <tr key={asset.id} className="hover:bg-gray-50">
 
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {asset.asset_tag}
+                        <td className="px-4 py-3 font-medium text-teal-700">
+                          <Link to={`/assets/${asset.id}`} className="hover:underline">
+                            {asset.asset_tag}
+                          </Link>
                         </td>
 
                         <td className="px-4 py-3">
@@ -603,9 +705,9 @@ const AssetsPage = () => {
                   onChange={e =>
                     setNewCategory({ ...newCategory, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
-                  required
+                  className={`w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm ${errors.cat_name ? 'border-red-500' : ''}`}
                 />
+                {errors.cat_name && <p className="text-xs text-red-500 mt-1">{errors.cat_name}</p>}
               </div>
 
               <div>
@@ -615,9 +717,9 @@ const AssetsPage = () => {
                   onChange={e =>
                     setNewCategory({ ...newCategory, code: e.target.value })
                   }
-                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
-                  required
+                  className={`w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm ${errors.cat_code ? 'border-red-500' : ''}`}
                 />
+                {errors.cat_code && <p className="text-xs text-red-500 mt-1">{errors.cat_code}</p>}
               </div>
 
               <div>
@@ -676,8 +778,7 @@ const AssetsPage = () => {
                 <select
                   value={newType.category_id}
                   onChange={e => setNewType({ ...newType, category_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
-                  required
+                  className={`w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm ${errors.type_category ? 'border-red-500' : ''}`}
                 >
                   <option value="">Select category</option>
                   {currentCategories.map((c: AssetCategory) => (
@@ -686,6 +787,7 @@ const AssetsPage = () => {
                     </option>
                   ))}
                 </select>
+                {errors.type_category && <p className="text-xs text-red-500 mt-1">{errors.type_category}</p>}
               </div>
 
               <div>
@@ -693,9 +795,30 @@ const AssetsPage = () => {
                 <input
                   value={newType.name}
                   onChange={e => setNewType({ ...newType, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm"
-                  required
+                  className={`w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm ${errors.type_name ? 'border-red-500' : ''}`}
                 />
+                {errors.type_name && <p className="text-xs text-red-500 mt-1">{errors.type_name}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-700">Tag Prefix</label>
+                <input
+                  value={newType.tag_prefix}
+                  onChange={e => {
+                    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+                    setNewType({ ...newType, tag_prefix: value })
+                  }}
+                  maxLength={4}
+                  placeholder="E.g., LAP"
+                  className={`w-full px-3 py-2 border rounded-md focus:border-teal-600 outline-none text-sm ${errors.type_tag_prefix ? 'border-red-500' : ''}`}
+                />
+                {errors.type_tag_prefix ? (
+                  <p className="text-xs text-red-500 mt-1">{errors.type_tag_prefix}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Up to 4 uppercase letters for asset tags (e.g., 'LAP' for Laptops).
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -717,17 +840,26 @@ const AssetsPage = () => {
                   />
                 </div>
               </div>
+              <div>
+                <label className="text-sm">Tag Prefix</label>
+                <input
+                  value={newType.tag_prefix}
+                  onChange={e => setNewType({ ...newType, tag_prefix: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                {/* <div>
                   <label className="text-sm">Purchase cost</label>
                   <input
                     type="number"
                     value={newType.purchase_cost}
                     onChange={e => setNewType({ ...newType, purchase_cost: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className={`w-full px-3 py-2 border rounded-md ${errors.type_cost ? 'border-red-500' : ''}`}
                   />
-                </div>
+                  {errors.type_cost && <p className="text-xs text-red-500 mt-1">{errors.type_cost}</p>}
+                </div> */}
 
                 <div>
                   <label className="text-sm">Warranty (months)</label>
@@ -737,8 +869,9 @@ const AssetsPage = () => {
                     onChange={e =>
                       setNewType({ ...newType, warranty_months: e.target.value })
                     }
-                    className="w-full px-3 py-2 border rounded-md"
+                    className={`w-full px-3 py-2 border rounded-md ${errors.type_warranty ? 'border-red-500' : ''}`}
                   />
+                  {errors.type_warranty && <p className="text-xs text-red-500 mt-1">{errors.type_warranty}</p>}
                 </div>
               </div>
 
@@ -815,8 +948,7 @@ const AssetsPage = () => {
                   onChange={e =>
                     setNewAsset({ ...newAsset, asset_type_id: e.target.value })
                   }
-                  className="w-full px-3 py-2 border rounded-md text-sm focus:border-teal-600"
-                  required
+                  className={`w-full px-3 py-2 border rounded-md text-sm focus:border-teal-600 ${errors.asset_type ? 'border-red-500' : ''}`}
                 >
                   <option value="">Select type</option>
                   {currentTypes.map(t => (
@@ -825,6 +957,7 @@ const AssetsPage = () => {
                     </option>
                   ))}
                 </select>
+                {errors.asset_type && <p className="text-xs text-red-500 mt-1">{errors.asset_type}</p>}
               </div>
 
               <div>
@@ -843,8 +976,9 @@ const AssetsPage = () => {
                         : [],
                     }))
                   }}
-                  className="w-full px-3 py-2 border rounded-md text-sm"
+                  className={`w-full px-3 py-2 border rounded-md text-sm ${errors.asset_qty ? 'border-red-500' : ''}`}
                 />
+                {errors.asset_qty && <p className="text-xs text-red-500 mt-1">{errors.asset_qty}</p>}
               </div>
 
               {/* Serial Numbers */}
@@ -860,10 +994,11 @@ const AssetsPage = () => {
                           updated[i] = e.target.value
                           setNewAsset(prev => ({ ...prev, serial_numbers: updated }))
                         }}
-                        className="w-full px-3 py-2 border rounded-md text-sm"
+                        className={`w-full px-3 py-2 border rounded-md text-sm ${errors.asset_serials ? 'border-red-500' : ''}`}
                       />
                     </div>
                   ))}
+                  {errors.asset_serials && <p className="text-xs text-red-500 mt-1">{errors.asset_serials}</p>}
                 </div>
               )}
 
@@ -888,8 +1023,9 @@ const AssetsPage = () => {
                     onChange={e =>
                       setNewAsset({ ...newAsset, purchase_price: e.target.value })
                     }
-                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    className={`w-full px-3 py-2 border rounded-md text-sm ${errors.asset_price ? 'border-red-500' : ''}`}
                   />
+                  {errors.asset_price && <p className="text-xs text-red-500 mt-1">{errors.asset_price}</p>}
                 </div>
               </div>
 
@@ -967,8 +1103,7 @@ const AssetsPage = () => {
                   onChange={e =>
                     setAssignmentForm({ ...assignmentForm, staff_id: e.target.value })
                   }
-                  className="w-full border px-3 py-2 rounded-md text-sm"
-                  required
+                  className={`w-full border px-3 py-2 rounded-md text-sm ${errors.assign_staff ? 'border-red-500' : ''}`}
                 >
                   <option value="">Select staff</option>
                   {staffOptions.map(s => (
@@ -977,6 +1112,7 @@ const AssetsPage = () => {
                     </option>
                   ))}
                 </select>
+                {errors.assign_staff && <p className="text-xs text-red-500 mt-1">{errors.assign_staff}</p>}
               </div>
 
               <div>
@@ -987,9 +1123,9 @@ const AssetsPage = () => {
                   onChange={e =>
                     setAssignmentForm({ ...assignmentForm, assigned_date: e.target.value })
                   }
-                  className="w-full border px-3 py-2 rounded-md text-sm"
-                  required
+                  className={`w-full border px-3 py-2 rounded-md text-sm ${errors.assign_date ? 'border-red-500' : ''}`}
                 />
+                {errors.assign_date && <p className="text-xs text-red-500 mt-1">{errors.assign_date}</p>}
               </div>
 
               <div>
@@ -1060,9 +1196,9 @@ const AssetsPage = () => {
                   onChange={e =>
                     setReturnForm({ ...returnForm, returned_date: e.target.value })
                   }
-                  className="w-full border px-3 py-2 rounded-md text-sm"
-                  required
+                  className={`w-full border px-3 py-2 rounded-md text-sm ${errors.return_date ? 'border-red-500' : ''}`}
                 />
+                {errors.return_date && <p className="text-xs text-red-500 mt-1">{errors.return_date}</p>}
               </div>
 
               <div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Designation, Department } from '../../types'
+import toast from 'react-hot-toast'
 
 interface DesignationFormProps {
   defaultValues?: Partial<Designation>
@@ -24,6 +25,8 @@ const DesignationForm = ({
     description: '',
     is_active: true,
   })
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (defaultValues) {
@@ -52,17 +55,27 @@ const DesignationForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!form.name.trim()) newErrors.name = 'Designation name is required'
+    if (!form.department_id) newErrors.department_id = 'Department is required'
+    if (form.description && form.description.length > 500) {
+      newErrors.description = 'Description must be less than 500 characters'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the errors in the form')
+      return
+    }
+
     onSubmit(form)
   }
 
-  const inputClass =
-    "border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition"
-
-  const labelClass = "text-sm font-medium text-gray-700"
-
-  const sectionTitle =
-    "text-xs font-semibold uppercase tracking-wider text-gray-900 mb-4"
+  const inputClass = "input"
+  const labelClass = "label"
+  const sectionTitle = "section-title mb-4"
 
   return (
     <form
@@ -83,12 +96,12 @@ const DesignationForm = ({
             </label>
             <input
               name="name"
-              required
               placeholder="e.g. Senior Software Engineer"
               value={form.name}
               onChange={handleChange}
-              className={inputClass}
+              className={`${inputClass} ${errors.name ? 'border-red-500' : ''}`}
             />
+            {errors.name && <p className="error-message">{errors.name}</p>}
           </div>
 
           {/* Level */}
@@ -113,7 +126,7 @@ const DesignationForm = ({
               name="department_id"
               value={form.department_id}
               onChange={handleChange}
-              className={inputClass}
+              className={`${inputClass} ${errors.department_id ? 'border-red-500' : ''}`}
             >
               <option value="">Select Department</option>
               {departments.map((dept) => (
@@ -122,6 +135,7 @@ const DesignationForm = ({
                 </option>
               ))}
             </select>
+            {errors.department_id && <p className="error-message">{errors.department_id}</p>}
           </div>
 
         </div>
@@ -139,8 +153,9 @@ const DesignationForm = ({
             placeholder="Brief description of the role"
             value={form.description}
             onChange={handleChange}
-            className={inputClass + " resize-none"}
+            className={`${inputClass} resize-none ${errors.description ? 'border-red-500' : ''}`}
           />
+          {errors.description && <p className="error-message">{errors.description}</p>}
         </div>
       </div>
 
@@ -163,7 +178,7 @@ const DesignationForm = ({
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="px-5 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition"
+          className="btn-secondary"
           disabled={loading}
         >
           Cancel
@@ -171,7 +186,7 @@ const DesignationForm = ({
 
         <button
           type="submit"
-          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition disabled:opacity-60"
+          className="btn-primary"
           disabled={loading}
         >
           {loading

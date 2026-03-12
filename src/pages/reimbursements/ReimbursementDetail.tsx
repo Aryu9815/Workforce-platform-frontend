@@ -17,8 +17,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
 import { Input } from '../../components/ui/Input';
-import { formatCurrency, formatDate } from '../../lib/utils';
-import { toast } from '../../components/ui/sonner';
+import { formatCurrency, formatDate, getErrorMessage } from '../../lib/utils';
+import toast from 'react-hot-toast';
 import type { ReimbursementClaim, ExpenseCategory } from '../../types';
 
 const statusConfig: Record<
@@ -44,6 +44,17 @@ const ReimbursementDetail = () => {
   const [notes, setNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const handleCancelClaim = async () => {
+      if (!id) return;
+      try {
+        await reimbursementsApi.deleteClaim(id);
+        toast.success('Reimbursement claim cancelled');
+        navigate('/reimbursements');
+      } catch (error: any) {
+        toast.error(getErrorMessage(error, 'Failed to cancel reimbursement claim'));
+      }
+    };
   const getPermissions = useAuthStore(state => state.getPermissions);
 
   useEffect(() => {
@@ -56,8 +67,8 @@ const ReimbursementDetail = () => {
         ]);
         setClaim(claimResponse);
         setCategories(categoriesResponse);
-      } catch {
-        toast.error('Failed to fetch reimbursement claim');
+      } catch (error: any) {
+        toast.error(getErrorMessage(error, 'Failed to fetch reimbursement claim'));
         navigate('/reimbursements');
       } finally {
         setLoading(false);
@@ -71,8 +82,8 @@ const ReimbursementDetail = () => {
     try {
       const data = await reimbursementsApi.getClaim(id);
       setClaim(data);
-    } catch {
-      toast.error('Failed to refresh reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to refresh reimbursement claim'));
     }
   };
 
@@ -82,8 +93,8 @@ const ReimbursementDetail = () => {
       await reimbursementsApi.submitClaim(id);
       toast.success('Reimbursement claim submitted for approval');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to submit reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to submit reimbursement claim'));
     }
   };
 
@@ -95,8 +106,8 @@ const ReimbursementDetail = () => {
       setShowApproveDialog(false);
       setNotes('');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to approve reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to approve reimbursement claim'));
     }
   };
 
@@ -108,8 +119,8 @@ const ReimbursementDetail = () => {
       setShowRejectDialog(false);
       setRejectionReason('');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to reject reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to reject reimbursement claim'));
     }
   };
 
@@ -121,8 +132,8 @@ const ReimbursementDetail = () => {
       setShowPayDialog(false);
       setPaymentReference('');
       await refreshClaim();
-    } catch {
-      toast.error('Failed to mark reimbursement claim as paid');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to mark reimbursement claim as paid'));
     }
   };
 
@@ -131,9 +142,9 @@ const ReimbursementDetail = () => {
     return category?.name || categoryId;
   };
 
-  const canViewReimbursements = getPermissions('reimbursements:view')
-  const canSubmitReimbursement = getPermissions('reimbursements:create')
-  const canApproveReimbursements = getPermissions('reimbursements:approve')
+  const canViewReimbursements = getPermissions('reimbursement:view')
+  const canSubmitReimbursement = getPermissions('reimbursement:create')
+  const canApproveReimbursements = getPermissions('reimbursement:approve')
   const canMarkPaidReimbursements = getPermissions('reimbursement:paid')
 
   if (!canViewReimbursements) {
@@ -167,7 +178,6 @@ const ReimbursementDetail = () => {
 
   const statusMeta = statusConfig[claim.status];
   const StatusIcon = statusMeta?.icon || FileText;
-  const isPaid = claim.status === 'paid';
 
   return (
     <div className="space-y-6 bg-gray-50 min-h-screen p-4 md:p-8">
@@ -195,11 +205,37 @@ const ReimbursementDetail = () => {
         </div>
         <div className="flex gap-2">
           {claim.status === 'draft' && canSubmitReimbursement && (
-            <Button onClick={handleSubmit}>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Submit for Approval
-            </Button>
+            <>
+              <Button onClick={handleSubmit}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Submit for Approval
+              </Button>
+              <Button variant="destructive" onClick={() => setShowCancelDialog(true)}>
+                Cancel
+              </Button>
+            </>
           )}
+                {/* Cancel Dialog */}
+                <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                  <DialogContent className="bg-white border border-gray-200 shadow-2xl rounded-lg z-50 max-w-lg p-0">
+                    <div className="p-6 border-b border-gray-100">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl font-semibold text-gray-900">Cancel Reimbursement Claim</DialogTitle>
+                        <DialogDescription className="text-gray-500 mt-1">
+                          Are you sure you want to cancel and delete this draft claim? This action cannot be undone.
+                        </DialogDescription>
+                      </DialogHeader>
+                    </div>
+                    <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-lg border-t border-gray-100">
+                      <Button variant="outline" className="bg-white" onClick={() => setShowCancelDialog(false)}>
+                        No, Keep Claim
+                      </Button>
+                      <Button variant="destructive" onClick={handleCancelClaim}>
+                        Yes, Cancel Claim
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
           {claim.status === 'submitted' && canApproveReimbursements && (
             <>
               <Button variant="outline" className="bg-white" onClick={() => setShowApproveDialog(true)}>

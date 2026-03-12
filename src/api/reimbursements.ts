@@ -72,6 +72,12 @@ export const reimbursementsApi = {
     return response.data
   },
   
+
+  deleteClaim: async (id: string): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/reimbursements/claims/${id}`);
+    return response.data;
+  },
+
   // Expense categories
   getCategories: async (): Promise<ExpenseCategory[]> => {
     const response = await apiClient.get('/reimbursements/categories')

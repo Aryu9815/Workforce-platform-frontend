@@ -12,6 +12,8 @@ import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { toast } from 'react-hot-toast'
 import { Badge } from '../../components/ui/Badge'
+import { getErrorMessage } from '../../lib/utils'
+import { useAuthStore } from '../../store/authStore'
 
 const RolesPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([])
@@ -20,6 +22,7 @@ const RolesPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [newRole, setNewRole] = useState({ name: '', description: '', is_default: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const getPermissions = useAuthStore(state => state.getPermissions)
 
   useEffect(() => {
     fetchRoles()
@@ -32,7 +35,7 @@ const RolesPage: React.FC = () => {
       setRoles(data)
     } catch (error) {
       console.error('Failed to fetch roles:', error)
-      toast.error('Failed to load roles.')
+      toast.error(getErrorMessage(error, 'Failed to load roles.'))
     } finally {
       setLoading(false)
     }
@@ -51,7 +54,7 @@ const RolesPage: React.FC = () => {
       fetchRoles()
     } catch (error) {
       console.error('Failed to create role:', error)
-      toast.error('Failed to create role.')
+      toast.error(getErrorMessage(error, 'Failed to create role.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -62,6 +65,22 @@ const RolesPage: React.FC = () => {
     role.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const canRoleView = getPermissions('role:view')
+  const canRoleCreate = getPermissions('role:create')
+
+  if (!canRoleView) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold tracking-tight">Role Management</h1>
+          <p className="text-muted-foreground">
+            You do not have permission to view roles.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -71,17 +90,17 @@ const RolesPage: React.FC = () => {
             Define and manage access roles for your organization.
           </p>
         </div>
-
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Create Role
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Role</DialogTitle>
+        {canRoleCreate && (
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Create Role
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Create New Role</DialogTitle>
               <DialogDescription>
                 Add a new role to define permissions for your team members.
               </DialogDescription>
@@ -126,6 +145,7 @@ const RolesPage: React.FC = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>

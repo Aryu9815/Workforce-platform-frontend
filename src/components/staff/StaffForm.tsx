@@ -1,254 +1,7 @@
-// // components/staff/StaffForm.tsx
-
-// import { useEffect, useState } from 'react'
-
-// interface OptionType {
-//   id: string
-//   name: string
-// }
-
-// interface StaffFormProps {
-//   defaultValues?: any
-//   onSubmit: (data: any) => void
-//   isEdit?: boolean
-//   loading?: boolean
-//   departments: OptionType[]
-//   designations: OptionType[]
-//   dropdownLoading?: boolean
-// }
-
-// const StaffForm = ({
-//   defaultValues,
-//   onSubmit,
-//   isEdit = false,
-//   loading = false,
-//   departments,
-//   designations,
-//   dropdownLoading = false,
-// }: StaffFormProps) => {
-//   const [form, setForm] = useState({
-//     employee_code: '',
-//     first_name: '',
-//     last_name: '',
-//     email: '',
-//     phone: '',
-//     department_id: '',
-//     designation_id: '',
-//     reporting_manager_id: '',
-//     employment_type: 'full_time',
-//     join_date: '',
-//     work_location: '',
-//     skills: [] as string[],
-//     is_active: true,
-//   })
-
-//   // ✅ Apply default values (Edit Mode)
-//   useEffect(() => {
-//     if (defaultValues) {
-//       setForm(prev => ({
-//         ...prev,
-//         ...defaultValues,
-//         department_id: defaultValues.department_id || '',
-//         designation_id: defaultValues.designation_id || '',
-//         skills: defaultValues.skills || [],
-//         join_date: defaultValues.join_date
-//           ? defaultValues.join_date.slice(0, 10)
-//           : '',
-//       }))
-//     }
-//   }, [defaultValues])
-
-//   const handleChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-//   ) => {
-//     const { name, value, type } = e.target
-
-//     setForm(prev => ({
-//       ...prev,
-//       [name]:
-//         type === 'checkbox'
-//           ? (e.target as HTMLInputElement).checked
-//           : value,
-//     }))
-//   }
-
-//   const handleSkillsChange = (value: string) => {
-//     setForm(prev => ({
-//       ...prev,
-//       skills: value
-//         .split(',')
-//         .map(s => s.trim())
-//         .filter(Boolean),
-//     }))
-//   }
-
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault()
-//     onSubmit(form)
-//   }
-
-//   return (
-//     <form onSubmit={handleSubmit} className="card space-y-6 p-6">
-//       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-//         <input
-//           name="employee_code"
-//           placeholder="Employee Code"
-//           value={form.employee_code}
-//           onChange={handleChange}
-//           className="input"
-//         />
-
-//         <input
-//           name="first_name"
-//           placeholder="First Name"
-//           value={form.first_name}
-//           onChange={handleChange}
-//           required
-//           className="input"
-//         />
-
-//         <input
-//           name="last_name"
-//           placeholder="Last Name"
-//           value={form.last_name}
-//           onChange={handleChange}
-//           required
-//           className="input"
-//         />
-
-//         {!isEdit && (
-//           <input
-//             name="email"
-//             type="email"
-//             placeholder="Official Email"
-//             value={form.email}
-//             onChange={handleChange}
-//             required
-//             className="input"
-//           />
-//         )}
-
-//         <input
-//           name="phone"
-//           placeholder="Phone"
-//           value={form.phone}
-//           onChange={handleChange}
-//           className="input"
-//         />
-
-//         {/* ✅ Department Dropdown */}
-//         <select
-//           name="department_id"
-//           value={form.department_id}
-//           onChange={handleChange}
-//           required
-//           disabled={dropdownLoading}
-//           className="input"
-//         >
-//           <option value="">Select Department</option>
-//           {departments.map(dep => (
-//             <option key={dep.id} value={dep.id}>
-//               {dep.name}
-//             </option>
-//           ))}
-//         </select>
-
-//         {/* ✅ Designation Dropdown */}
-//         <select
-//           name="designation_id"
-//           value={form.designation_id}
-//           onChange={handleChange}
-//           required
-//           disabled={dropdownLoading}
-//           className="input"
-//         >
-//           <option value="">Select Designation</option>
-//           {designations.map(des => (
-//             <option key={des.id} value={des.id}>
-//               {des.name}
-//             </option>
-//           ))}
-//         </select>
-
-//         <input
-//           type="date"
-//           name="join_date"
-//           value={form.join_date}
-//           onChange={handleChange}
-//           required
-//           className="input"
-//         />
-
-//         <input
-//           name="work_location"
-//           placeholder="Work Location"
-//           value={form.work_location}
-//           onChange={handleChange}
-//           className="input"
-//         />
-
-//         <select
-//           name="employment_type"
-//           value={form.employment_type}
-//           onChange={handleChange}
-//           className="input"
-//         >
-//           <option value="full_time">Full Time</option>
-//           <option value="contractor">Contractor</option>
-//           <option value="vendor">Vendor</option>
-//         </select>
-
-//         <input
-//           name="reporting_manager_id"
-//           placeholder="Reporting Manager ID"
-//           value={form.reporting_manager_id}
-//           onChange={handleChange}
-//           className="input"
-//         />
-//       </div>
-
-//       {/* Skills */}
-//       <input
-//         placeholder="Skills (comma separated)"
-//         value={form.skills.join(', ')}
-//         onChange={(e) => handleSkillsChange(e.target.value)}
-//         className="input"
-//       />
-
-//       {/* Active Toggle (Edit Mode Only) */}
-//       {isEdit && (
-//         <label className="flex items-center space-x-2">
-//           <input
-//             type="checkbox"
-//             name="is_active"
-//             checked={form.is_active}
-//             onChange={handleChange}
-//           />
-//           <span>Active</span>
-//         </label>
-//       )}
-
-//       <div className="flex justify-end">
-//         <button
-//           type="submit"
-//           disabled={loading}
-//           className="btn-primary"
-//         >
-//           {loading
-//             ? 'Saving...'
-//             : isEdit
-//             ? 'Update Staff'
-//             : 'Create Staff'}
-//         </button>
-//       </div>
-//     </form>
-//   )
-// }
-
-// export default StaffForm
-
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { staffApi } from '../../api/staff'
+import toast from 'react-hot-toast'
 
 interface OptionType {
   id: string
@@ -262,6 +15,7 @@ interface StaffFormProps {
   loading?: boolean
   departments: OptionType[]
   designations: OptionType[]
+  roles?: OptionType[]
   dropdownLoading?: boolean
 }
 
@@ -272,17 +26,18 @@ const StaffForm = ({
   loading = false,
   departments,
   designations,
+  roles = [],
   dropdownLoading = false,
 }: StaffFormProps) => {
 
   const [form, setForm] = useState({
-    employee_code: '',
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
     department_id: '',
     designation_id: '',
+    role_id: '',
     reporting_manager_id: '',
     employment_type: 'full_time',
     join_date: '',
@@ -291,6 +46,8 @@ const StaffForm = ({
     is_active: true,
   })
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
   useEffect(() => {
     if (defaultValues) {
       setForm(prev => ({
@@ -298,6 +55,7 @@ const StaffForm = ({
         ...defaultValues,
         department_id: defaultValues.department_id || '',
         designation_id: defaultValues.designation_id || '',
+        role_id: defaultValues.role_id || '',
         skills: defaultValues.skills || [],
         join_date: defaultValues.join_date
           ? defaultValues.join_date.slice(0, 10)
@@ -332,36 +90,51 @@ const StaffForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!form.first_name.trim()) newErrors.first_name = 'First name is required'
+    if (!form.last_name.trim()) newErrors.last_name = 'Last name is required'
+    if (!isEdit && !form.email.trim()) newErrors.email = 'Email is required'
+    if (!form.department_id) newErrors.department_id = 'Department is required'
+    if (!form.designation_id) newErrors.designation_id = 'Designation is required'
+    if (!form.role_id) newErrors.role_id = 'Role is required'
+    if (!form.join_date) newErrors.join_date = 'Join date is required'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the errors in the form')
+      return
+    }
+
     onSubmit(form)
   }
 
-  const inputClass =
-    "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
+  const inputClass = "input"
+  const labelClass = "label"
 
-  const labelClass =
-    "text-sm font-medium text-gray-700"
+  const { data: staffListData, isLoading: staffLoading } = useQuery({
+    queryKey: ['staff', 'all-for-manager'],
+    queryFn: () =>
+      staffApi.getStaffList({
+        page: 1,
+        page_size: 100,
+      }),
+  })
+
+  const staffOptions =
+    staffListData?.items?.map((s: any) => ({ id: s.id, name: s.full_name })) || []
 
   return (
     <form onSubmit={handleSubmit} className="space-y-10">
 
       {/* PERSONAL INFORMATION */}
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-6">
+        <h2 className="section-title mb-6">
           Personal Information
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          <div className="flex flex-col gap-2">
-            <label className={labelClass}>Employee Code</label>
-            <input
-              name="employee_code"
-              value={form.employee_code}
-              onChange={handleChange}
-              className={inputClass}
-            />
-          </div>
-
           <div className="flex flex-col gap-2">
             <label className={labelClass}>
               First Name <span className="text-red-500">*</span>
@@ -370,9 +143,9 @@ const StaffForm = ({
               name="first_name"
               value={form.first_name}
               onChange={handleChange}
-              required
-              className={inputClass}
+              className={`${inputClass} ${errors.first_name ? 'border-red-500' : ''}`}
             />
+            {errors.first_name && <p className="error-message">{errors.first_name}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -383,9 +156,9 @@ const StaffForm = ({
               name="last_name"
               value={form.last_name}
               onChange={handleChange}
-              required
-              className={inputClass}
+              className={`${inputClass} ${errors.last_name ? 'border-red-500' : ''}`}
             />
+            {errors.last_name && <p className="error-message">{errors.last_name}</p>}
           </div>
 
           {!isEdit && (
@@ -398,14 +171,16 @@ const StaffForm = ({
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                required
-                className={inputClass}
+                className={`${inputClass} ${errors.email ? 'border-red-500' : ''}`}
               />
+              {errors.email && <p className="error-message">{errors.email}</p>}
             </div>
           )}
 
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Phone</label>
+            <label className={labelClass}>
+              Phone <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
+            </label>
             <input
               name="phone"
               value={form.phone}
@@ -419,7 +194,7 @@ const StaffForm = ({
 
       {/* EMPLOYMENT INFORMATION */}
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-6">
+        <h2 className="section-title mb-6">
           Employment Information
         </h2>
 
@@ -433,9 +208,8 @@ const StaffForm = ({
               name="department_id"
               value={form.department_id}
               onChange={handleChange}
-              required
               disabled={dropdownLoading}
-              className={inputClass}
+              className={`${inputClass} ${errors.department_id ? 'border-red-500' : ''}`}
             >
               <option value="">Select Department</option>
               {departments.map(dep => (
@@ -444,6 +218,7 @@ const StaffForm = ({
                 </option>
               ))}
             </select>
+            {errors.department_id && <p className="error-message">{errors.department_id}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -454,9 +229,8 @@ const StaffForm = ({
               name="designation_id"
               value={form.designation_id}
               onChange={handleChange}
-              required
               disabled={dropdownLoading}
-              className={inputClass}
+              className={`${inputClass} ${errors.designation_id ? 'border-red-500' : ''}`}
             >
               <option value="">Select Designation</option>
               {designations.map(des => (
@@ -465,6 +239,28 @@ const StaffForm = ({
                 </option>
               ))}
             </select>
+            {errors.designation_id && <p className="error-message">{errors.designation_id}</p>}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className={labelClass}>
+              Assign Role <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="role_id"
+              value={form.role_id}
+              onChange={handleChange}
+              disabled={dropdownLoading}
+              className={`${inputClass} ${errors.role_id ? 'border-red-500' : ''}`}
+            >
+              <option value="">Select Role</option>
+              {roles.map(role => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
+            {errors.role_id && <p className="error-message">{errors.role_id}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -476,13 +272,15 @@ const StaffForm = ({
               name="join_date"
               value={form.join_date}
               onChange={handleChange}
-              required
-              className={inputClass}
+              className={`${inputClass} ${errors.join_date ? 'border-red-500' : ''}`}
             />
+            {errors.join_date && <p className="error-message">{errors.join_date}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Work Location</label>
+            <label className={labelClass}>
+              Work Location <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
+            </label>
             <input
               name="work_location"
               value={form.work_location}
@@ -492,7 +290,9 @@ const StaffForm = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Employment Type</label>
+            <label className={labelClass}>
+              Employment Type <span className="text-red-500">*</span>
+            </label>
             <select
               name="employment_type"
               value={form.employment_type}
@@ -506,13 +306,23 @@ const StaffForm = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Reporting Manager ID</label>
-            <input
+            <label className={labelClass}>
+              Reporting Manager <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
+            </label>
+            <select
               name="reporting_manager_id"
-              value={form.reporting_manager_id}
+              value={form.reporting_manager_id || ''}
               onChange={handleChange}
+              disabled={staffLoading}
               className={inputClass}
-            />
+            >
+              <option value="">None</option>
+              {staffOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
           </div>
 
         </div>
@@ -520,8 +330,8 @@ const StaffForm = ({
 
       {/* SKILLS */}
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-4">
-          Skills
+        <h2 className="section-title mb-4">
+          Skills <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span>
         </h2>
 
         <div className="flex flex-col gap-2">
@@ -557,7 +367,7 @@ const StaffForm = ({
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition"
+          className="btn-primary"
         >
           {loading
             ? 'Saving...'

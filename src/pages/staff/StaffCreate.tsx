@@ -5,6 +5,9 @@ import StaffForm from '../../components/staff/StaffForm'
 import { staffApi } from '../../api/staff'
 import { departmentApi } from '../../api/department'
 import { designationApi } from '../../api/designation'
+import { rolesApi } from '../../api/rolesApi'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 const StaffCreate = () => {
   const navigate = useNavigate()
@@ -22,15 +25,25 @@ const StaffCreate = () => {
     queryFn: () => designationApi.getDesignations(),
   })
 
+  // Fetch Roles
+  const { data: roles, isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => rolesApi.list(),
+  })
+
   const mutation = useMutation({
     mutationFn: staffApi.createStaff,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
+      toast.success('Staff member created')
       navigate(`/staff/${data.id}`)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to create staff member'))
     },
   })
 
-  const isLoading = departmentsLoading || designationsLoading
+  const isLoading = departmentsLoading || designationsLoading || rolesLoading
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen space-y-8">
@@ -67,6 +80,7 @@ const StaffCreate = () => {
             loading={mutation.isPending}
             departments={departments || []}
             designations={designations || []}
+            roles={roles || []}
             dropdownLoading={isLoading}
           />
         )}

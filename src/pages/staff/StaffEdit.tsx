@@ -6,6 +6,9 @@ import StaffForm from '../../components/staff/StaffForm'
 import { staffApi } from '../../api/staff'
 import { departmentApi } from '../../api/department'
 import { designationApi } from '../../api/designation'
+import { rolesApi } from '../../api/rolesApi'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 const StaffEdit = () => {
   const { id } = useParams<{ id: string }>()
@@ -41,18 +44,31 @@ const StaffEdit = () => {
     queryFn: () => designationApi.getDesignations()
   })
 
+  /* Fetch Roles */
+  const {
+    data: roles = [],
+    isLoading: rolesLoading
+  } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => rolesApi.list()
+  })
+
   /* Update Staff */
   const updateMutation = useMutation({
     mutationFn: (data: any) => staffApi.updateStaff(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
       queryClient.invalidateQueries({ queryKey: ['staff', id] })
+      toast.success('Staff member updated')
       navigate(`/staff/${id}`)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to update staff member'))
     }
   })
 
   /* Loading State */
-  if (staffLoading || deptLoading || desigLoading) {
+  if (staffLoading || deptLoading || desigLoading || rolesLoading) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="text-center text-gray-500 py-16">
@@ -106,6 +122,7 @@ const StaffEdit = () => {
             phone: staff.phone,
             department_id: staff.department_id,
             designation_id: staff.designation_id,
+            role_id: staff.role_id || '',
             reporting_manager_id: staff.reporting_manager_id,
             employment_type: staff.employment_type,
             work_location: staff.work_location,
@@ -117,6 +134,7 @@ const StaffEdit = () => {
           }}
           departments={departments}
           designations={designations}
+          roles={roles}
           isEdit
           loading={updateMutation.isPending}
           onSubmit={(data) => updateMutation.mutate(data)}

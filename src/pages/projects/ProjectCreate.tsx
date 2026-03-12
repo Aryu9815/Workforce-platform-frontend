@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
-import { Search } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { ArrowLeft, Search } from 'lucide-react'
+import { showApiError } from '../../lib/utils'
 
-const inputClass =
-  "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-const labelClass = "text-sm font-medium text-gray-700"
+const inputClass = "input"
+const labelClass = "label"
 
 const ProjectCreate = () => {
   const navigate = useNavigate()
@@ -16,9 +17,8 @@ const ProjectCreate = () => {
     name: '',
     code: '',
     description: '',
-    status: 'planning',
-    priority: 'medium',
-    project_type: '',
+    status: 'planning' as 'planning' | 'active' | 'on_hold' | 'completed',
+    priority: 'medium' as 'medium' | 'low' | 'high' | 'critical',
     start_date: '',
     end_date: '',
     budget: '',
@@ -27,15 +27,29 @@ const ProjectCreate = () => {
 
   const [managerSearch, setManagerSearch] = useState('')
   const [selectedManagerId, setSelectedManagerId] = useState<string>('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: staffNames, isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff-names'],
     queryFn: staffApi.getStaffNames,
   })
 
+  const staffOptions =
+    Array.isArray(staffNames)
+      ? staffNames
+      : staffNames
+      ? Object.entries(staffNames).map(([id, name]) => ({ id, name: name as string }))
+      : []
+
   const createMutation = useMutation({
     mutationFn: projectsApi.createProject,
-    onSuccess: () => navigate('/projects')
+    onSuccess: () => {
+      toast.success('Project created successfully')
+      navigate('/projects')
+    },
+    onError: (error: any) => {
+      showApiError(error, 'Failed to create project')
+    },
   })
 
   const onChange = (
@@ -47,11 +61,28 @@ const ProjectCreate = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!form.name.trim()) newErrors.name = 'Project name is required'
+    if (!form.code.trim()) newErrors.code = 'Project code is required'
+    if (!form.start_date) newErrors.start_date = 'Start date is required'
+    if (!form.end_date) newErrors.end_date = 'End date is required'
+    if (!selectedManagerId) newErrors.manager = 'Project manager is required'
+    if (form.budget && Number(form.budget) <= 0) {
+      newErrors.budget = 'Budget must be a positive number'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the errors in the form')
+      return
+    }
 
     createMutation.mutate({
       ...form,
       budget: form.budget ? Number(form.budget) : undefined,
-      project_manager_id: selectedManagerId || undefined,
+      project_manager_id: selectedManagerId,
     })
   }
 
@@ -59,11 +90,19 @@ const ProjectCreate = () => {
     <div className="space-y-8 max-w-3xl">
 
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">Create Project</h1>
-        <p className="text-gray-500 text-sm">
-          Add a new project with required details
-        </p>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate('/projects')}
+          className="p-2 rounded-md hover:bg-gray-100 transition"
+        >
+          <ArrowLeft className="h-5 w-5 text-gray-600" />
+        </button>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Create Project</h1>
+          <p className="text-gray-500 text-sm">
+            Add a new project with required details
+          </p>
+        </div>
       </div>
 
       {/* Form Container */}
@@ -74,7 +113,7 @@ const ProjectCreate = () => {
 
         {/* SECTION: Basic Info */}
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+          <h2 className="section-title mb-4">
             Project Information
           </h2>
 
@@ -87,33 +126,23 @@ const ProjectCreate = () => {
               </label>
               <input
                 name="name"
-                required
                 value={form.name}
                 onChange={onChange}
-                className={inputClass}
+                className={`${inputClass} ${errors.name ? 'border-red-500' : ''}`}
               />
+              {errors.name && <p className="error-message">{errors.name}</p>}
             </div>
 
             {/* Project Code */}
             <div className="flex flex-col gap-2">
-              <label className={labelClass}>Project Code</label>
+              <label className={labelClass}>Project Code <span className="text-red-500">*</span></label>
               <input
                 name="code"
                 value={form.code}
                 onChange={onChange}
-                className={inputClass}
+                className={`${inputClass} ${errors.code ? 'border-red-500' : ''}`}
               />
-            </div>
-
-            {/* Project Type */}
-            <div className="flex flex-col gap-2">
-              <label className={labelClass}>Project Type</label>
-              <input
-                name="project_type"
-                value={form.project_type}
-                onChange={onChange}
-                className={inputClass}
-              />
+              {errors.code && <p className="error-message">{errors.code}</p>}
             </div>
 
             {/* Priority */}
@@ -148,13 +177,13 @@ const ProjectCreate = () => {
 
         {/* SECTION: Project Manager */}
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+          <h2 className="section-title mb-4">
             Project Manager
           </h2>
 
           <div className="flex flex-col gap-2 relative">
 
-            <label className={labelClass}>Assign Manager</label>
+            <label className={labelClass}>Assign Manager <span className="text-red-500">*</span></label>
 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -164,17 +193,18 @@ const ProjectCreate = () => {
                 value={managerSearch}
                 placeholder={isLoadingStaff ? 'Loading...' : 'Search staff...'}
                 onChange={(e) => setManagerSearch(e.target.value)}
-                className={`${inputClass} pl-10`}
+                className={`${inputClass} pl-10 w-full ${errors.manager ? 'border-red-500' : ''}`}
               />
+              {errors.manager && <p className="error-message">{errors.manager}</p>}
 
               {/* Suggestions */}
               {managerSearch && !isLoadingStaff && (
                 <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-y-auto">
 
-                  {staffNames
-                    ?.filter(st => st.name.toLowerCase().includes(managerSearch.toLowerCase()))
-                    ?.slice(0, 25)
-                    ?.map(st => (
+                  {staffOptions
+                    .filter(st => st.name.toLowerCase().includes(managerSearch.toLowerCase()))
+                    .slice(0, 25)
+                    .map(st => (
                       <button
                         key={st.id}
                         type="button"
@@ -188,7 +218,7 @@ const ProjectCreate = () => {
                       </button>
                     ))}
 
-                  {Array.isArray(staffNames) && staffNames.length === 0 && (
+                  {staffOptions.length === 0 && (
                     <div className="px-3 py-2 text-sm text-gray-500">No staff found</div>
                   )}
                 </div>
@@ -199,32 +229,34 @@ const ProjectCreate = () => {
 
         {/* SECTION: Schedule */}
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+          <h2 className="section-title mb-4">
             Schedule
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <div className="flex flex-col gap-2">
-              <label className={labelClass}>Start Date</label>
+              <label className={labelClass}>Start Date <span className="text-red-500">*</span></label>
               <input
                 type="date"
                 name="start_date"
                 value={form.start_date}
                 onChange={onChange}
-                className={inputClass}
+                className={`${inputClass} ${errors.start_date ? 'border-red-500' : ''}`}
               />
+              {errors.start_date && <p className="error-message">{errors.start_date}</p>}
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className={labelClass}>End Date</label>
+              <label className={labelClass}>End Date <span className="text-red-500">*</span></label>
               <input
                 type="date"
                 name="end_date"
                 value={form.end_date}
                 onChange={onChange}
-                className={inputClass}
+                className={`${inputClass} ${errors.end_date ? 'border-red-500' : ''}`}
               />
+              {errors.end_date && <p className="error-message">{errors.end_date}</p>}
             </div>
 
           </div>
@@ -232,7 +264,7 @@ const ProjectCreate = () => {
 
         {/* SECTION: Financials */}
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+          <h2 className="section-title mb-4">
             Budget
           </h2>
 
@@ -246,8 +278,9 @@ const ProjectCreate = () => {
                 name="budget"
                 value={form.budget}
                 onChange={onChange}
-                className={inputClass}
+                className={`${inputClass} ${errors.budget ? 'border-red-500' : ''}`}
               />
+              {errors.budget && <p className="error-message">{errors.budget}</p>}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -268,7 +301,7 @@ const ProjectCreate = () => {
           <button
             type="button"
             onClick={() => navigate('/projects')}
-            className="px-5 py-2 rounded-md border text-gray-700 bg-white hover:bg-gray-100 text-sm"
+            className="btn-secondary"
           >
             Cancel
           </button>
@@ -276,7 +309,7 @@ const ProjectCreate = () => {
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm disabled:opacity-50"
+            className="btn-primary"
           >
             {createMutation.isPending ? "Creating..." : "Create Project"}
           </button>

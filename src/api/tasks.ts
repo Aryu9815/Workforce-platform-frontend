@@ -4,6 +4,7 @@ import { Task, PaginatedResponse } from '../types'
 export interface CreateTaskData {
   project_id: string
   title: string
+  task_label_id?: string
   description?: string
   priority?: 'low' | 'medium' | 'high' | 'urgent'
   task_type?: string
@@ -15,14 +16,16 @@ export interface CreateTaskData {
   workflow_state_id?: string
   status_id?: string
   sprint_id?: string
-  assignee_ids?: string[]
+  assignees?: { staff_id: string; role: string }[]
   milestone?: boolean
   billable?: boolean
   tags?: string[]
+  is_blocked_by_task?: boolean
 }
 
 export interface UpdateTaskData {
   title?: string
+  task_label_id?: string
   description?: string
   workflow_state_id?: string
   status_id?: string
@@ -49,51 +52,61 @@ export const tasksApi = {
     const response = await apiClient.get('/tasks', { params })
     return response.data
   },
-  
+
   getBacklogTasks: async (params?: { project_id?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<Task>> => {
     const response = await apiClient.get(`/tasks/${params?.project_id}/backlogs`, { params })
     return response.data
   },
-  
+
+  getAssignedTasks: async (staffId: string): Promise<Task[]> => {
+    const response = await apiClient.get(`/tasks/assigned/${staffId}`)
+    return response.data
+  },
+
   getTask: async (id: string): Promise<Task> => {
     const response = await apiClient.get(`/tasks/${id}`)
     return response.data
   },
-  
+
   createTask: async (data: CreateTaskData): Promise<Task> => {
     const response = await apiClient.post('/tasks', data)
     return response.data
   },
-  
+
   updateTask: async (id: string, data: UpdateTaskData): Promise<Task> => {
     const response = await apiClient.put(`/tasks/${id}`, data)
     return response.data
   },
-  
+
   deleteTask: async (id: string): Promise<void> => {
     await apiClient.delete(`/tasks/${id}`)
   },
-  
+
   assignTask: async (id: string, assigneeIds: string[]): Promise<void> => {
     await apiClient.post(`/tasks/${id}/assign`, assigneeIds)
   },
-  
+
   getTaskComments: async (taskId: string): Promise<any> => {
     const response = await apiClient.get(`/tasks/${taskId}/comments`)
     return response.data
   },
-  
+
   addTaskComment: async (taskId: string, data: { task_id?: string; content: string; is_internal?: boolean; parent_comment_id?: string }): Promise<any> => {
     const response = await apiClient.post(`/tasks/${taskId}/comments`, { task_id: taskId, ...data })
     return response.data
   },
-  
+
   updateTaskComment: async (taskId: string, commentId: string, data: { content: string; is_internal?: boolean }): Promise<any> => {
     const response = await apiClient.put(`/tasks/${taskId}/comments/${commentId}`, data)
     return response.data
   },
-  
+
   deleteTaskComment: async (taskId: string, commentId: string): Promise<void> => {
     await apiClient.delete(`/tasks/${taskId}/comments/${commentId}`)
+  },
+
+  getTickets: async (sprintId: string): Promise<Record<string, string>> => {
+    const response = await apiClient.get(`/tasks/${sprintId}/get_tickets`)
+    return response.data
   },
 }

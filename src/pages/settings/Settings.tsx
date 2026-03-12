@@ -2,6 +2,9 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Shield, UserCog, Building, Bell, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
+
+// const getPermissions = useAuthStore(state => state.getPermissions)
 
 const Settings: React.FC = () => {
   const settingsOptions = [
@@ -11,7 +14,9 @@ const Settings: React.FC = () => {
       icon: Shield,
       href: '/settings/roles',
       color: 'text-blue-500',
-      bgColor: 'bg-blue-50'
+      bgColor: 'bg-blue-50',
+      // isAllowed: getPermissions('role:view')
+      isAllowed: true
     },
     {
       title: 'General Settings',
@@ -19,7 +24,8 @@ const Settings: React.FC = () => {
       icon: Building,
       href: '/settings/general',
       color: 'text-teal-500',
-      bgColor: 'bg-teal-50'
+      bgColor: 'bg-teal-50',
+      isAllowed: true
     },
     {
       title: 'User Management',
@@ -27,7 +33,8 @@ const Settings: React.FC = () => {
       icon: UserCog,
       href: '/staff',
       color: 'text-purple-500',
-      bgColor: 'bg-purple-50'
+      bgColor: 'bg-purple-50',
+      isAllowed: true
     },
     {
       title: 'Notifications',
@@ -35,7 +42,8 @@ const Settings: React.FC = () => {
       icon: Bell,
       href: '/settings/notifications',
       color: 'text-orange-500',
-      bgColor: 'bg-orange-50'
+      bgColor: 'bg-orange-50',
+      isAllowed: true
     },
     {
       title: 'Security',
@@ -43,7 +51,8 @@ const Settings: React.FC = () => {
       icon: Lock,
       href: '/settings/security',
       color: 'text-red-500',
-      bgColor: 'bg-red-50'
+      bgColor: 'bg-red-50',
+      isAllowed: true
     }
   ]
 

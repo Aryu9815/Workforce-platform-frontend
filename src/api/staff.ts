@@ -2,13 +2,13 @@ import apiClient from './client'
 import { Staff, Department, PaginatedResponse } from '../types'
 
 export interface CreateStaffData {
-  employee_code?: string
   first_name: string
   last_name: string
   email: string
   phone?: string
   department_id: string
   designation_id: string
+  role_id?: string
   reporting_manager_id?: string
   employment_type: 'full_time' | 'contractor' | 'vendor'
   join_date: string
@@ -22,6 +22,7 @@ export interface UpdateStaffData {
   phone?: string
   department_id?: string
   designation_id?: string
+  role_id?: string
   reporting_manager_id?: string
   employment_type?: 'full_time' | 'contractor' | 'vendor'
   work_location?: string
@@ -47,7 +48,6 @@ export const staffApi = {
   },
   getDesignations: async () => {
     const response = await apiClient.get('/staff/designations')
-    console.log('Designations response:', response.data)
     return response.data
   },
 

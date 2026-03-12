@@ -27,6 +27,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             style: {
               background: '#363636',
               color: '#fff',
+              whiteSpace: 'pre-line', // Allow multi-line errors
+              maxWidth: '400px',
             },
             success: {
               duration: 3000,
@@ -48,3 +50,22 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
+
+if ('serviceWorker' in navigator) {
+  const register = () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('Service worker registered:', registration.scope)
+      })
+      .catch((err) => {
+        console.error('Service worker registration failed:', err)
+      })
+  }
+
+  if (document.readyState === 'complete') {
+    register()
+  } else {
+    window.addEventListener('load', register)
+  }
+}

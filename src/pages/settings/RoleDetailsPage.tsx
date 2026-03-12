@@ -11,8 +11,10 @@ import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { toast } from 'react-hot-toast'
 import { Badge } from '../../components/ui/Badge'
+import { getErrorMessage } from '../../lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/Dialog'
+import { useAuthStore } from '../../store/authStore'
 
 const RoleDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -25,7 +27,8 @@ const RoleDetailsPage: React.FC = () => {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editRole, setEditRole] = useState({ name: '', description: '', is_default: false })
-
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  
   useEffect(() => {
     if (id) {
       fetchData()
@@ -49,7 +52,7 @@ const RoleDetailsPage: React.FC = () => {
       })
     } catch (error) {
       console.error('Failed to fetch role details:', error)
-      toast.error('Failed to load role details.')
+      toast.error(getErrorMessage(error, 'Failed to load role details.'))
       navigate('/settings/roles')
     } finally {
       setLoading(false)
@@ -72,7 +75,7 @@ const RoleDetailsPage: React.FC = () => {
       fetchData()
     } catch (error) {
       console.error('Failed to update permissions:', error)
-      toast.error('Failed to update permissions.')
+      toast.error(getErrorMessage(error, 'Failed to update permissions.'))
     } finally {
       setIsSaving(false)
     }
@@ -88,7 +91,7 @@ const RoleDetailsPage: React.FC = () => {
       fetchData()
     } catch (error) {
       console.error('Failed to update role:', error)
-      toast.error('Failed to update role.')
+      toast.error(getErrorMessage(error, 'Failed to update role.'))
     } finally {
       setIsSaving(false)
     }
@@ -102,11 +105,14 @@ const RoleDetailsPage: React.FC = () => {
       navigate('/settings/roles')
     } catch (error) {
       console.error('Failed to delete role:', error)
-      toast.error('Failed to delete role.')
+      toast.error(getErrorMessage(error, 'Failed to delete role.'))
     } finally {
       setIsDeleting(false)
     }
   }
+  const canRoleUpdate = getPermissions('role:update')
+  const canRoleDelete = getPermissions('role:delete')
+  const canRoleView = getPermissions('role:view')
 
   // Group permissions by resource
   const groupedPermissions = permissions.reduce((acc, curr) => {
@@ -124,7 +130,16 @@ const RoleDetailsPage: React.FC = () => {
       </div>
     )
   }
-
+  
+  if (!canRoleView) {
+    return(
+      <div className="flex justify-center items-center py-20">
+        You do not have permission to view this role.
+      </div>
+    )
+    
+  }
+  
   if (!role) return null
 
   return (
@@ -146,6 +161,7 @@ const RoleDetailsPage: React.FC = () => {
           <p className="text-muted-foreground">{role.description || 'No description provided.'}</p>
         </div>
         <div className="flex items-center gap-2">
+          {canRoleUpdate && (
           <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
@@ -153,7 +169,7 @@ const RoleDetailsPage: React.FC = () => {
                 Edit Role
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-white">
               <DialogHeader>
                 <DialogTitle>Edit Role</DialogTitle>
                 <DialogDescription>
@@ -196,8 +212,9 @@ const RoleDetailsPage: React.FC = () => {
               </form>
             </DialogContent>
           </Dialog>
+          )}
 
-          {!role.is_system && (
+          {!role.is_system && canRoleDelete && (
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="destructive" className="flex items-center gap-2">

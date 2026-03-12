@@ -25,8 +25,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/DropdownMenu';
-import { formatCurrency, formatDate } from '../../lib/utils';
-import { toast } from 'sonner';
+import { formatCurrency, formatDate, getErrorMessage } from '../../lib/utils';
+import toast from 'react-hot-toast';
 import type { ReimbursementClaim, ExpenseCategory } from '../../types';
 
 const statusConfig = {
@@ -79,8 +79,8 @@ const ReimbursementList = () => {
         pages: response.pages,
         page_size: (response as any).page_size ?? prev.page_size,
       }));
-    } catch {
-      toast.error('Failed to fetch reimbursement claims');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to fetch reimbursement claims'));
     } finally {
       setLoading(false);
     }
@@ -91,8 +91,8 @@ const ReimbursementList = () => {
       await reimbursementsApi.approveClaim(id, 'approved');
       toast.success('Reimbursement claim approved');
       fetchClaims();
-    } catch {
-      toast.error('Failed to approve reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to approve reimbursement claim'));
     }
   };
 
@@ -101,8 +101,8 @@ const ReimbursementList = () => {
       await reimbursementsApi.approveClaim(id, 'rejected');
       toast.success('Reimbursement claim rejected');
       fetchClaims();
-    } catch {
-      toast.error('Failed to reject reimbursement claim');
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, 'Failed to reject reimbursement claim'));
     }
   };
 

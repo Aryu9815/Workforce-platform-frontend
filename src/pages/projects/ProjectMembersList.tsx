@@ -4,6 +4,7 @@ import { projectsApi } from '../../api/projects'
 import { ProjectMember } from '../../types'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
+import { getErrorMessage } from '../../lib/utils'
 
 const ProjectMembersList = () => {
   const { id } = useParams<{ id: string }>()
@@ -22,11 +23,7 @@ const ProjectMembersList = () => {
       refetch()
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to remove member'
-      )
+      toast.error(getErrorMessage(error, 'Failed to remove member'))
     },
   })
 

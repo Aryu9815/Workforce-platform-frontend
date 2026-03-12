@@ -1,0 +1,10 @@
+<script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+            .register("/sw.js", { type: "classic" })
+            .then(reg => console.log("SW REGISTERED:", reg))
+            .catch(err => console.error("SW REGISTER FAILED:", err));
+    } else {
+        console.log("Service worker not supported");
+    }
+</script>

@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { staffApi } from '../../api/staff'
 import { Department } from '../../types'
+import toast from 'react-hot-toast'
 
 interface DepartmentFormProps {
   defaultValues?: Partial<Department>
@@ -19,14 +22,18 @@ const DepartmentForm = ({
     name: '',
     code: '',
     description: '',
+    head_id: '',
     is_active: true,
   })
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (defaultValues) {
       setForm(prev => ({
         ...prev,
         ...defaultValues,
+        head_id: defaultValues.head_id || '',
       }))
     }
   }, [defaultValues])
@@ -45,17 +52,43 @@ const DepartmentForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!form.name.trim()) newErrors.name = 'Department name is required'
+    else if (form.name.length > 100) newErrors.name = 'Name must be less than 100 characters'
+    if (!form.code.trim()) newErrors.code = 'Department code is required'
+    else if (form.code && form.code.length > 20) newErrors.code = 'Code must be less than 20 characters'
+    if (form.description && form.description.length > 500) {
+      newErrors.description = 'Description must be less than 500 characters'
+    }
+
+    if (!form.head_id.trim()) newErrors.head_id = 'Department head is required'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the errors in the form')
+      return
+    }
+
     onSubmit(form)
   }
 
-  const inputClass =
-    "border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition"
+  const inputClass = "input"
+  const labelClass = "label"
+  const sectionTitle = "section-title mb-4"
 
-  const labelClass = "text-sm font-medium text-gray-700"
+  const { data: staffListData, isLoading: staffLoading } = useQuery({
+    queryKey: ['staff', 'all-for-department-head'],
+    queryFn: () =>
+      staffApi.getStaffList({
+        page: 1,
+        page_size: 100,
+      }),
+  })
 
-  const sectionTitle =
-    "text-xs font-semibold uppercase tracking-wider text-gray-900 mb-4"
+  const staffOptions =
+    staffListData?.items?.map((s: any) => ({ id: s.id, name: s.full_name })) || []
 
   return (
     <form
@@ -76,24 +109,27 @@ const DepartmentForm = ({
             </label>
             <input
               name="name"
-              required
               value={form.name}
               onChange={handleChange}
-              className={inputClass}
+              className={`${inputClass} ${errors.name ? 'border-red-500' : ''}`}
               placeholder="e.g. Engineering"
             />
+            {errors.name && <p className="error-message">{errors.name}</p>}
           </div>
 
           {/* Department Code */}
           <div className="flex flex-col gap-2">
-            <label className={labelClass}>Department Code</label>
+            <label className={labelClass}>
+            Department Code <span className="text-red-500">*</span>
+            </label>
             <input
               name="code"
               value={form.code}
               onChange={handleChange}
-              className={inputClass}
+              className={`${inputClass} ${errors.code ? 'border-red-500' : ''}`}
               placeholder="e.g. ENG"
             />
+            {errors.code && <p className="error-message">{errors.code}</p>}
           </div>
 
         </div>
@@ -111,9 +147,34 @@ const DepartmentForm = ({
             value={form.description}
             onChange={handleChange}
             placeholder="Brief department description..."
-            className={inputClass + " resize-none"}
+            className={`${inputClass} resize-none ${errors.description ? 'border-red-500' : ''}`}
           />
+          {errors.description && <p className="error-message">{errors.description}</p>}
         </div>
+      </div>
+
+      {/* DEPARTMENT HEAD */}
+      <div>
+        <h2 className={sectionTitle}>
+          Department Head <span className="text-red-500">*</span>
+        </h2>
+        <div className="flex flex-col gap-2">
+          <select
+            name="head_id"
+            value={form.head_id || ''}
+            onChange={handleChange}
+            disabled={staffLoading}
+            className={inputClass}
+          >
+            <option value="">None</option>
+            {staffOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {errors.head_id && <p className="error-message">{errors.head_id}</p>}
       </div>
 
       {/* ACTIVE STATUS */}
@@ -135,7 +196,7 @@ const DepartmentForm = ({
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="px-5 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition"
+          className="btn-secondary"
           disabled={loading}
         >
           Cancel
@@ -144,7 +205,7 @@ const DepartmentForm = ({
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm transition disabled:opacity-60"
+          className="btn-primary"
         >
           {loading
             ? "Saving..."

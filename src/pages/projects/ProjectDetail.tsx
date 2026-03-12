@@ -3,17 +3,23 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
+import { getErrorMessage } from '../../lib/utils'
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-
+  const getPermissions = useAuthStore(state => state.getPermissions)
+  
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
     queryFn: () => projectsApi.getProject(id!),
     enabled: !!id,
   })
 
+  const canEditProject = getPermissions('project:update')
+  const canDeleteProject = getPermissions('project:delete')
+  const  canViewMembers = getPermissions('project:view-members')
+  const canManageMembers = getPermissions('project:manage-members')
   const deleteMutation = useMutation({
     mutationFn: () => projectsApi.deleteProject(id!),
     onSuccess: () => {
@@ -21,13 +27,10 @@ const ProjectDetail = () => {
       navigate('/projects')
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete project'
-      )
+      toast.error(getErrorMessage(error, 'Failed to delete project'))
     },
   })
+
 
   if (isLoading) return <div className="py-10 text-center text-gray-500">Loading...</div>
   if (!project) return <div className="py-10 text-center text-gray-500">Project not found</div>
@@ -53,11 +56,6 @@ const ProjectDetail = () => {
     const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
     return `${diff} days`
   }
-  const getPermissions = useAuthStore(state => state.getPermissions)
-  const canDeleteProject = getPermissions('project:delete')
-  const canEditProject = getPermissions('project:update')
-  const canManageMembers = getPermissions('project:manage-members')
-  const canViewMembers = getPermissions('project:view-members')
 
   return (
     <div className="p-6 space-y-8 bg-gray-50">
@@ -212,47 +210,47 @@ const ProjectDetail = () => {
 
       {/* FULL-WIDTH TEAM MEMBERS */}
       {canViewMembers && (
-      <div className="border bg-white rounded-lg p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
-          
-          <div className="flex gap-2">
-            {canManageMembers && (
-              <button
-                onClick={() => navigate(`/projects/${id}/members/new`)}
-                className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
-              >
-                Add Member
-              </button>
-            )}
-            <button
-              onClick={() => navigate(`/projects/${id}/members`)}
-              className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 text-sm"
-            >
-              View All
-            </button>
-          </div>
-        </div>
+        <div className="border bg-white rounded-lg p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
 
-        {project.project_members?.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {project.project_members.map((member) => (
+            <div className="flex gap-2">
+              {canManageMembers && (
+                <button
+                  onClick={() => navigate(`/projects/${id}/members/new`)}
+                  className="px-4 py-2 border rounded-md bg-white hover:bg-gray-100 text-sm"
+                >
+                  Add Member
+                </button>
+              )}
               <button
-                key={member.id}
-                onClick={() => navigate(`/staff/${member.staff_id}`)}
-                className="p-4 rounded-lg border bg-gray-50 hover:bg-gray-100 transition"
+                onClick={() => navigate(`/projects/${id}/members`)}
+                className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 text-sm"
               >
-                <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                <p className="text-xs text-gray-600">{member.role}</p>
+                View All
               </button>
-            ))}
+            </div>
           </div>
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No team members added yet.
-          </p>
-        )}
-      </div>
+
+          {project.project_members?.length ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {project.project_members.map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() => navigate(`/staff/${member.staff_id}`)}
+                  className="p-4 rounded-lg border bg-gray-50 hover:bg-gray-100 transition"
+                >
+                  <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                  <p className="text-xs text-gray-600">{member.role}</p>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No team members added yet.
+            </p>
+          )}
+        </div>
       )}
     </div>
   )

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, ArrowLeft } from 'lucide-react'
 import { tasksApi } from '../../api/tasks'
+import { projectsApi } from '../../api/projects'
 import TaskDetailModal from '../projects/TaskDetailModal'
 
 const Backlog = () => {
@@ -22,6 +23,18 @@ const Backlog = () => {
         page,
         page_size: pageSize,
       }),
+  })
+
+  const { data: project } = useQuery({
+    queryKey: ['project', id],
+    queryFn: () => projectsApi.getProject(id!),
+    enabled: !!id,
+  })
+
+  const { data: workflow } = useQuery({
+    queryKey: ['workflow', project?.workflow_id],
+    queryFn: () => projectsApi.getWorkflow(project?.workflow_id!),
+    enabled: !!project?.workflow_id,
   })
 
   return (
@@ -71,10 +84,9 @@ const Backlog = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-gray-600 font-medium">Ticket</th>
                 <th className="px-4 py-3 text-left text-gray-600 font-medium">Title</th>
+                <th className="px-4 py-3 text-left text-gray-600 font-medium">Label</th>
                 <th className="px-4 py-3 text-left text-gray-600 font-medium">Priority</th>
-                <th className="px-4 py-3 text-left text-gray-600 font-medium">Type</th>
                 <th className="px-4 py-3 text-left text-gray-600 font-medium">Workflow State</th>
-                {/* <th className="px-4 py-3 text-left text-gray-600 font-medium">Assignees</th> */}
                 <th className="px-4 py-3 text-left text-gray-600 font-medium">Due</th>
               </tr>
             </thead>
@@ -122,11 +134,24 @@ const Backlog = () => {
                           </div>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        {t.task_label ? (
+                          <span 
+                            className="px-2 py-0.5 rounded text-xs font-medium border"
+                            style={{ 
+                              backgroundColor: `${t.task_label.color}15`, 
+                              color: t.task_label.color,
+                              borderColor: `${t.task_label.color}30`
+                            }}
+                          >
+                            {t.task_label.label}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 capitalize">
                         {t.priority || '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {t.task_type || '—'}
                       </td>
                       <td className="px-4 py-3">
                         {t.workflow_state_name || '—'}
@@ -172,7 +197,7 @@ const Backlog = () => {
         <TaskDetailModal
           projectId={id}
           sprintId={selectedTask.sprint_id || null}
-          workflowStates={[]}
+          workflowStates={workflow?.workflow_states || []}
           selectedTask={selectedTask}
           onClose={() => setSelectedTask(null)}
         />

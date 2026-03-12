@@ -3,6 +3,7 @@ import {
   Asset,
   AssetCategory,
   AssetType,
+  AssetHistoryResponse,
   PaginatedResponse,
 } from '../types'
 
@@ -23,10 +24,11 @@ export interface CreateAssetCategoryData {
 export interface CreateAssetTypeData {
   category_id: string
   name: string
+  tag_prefix: string
   brand?: string
   model_number?: string
   is_serialized?: boolean
-  purchase_cost?: number
+  // purchase_cost?: number
   warranty_months?: number
   description?: string
 }
@@ -135,6 +137,11 @@ export const assetsApi = {
       `/assets/${assetId}/return`,
       data
     )
+    return response.data
+  },
+
+  getAssetHistory: async (assetId: string): Promise<AssetHistoryResponse> => {
+    const response = await apiClient.get(`/assets/${assetId}/history`)
     return response.data
   },
 }

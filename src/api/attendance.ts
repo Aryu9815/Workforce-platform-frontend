@@ -44,10 +44,20 @@ export const attendanceApi = {
     return response.data
   },
   
-  checkOut: async (staffId: string, location?: Record<string, any>): Promise<AttendanceRecord> => {
+  checkOut: async (staffId: string, location?: Record<string, any>, notes?: string): Promise<AttendanceRecord> => {
     const response = await apiClient.post('/attendance/check-out', null, {
-      params: { staff_id: staffId, location }
+      params: { staff_id: staffId, location, notes }
     })
+    return response.data
+  },
+
+  getAttendanceRecord: async (id: string): Promise<AttendanceRecord> => {
+    const response = await apiClient.get(`/attendance/${id}`)
+    return response.data
+  },
+
+  updateAttendance: async (id: string, data: Partial<CreateAttendanceData>): Promise<AttendanceRecord> => {
+    const response = await apiClient.put(`/attendance/records/${id}`, data)
     return response.data
   },
   

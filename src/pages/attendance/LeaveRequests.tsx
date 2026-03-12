@@ -11,15 +11,13 @@ import {
 import { attendanceApi, CreateLeaveRequestData } from '../../api/attendance'
 import { LeaveRequest, LeaveType } from '../../types'
 import { useAuthStore } from '../../store/authStore'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { format, differenceInDays } from 'date-fns'
+import { showApiError } from '../../lib/utils'
 
 const LeaveRequests = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [accrualMonth, setAccrualMonth] = useState(
-    format(new Date(), 'yyyy-MM')
-  )
   const { user, getPermissions } = useAuthStore()
   const queryClient = useQueryClient()
 
@@ -29,6 +27,7 @@ const LeaveRequests = () => {
     end_date: format(new Date(), 'yyyy-MM-dd'),
     reason: ''
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ['leave-requests', statusFilter],
@@ -47,7 +46,7 @@ const LeaveRequests = () => {
     mutationFn: (data: CreateLeaveRequestData) =>
       attendanceApi.createLeaveRequest(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['leave-requests'])
+      queryClient.invalidateQueries({ queryKey: ['leave-requests'] })
       setIsModalOpen(false)
       toast.success('Leave request submitted')
       setFormData({
@@ -58,7 +57,7 @@ const LeaveRequests = () => {
       })
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Failed to submit request')
+      showApiError(e, 'Failed to submit request')
     }
   })
 
@@ -69,11 +68,11 @@ const LeaveRequests = () => {
       notes?: string
     }) => attendanceApi.approveLeaveRequest(payload.id, payload.status),
     onSuccess: (_, vars) => {
-      queryClient.invalidateQueries(['leave-requests'])
+      queryClient.invalidateQueries({ queryKey: ['leave-requests'] })
       toast.success(`Request ${vars.status}`)
     },
     onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Action failed')
+      showApiError(e, 'Action failed')
     }
   })
 
@@ -81,21 +80,7 @@ const LeaveRequests = () => {
   const canRequestLeave = getPermissions('leave:create')
   const canApproveLeave = getPermissions('leave:approve')
   
-  const accrualMutation = useMutation({
-    mutationFn: async () => {
-      const [yearStr, monthStr] = accrualMonth.split('-')
-      const year = parseInt(yearStr, 10)
-      const month = parseInt(monthStr, 10)
-      return attendanceApi.runLeaveAccrual(year, month)
-    },
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Leave accrual executed')
-      queryClient.invalidateQueries(['leave-requests'])
-    },
-    onError: (e: any) => {
-      toast.error(e.response?.data?.detail || 'Failed to run leave accrual')
-    },
-  })
+
 
 
   if (!canViewLeave) {
@@ -108,11 +93,17 @@ const LeaveRequests = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
 
     if (!user || !(user as any).staff_id) {
       toast.error('User staff information missing')
       return
     }
+
+    if (!formData.leave_type_id) newErrors.leave_type = 'Leave type is required'
+    if (!formData.start_date) newErrors.start_date = 'Start date is required'
+    if (!formData.end_date) newErrors.end_date = 'End date is required'
 
     const days =
       differenceInDays(
@@ -120,7 +111,14 @@ const LeaveRequests = () => {
         new Date(formData.start_date!)
       ) + 1
 
-    if (days <= 0) return toast.error('End date must be after start date')
+    if (days <= 0) {
+      newErrors.end_date = 'End date must be after start date'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
 
     createMutation.mutate({
       ...formData,
@@ -171,26 +169,7 @@ const LeaveRequests = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-2">
-            <label className="text-xs font-medium text-gray-600">
-              Accrual month
-            </label>
-            <input
-              type="month"
-              value={accrualMonth}
-              onChange={(e) => setAccrualMonth(e.target.value)}
-              className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-teal-600"
-            />
-            <button
-              type="button"
-              onClick={() => accrualMutation.mutate()}
-              disabled={accrualMutation.isPending}
-              className="text-xs px-3 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-            >
-              {accrualMutation.isPending ? 'Running...' : 'Run Accrual'}
-            </button>
-          </div>
-
+          
           {canRequestLeave && (
             <button
               onClick={() => setIsModalOpen(true)}
@@ -327,120 +306,121 @@ const LeaveRequests = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-  <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
+        <>
+          <div className="modal-overlay" onClick={() => setIsModalOpen(false)} />
+          <div className="modal-content p-0 max-w-md">
 
-    {/* Header */}
-    <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-      <h2 className="text-lg font-semibold text-gray-900">
-        Request Leave
-      </h2>
-      <button
-        className="text-gray-400 hover:text-gray-600 transition"
-        onClick={() => setIsModalOpen(false)}
-      >
-        <XCircle className="h-6 w-6" />
-      </button>
-    </div>
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-secondary-900">
+                Request Leave
+              </h2>
+              <button
+                className="text-secondary-400 hover:text-secondary-600 transition"
+                onClick={() => setIsModalOpen(false)}
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
 
-    {/* Form */}
-    <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
 
-      {/* Leave Type */}
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">
-          Leave Type <span className="text-red-500">*</span>
-        </label>
-        <select
-          required
-          value={formData.leave_type_id}
-          onChange={(e) =>
-            setFormData({ ...formData, leave_type_id: e.target.value })
-          }
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-        >
-          <option value="">Select leave type</option>
-          {leaveTypes?.map((lt: LeaveType) => (
-            <option key={lt.id} value={lt.id}>
-              {lt.name}
-            </option>
-          ))}
-        </select>
-      </div>
+              {/* Leave Type */}
+              <div className="flex flex-col gap-1">
+                <label className="label">
+                  Leave Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.leave_type_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, leave_type_id: e.target.value })
+                  }
+                  className={`input ${errors.leave_type ? 'input-error' : ''}`}
+                >
+                  <option value="">Select leave type</option>
+                  {leaveTypes?.map((lt: LeaveType) => (
+                    <option key={lt.id} value={lt.id}>
+                      {lt.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.leave_type && <p className="error-message">{errors.leave_type}</p>}
+              </div>
 
-      {/* Dates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700">
-            Start Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            required
-            value={formData.start_date}
-            onChange={(e) =>
-              setFormData({ ...formData, start_date: e.target.value })
-            }
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-          />
-        </div>
+                <div className="flex flex-col gap-1">
+                  <label className="label">
+                    Start Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
+                    className={`input ${errors.start_date ? 'input-error' : ''}`}
+                  />
+                  {errors.start_date && <p className="error-message">{errors.start_date}</p>}
+                </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700">
-            End Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            required
-            value={formData.end_date}
-            onChange={(e) =>
-              setFormData({ ...formData, end_date: e.target.value })
-            }
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-          />
-        </div>
+                <div className="flex flex-col gap-1">
+                  <label className="label">
+                    End Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, end_date: e.target.value })
+                    }
+                    className={`input ${errors.end_date ? 'input-error' : ''}`}
+                  />
+                  {errors.end_date && <p className="error-message">{errors.end_date}</p>}
+                </div>
 
-      </div>
+              </div>
 
-      {/* Reason */}
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">
-          Reason
-        </label>
-        <textarea
-          rows={4}
-          value={formData.reason}
-          onChange={(e) =>
-            setFormData({ ...formData, reason: e.target.value })
-          }
-          placeholder="Explain why you are requesting leave"
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-        />
-      </div>
+              {/* Reason */}
+              <div className="flex flex-col gap-1">
+                <label className="label">
+                  Reason
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.reason}
+                  onChange={(e) =>
+                    setFormData({ ...formData, reason: e.target.value })
+                  }
+                  placeholder="Explain why you are requesting leave"
+                  className="input"
+                />
+              </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 pt-4 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(false)}
-          className="flex-1 px-4 py-2 border rounded-md text-gray-700 bg-white hover:bg-gray-100 text-sm transition"
-        >
-          Cancel
-        </button>
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-5 border-t border-secondary-200 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
 
-        <button
-          type="submit"
-          disabled={createMutation.isPending}
-          className="flex-1 px-4 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 text-sm transition disabled:opacity-50"
-        >
-          {createMutation.isPending ? 'Submitting...' : 'Submit Request'}
-        </button>
-      </div>
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="btn-primary"
+                >
+                  {createMutation.isPending ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
 
-    </form>
-  </div>
-</div>
+            </form>
+          </div>
+        </>
 
       )}
     </div>

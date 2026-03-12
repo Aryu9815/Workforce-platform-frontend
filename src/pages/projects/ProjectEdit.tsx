@@ -4,12 +4,11 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../../api/projects'
 import { staffApi } from '../../api/staff'
 import toast from 'react-hot-toast'
-import { Search } from 'lucide-react'
+import { ArrowLeft, Search } from 'lucide-react'
+import { showApiError } from '../../lib/utils'
 
-const inputClass =
-  "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-const labelClass =
-  "text-sm font-medium text-gray-700"
+const inputClass = "input"
+const labelClass = "label"
 
 const ProjectEdit = () => {
   const navigate = useNavigate()
@@ -80,12 +79,7 @@ const ProjectEdit = () => {
       navigate(`/projects/${id}`)
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to update project'
-      toast.error(message)
+      showApiError(error, 'Failed to update project')
     },
   })
 
@@ -121,11 +115,19 @@ const ProjectEdit = () => {
     <div className="space-y-8 max-w-4xl">
 
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">Edit Project</h1>
-        <p className="text-gray-500 text-sm">
-          Update project details and timeline
-        </p>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-md hover:bg-gray-100 transition"
+        >
+          <ArrowLeft className="h-5 w-5 text-gray-600" />
+        </button>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Edit Project</h1>
+          <p className="text-gray-500 text-sm">
+            Update project details and timeline
+          </p>
+        </div>
       </div>
 
       {/* Loading */}
@@ -139,7 +141,7 @@ const ProjectEdit = () => {
 
           {/* SECTION: Basic Info */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            <h2 className="section-title mb-4">
               Project Information
             </h2>
 
@@ -206,7 +208,7 @@ const ProjectEdit = () => {
 
           {/* SECTION: Manager */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            <h2 className="section-title mb-4">
               Project Manager
             </h2>
 
@@ -265,7 +267,7 @@ const ProjectEdit = () => {
 
           {/* SECTION: Timeline */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            <h2 className="section-title mb-4">
               Timeline
             </h2>
 
@@ -320,7 +322,7 @@ const ProjectEdit = () => {
 
           {/* SECTION: Budget */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-600 mb-4">
+            <h2 className="section-title mb-4">
               Budget & Progress
             </h2>
 
@@ -371,7 +373,7 @@ const ProjectEdit = () => {
             <button
               type="button"
               onClick={() => navigate(`/projects/${id}`)}
-              className="px-5 py-2 rounded-md border text-gray-700 bg-white hover:bg-gray-100 text-sm"
+              className="btn-secondary"
             >
               Cancel
             </button>
@@ -379,7 +381,7 @@ const ProjectEdit = () => {
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm disabled:opacity-50"
+              className="btn-primary"
             >
               {updateMutation.isPending ? "Updating..." : "Update Project"}
             </button>

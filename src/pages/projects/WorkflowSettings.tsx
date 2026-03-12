@@ -2,23 +2,28 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { projectsApi } from "../../api/projects"
+import { taskLabelsApi } from "../../api/taskLabelsApi"
 import toast from "react-hot-toast"
 import { useAuthStore } from '../../store/authStore'
+import { getErrorMessage } from '../../lib/utils'
 
 const WorkflowSettings = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const [activeTab, setActiveTab] = useState<"transitions" | "states">("transitions")
+  const [activeTab, setActiveTab] = useState<"transitions" | "states" | "labels">("transitions")
   const [selectedState, setSelectedState] = useState<any | null>(null)
   const [selectedTransition, setSelectedTransition] = useState<any | null>(null)
+  const [selectedLabel, setSelectedLabel] = useState<any | null>(null)
   const [isStateModalOpen, setIsStateModalOpen] = useState(false)
   const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false)
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false)
 
   const getPermissions = useAuthStore(state => state.getPermissions)
   const canViewTransitions = getPermissions('transition:view')
   const canViewStates = getPermissions('state:view')
+  const canViewLabels = getPermissions('task_label:view')
   const { data: project } = useQuery({
     queryKey: ["project", id],
     queryFn: () => projectsApi.getProject(id!),
@@ -37,6 +42,12 @@ const WorkflowSettings = () => {
     queryKey: ["workflow-transitions", workflowId],
     queryFn: () => projectsApi.getWorkflowTransitions(workflowId!),
     enabled: !!workflowId,
+  })
+
+  const { data: labels } = useQuery({
+    queryKey: ["task-labels", id],
+    queryFn: () => taskLabelsApi.getTaskLabelsByProject(id!),
+    enabled: !!id,
   })
 
   if (!project || !workflow) {
@@ -60,11 +71,11 @@ const WorkflowSettings = () => {
         toast.success("State created")
       }
 
-      queryClient.invalidateQueries(["workflow", workflowId])
+      queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] })
       setIsStateModalOpen(false)
       setSelectedState(null)
-    } catch {
-      toast.error("Failed to save state")
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, "Failed to save state"))
     }
   }
 
@@ -79,11 +90,29 @@ const WorkflowSettings = () => {
         toast.success("Transition created")
       }
 
-      queryClient.invalidateQueries(["workflow-transitions", workflowId])
+      queryClient.invalidateQueries({ queryKey: ["workflow-transitions", workflowId] })
       setIsTransitionModalOpen(false)
       setSelectedTransition(null)
-    } catch {
-      toast.error("Failed to save transition")
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, "Failed to save transition"))
+    }
+  }
+
+  const saveLabel = async (data: any) => {
+    try {
+      if (selectedLabel) {
+        await taskLabelsApi.updateTaskLabel(selectedLabel.id, data)
+        toast.success("Label updated")
+      } else {
+        await taskLabelsApi.createTaskLabel({ ...data, project_id: id! })
+        toast.success("Label created")
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["task-labels", id] })
+      setIsLabelModalOpen(false)
+      setSelectedLabel(null)
+    } catch (error: any) {
+      toast.error(getErrorMessage(error, "Failed to save label"))
     }
   }
 
@@ -92,7 +121,7 @@ const WorkflowSettings = () => {
     if (!confirm("Delete this state?")) return
 
     await projectsApi.deleteWorkflowState(workflowId!, selectedState.id)
-    queryClient.invalidateQueries(["workflow", workflowId])
+    queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] })
     setIsStateModalOpen(false)
     setSelectedState(null)
     toast.success("State removed")
@@ -103,18 +132,32 @@ const WorkflowSettings = () => {
     if (!confirm("Delete this transition?")) return
 
     await projectsApi.deleteWorkflowTransition(workflowId!, selectedTransition.id)
-    queryClient.invalidateQueries(["workflow-transitions", workflowId])
+    queryClient.invalidateQueries({ queryKey: ["workflow-transitions", workflowId] })
     setIsTransitionModalOpen(false)
     setSelectedTransition(null)
     toast.success("Transition removed")
   }
 
+  const deleteLabel = async () => {
+    if (!selectedLabel) return
+    if (!confirm("Delete this label?")) return
+
+    await taskLabelsApi.deleteTaskLabel(selectedLabel.id)
+    queryClient.invalidateQueries({ queryKey: ["task-labels", id] })
+    setIsLabelModalOpen(false)
+    setSelectedLabel(null)
+    toast.success("Label removed")
+  }
+
   const canEditState = getPermissions('state:update')
   const canEditTransition = getPermissions('transition:update')
+  const canEditLabel = getPermissions('task_label:update')
   const canDeleteState = getPermissions('state:delete')
   const canDeleteTransition = getPermissions('transition:delete')
+  const canDeleteLabel = getPermissions('task_label:delete')
   const canCreateState = getPermissions('state:create')
   const canCreateTransition = getPermissions('transition:create')
+  const canCreateLabel = getPermissions('task_label:create')
 
 
   return (
@@ -161,6 +204,18 @@ const WorkflowSettings = () => {
           States
         </button>
         )}
+        {canViewLabels && (
+        <button
+          onClick={() => setActiveTab("labels")}
+          className={`px-4 py-2 text-sm rounded-md ${
+            activeTab === "labels"
+              ? "bg-teal-600 text-white"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
+        >
+          Labels
+        </button>
+        )}
         </div>
 
       <div className="border border-gray-200 rounded-md bg-white p-6">
@@ -175,7 +230,7 @@ const WorkflowSettings = () => {
                   setSelectedTransition(null)
                   setIsTransitionModalOpen(true)
                 }}
-                className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
+                className="btn-primary"
               >
                 + Add Transition
               </button>
@@ -275,6 +330,63 @@ const WorkflowSettings = () => {
           </>
         )}
 
+        {/* LABELS */}
+        {activeTab === "labels" && (
+          <>
+            <div className="flex justify-end mb-4">
+              {canCreateLabel && (
+              <button
+                onClick={() => {
+                  setSelectedLabel(null)
+                  setIsLabelModalOpen(true)
+                }}
+                className="px-4 py-2 text-sm bg-teal-700 text-white rounded-md hover:bg-teal-800"
+              >
+                + Add Label
+              </button>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-gray-600 font-medium">Label</th>
+                    <th className="px-4 py-3 text-left text-gray-600 font-medium">Description</th>
+                    <th className="px-4 py-3 text-center text-gray-600 font-medium">Color</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+                  {labels?.map((label: any) => (
+                    <tr
+                      key={label.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => {
+                        if (!canEditLabel) return
+                        setSelectedLabel(label)
+                        setIsLabelModalOpen(true)
+                      }}
+                    >
+                      <td className="px-4 py-3 font-medium">{label.label}</td>
+                      <td className="px-4 py-3">{label.description || "-"}</td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded-full border border-gray-200"
+                            style={{ backgroundColor: label.color }}
+                          />
+                          <span className="font-mono text-xs">{label.color}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
       </div>
 
       {/* MODALS (will update theme next) */}
@@ -283,7 +395,7 @@ const WorkflowSettings = () => {
           stateData={selectedState}
           onClose={() => setIsStateModalOpen(false)}
           onSave={saveState}
-          onDelete={deleteState}
+          onDelete={canDeleteState ? deleteState : undefined}
         />
       )}
 
@@ -293,7 +405,16 @@ const WorkflowSettings = () => {
           workflowStates={workflow.workflow_states}
           onClose={() => setIsTransitionModalOpen(false)}
           onSave={saveTransition}
-          onDelete={deleteTransition}
+          onDelete={canDeleteTransition ? deleteTransition : undefined}
+        />
+      )}
+
+      {isLabelModalOpen && (
+        <LabelModal
+          labelData={selectedLabel}
+          onClose={() => setIsLabelModalOpen(false)}
+          onSave={saveLabel}
+          onDelete={canDeleteLabel ? deleteLabel : undefined}
         />
       )}
 
@@ -307,9 +428,8 @@ export default WorkflowSettings
    SHARED STYLES
 --------------------------------------------------------- */
 
-const inputClass =
-  "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
-const labelClass = "text-sm font-medium text-gray-700"
+const inputClass = "input"
+const labelClass = "label"
 
 
 /* ---------------------------------------------------------
@@ -317,24 +437,23 @@ const labelClass = "text-sm font-medium text-gray-700"
 --------------------------------------------------------- */
 
 const Modal = ({ title, children, onClose }: any) => (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-xl w-full max-w-lg border border-gray-200 shadow-lg">
-      
+  <>
+    <div className="modal-overlay" onClick={onClose} />
+    <div className="modal-content p-0 max-w-lg">
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 text-sm"
+          className="text-gray-500 hover:text-gray-700 text-sm transition"
         >
           Close
         </button>
       </div>
-
       {/* Content */}
-      <div className="px-6 py-4">{children}</div>
+      <div className="px-6 py-5">{children}</div>
     </div>
-  </div>
+  </>
 )
 
 
@@ -426,11 +545,16 @@ export const StateModal = ({ stateData, onClose, onSave, onDelete }: any) => {
         {/* Category */}
         <div>
           <label className={labelClass}>Category</label>
-          <input
+          <select
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
-            className={inputClass}
-          />
+            className={`${inputClass} cursor-pointer`}
+          >
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="review">Review</option>
+            <option value="done">Done</option>
+          </select>
         </div>
 
         {/* Time Limit */}
@@ -461,12 +585,12 @@ export const StateModal = ({ stateData, onClose, onSave, onDelete }: any) => {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+        <div className="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
 
-          {stateData && (
+          {stateData && onDelete && (
             <button
               onClick={onDelete}
-              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md"
+              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-sm"
             >
               Delete
             </button>
@@ -474,7 +598,85 @@ export const StateModal = ({ stateData, onClose, onSave, onDelete }: any) => {
 
           <button
             onClick={() => onSave(form)}
-            className="ml-auto px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm"
+            className="ml-auto btn-primary"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+
+export const LabelModal = ({ labelData, onClose, onSave, onDelete }: any) => {
+  const [form, setForm] = useState({
+    label: labelData?.label || "",
+    description: labelData?.description || "",
+    color: labelData?.color || "#CCCCCC",
+  })
+
+  return (
+    <Modal title={labelData ? "Edit Label" : "Create Label"} onClose={onClose}>
+      <div className="space-y-4">
+        {/* Label */}
+        <div>
+          <label className={labelClass}>Label Name</label>
+          <input
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            className={inputClass}
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className={labelClass}>Description</label>
+          <textarea
+            value={form.description}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
+            className={inputClass}
+            rows={3}
+          />
+        </div>
+
+        {/* Color */}
+        <div>
+          <label className={labelClass}>Color</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={form.color}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+              className="h-10 w-20 rounded cursor-pointer"
+            />
+            <input
+              type="text"
+              value={form.color}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+              className={`${inputClass} font-mono`}
+              placeholder="#FFFFFF"
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
+          {labelData && onDelete && (
+            <button
+              onClick={onDelete}
+              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-sm"
+            >
+              Delete
+            </button>
+          )}
+
+          <button
+            onClick={() => onSave(form)}
+            className="ml-auto btn-primary"
           >
             Save
           </button>
@@ -607,12 +809,11 @@ export const TransitionModal = ({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-
-          {transitionData && (
+        <div className="flex justify-between items-center pt-4 border-t border-gray-200 mt-4">
+          {transitionData && onDelete && (
             <button
               onClick={onDelete}
-              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md"
+              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-sm"
             >
               Delete
             </button>
@@ -620,7 +821,7 @@ export const TransitionModal = ({
 
           <button
             onClick={() => onSave(form)}
-            className="ml-auto px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm"
+            className="ml-auto btn-primary"
           >
             Save
           </button>

@@ -14,7 +14,7 @@ const Layout = () => {
       <Sidebar />
       
       {/* Main content */}
-      <div className={`flex-1 flex flex-col min-w-0 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         {/* Header */}
         <Header />
         
@@ -28,8 +28,10 @@ const Layout = () => {
             maxWidth: "100%",                               // prevent expansion
           }}
         >
-
-          <div className={`${isWorkflowPage ? 'w-full h-full' : 'max-w-7xl mx-auto'}`}>
+          <div
+            key={location.pathname}
+            className={`animate-page-enter ${isWorkflowPage ? 'w-full h-full' : 'max-w-7xl mx-auto'}`}
+          >
             <Outlet />
           </div>
         </main>

@@ -6,6 +6,7 @@ import { staffApi } from '../../api/staff'
 import { useAuthStore } from '../../store/authStore'
 import { Search } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 const inputClass =
   "border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-indigo-600"
@@ -20,8 +21,18 @@ const ProjectMemberCreate = () => {
   const [search, setSearch] = useState('')
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
   const [role, setRole] = useState('')
-  const [joinedAt, setJoinedAt] = useState('')
+  const [joinedAt, setJoinedAt] = useState<string>(
+    isEdit
+      ? ''
+      : (() => {
+          const d = new Date()
+          const pad = (n: number) => String(n).padStart(2, '0')
+          const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+          return local
+        })()
+  )
   const [leftAt, setLeftAt] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: staffNames, isLoading } = useQuery({
     queryKey: ['staff-names'],
@@ -58,12 +69,7 @@ const ProjectMemberCreate = () => {
       navigate(`/projects/${id}/members`)
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to add member'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Failed to add member'))
     },
   })
 
@@ -75,17 +81,26 @@ const ProjectMemberCreate = () => {
       navigate(`/projects/${id}/members`)
     },
     onError: (error: any) => {
-      const message =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to update member'
-      toast.error(message)
+      toast.error(getErrorMessage(error, 'Failed to update member'))
     },
   })
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    const newErrors: Record<string, string> = {}
+
+    if (!isEdit && !selectedStaffId) newErrors.staff = 'Staff member is required'
+    if (!isEdit && !joinedAt) newErrors.joined_at = 'Joined date is required'
+    if (!role.trim()) newErrors.role = 'Role is required'
+    else if (role.length > 100) newErrors.role = 'Role must be less than 100 characters'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the errors in the form')
+      return
+    }
+
     if (isEdit) {
       updateMutation.mutate({
         role: role || undefined,
@@ -93,7 +108,6 @@ const ProjectMemberCreate = () => {
         left_at: leftAt || undefined,
       })
     } else {
-      if (!selectedStaffId) return
       createMutation.mutate({
         project_id: id!,
         staff_id: selectedStaffId,
@@ -133,7 +147,7 @@ const ProjectMemberCreate = () => {
           {/* STAFF SEARCH */}
           {!isEdit && (
             <div className="md:col-span-2">
-              <label className={labelClass}>Staff Member</label>
+              <label className={labelClass}>Staff Member <span className="text-red-500">*</span></label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
@@ -142,8 +156,9 @@ const ProjectMemberCreate = () => {
                   disabled={isLoading}
                   placeholder={isLoading ? 'Loading staff...' : 'Search staff...'}
                   onChange={(e) => setSearch(e.target.value)}
-                  className={`${inputClass} pl-10`}
+                  className={`${inputClass} pl-10 w-full ${errors.staff ? 'border-red-500' : ''}`}
                 />
+                {errors.staff && <p className="text-xs text-red-500 mt-1">{errors.staff}</p>}
 
                 {/* Suggestions */}
                 {search && staffOptions.length > 0 && (
@@ -181,24 +196,26 @@ const ProjectMemberCreate = () => {
 
           {/* ROLE */}
           <div>
-            <label className={labelClass}>Role</label>
+            <label className={labelClass}>Role <span className="text-red-500">*</span></label>
             <input
-              className={inputClass}
+              className={`${inputClass} w-full ${errors.role ? 'border-red-500' : ''}`}
               placeholder="Role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
             />
+            {errors.role && <p className="text-xs text-red-500 mt-1">{errors.role}</p>}
           </div>
 
           {/* JOINED DATE */}
           <div>
-            <label className={labelClass}>Joined At</label>
+            <label className={labelClass}>Joined At <span className="text-red-500">*</span></label>
             <input
               type="datetime-local"
-              className={inputClass}
+              className={`${inputClass} ${errors.joined_at ? 'border-red-500' : ''}`}
               value={joinedAt}
               onChange={(e) => setJoinedAt(e.target.value)}
             />
+            {errors.joined_at && <p className="text-xs text-red-500 mt-1">{errors.joined_at}</p>}
           </div>
 
           {/* LEFT DATE (ONLY IN EDIT) */}
@@ -229,7 +246,7 @@ const ProjectMemberCreate = () => {
             type="submit"
             disabled={
               (isEdit ? updateMutation.isPending : createMutation.isPending) ||
-              (!isEdit && !selectedStaffId)
+              (!isEdit && (!selectedStaffId || !joinedAt))
             }
             className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm disabled:opacity-50"
           >

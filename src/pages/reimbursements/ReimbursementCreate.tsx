@@ -4,7 +4,9 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { reimbursementsApi, CreateReimbursementItemData } from '../../api/reimbursements'
 import { staffApi } from '../../api/staff'
 import type { ExpenseCategory, Staff } from '../../types'
-import { Search } from 'lucide-react'
+import { ArrowLeft, Search } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { getErrorMessage } from '../../lib/utils'
 
 type ItemForm = {
   category_id: string
@@ -39,13 +41,14 @@ const ReimbursementCreate = () => {
     claim_date: new Date().toISOString().split('T')[0],
     expense_date_start: '',
     expense_date_end: '',
-    currency: 'USD',
+    currency: 'INR',
     description: '',
   })
 
   const [items, setItems] = useState<ItemForm[]>([{ ...emptyItem }])
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: categories } = useQuery<ExpenseCategory[]>({
     queryKey: ['reimbursement-categories'],
@@ -64,7 +67,11 @@ const ReimbursementCreate = () => {
   const createMutation = useMutation({
     mutationFn: reimbursementsApi.createClaim,
     onSuccess: (created) => {
+      toast.success('Reimbursement claim created')
       navigate(`/reimbursements/${created.id}`)
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to create reimbursement claim'))
     },
   })
 
@@ -126,14 +133,51 @@ const ReimbursementCreate = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+
+    const newErrors: Record<string, string> = {}
+
+    if (!form.staff_id) {
+      newErrors.staff_id = 'Staff selection is required'
+    }
+
+    if (!form.claim_date) {
+      newErrors.claim_date = 'Claim date is required'
+    }
 
     const payloadItems = buildItemsPayload()
 
-    if (!form.staff_id) {
-      return
+    if (payloadItems.length === 0) {
+      newErrors.items = 'At least one valid expense item is required'
     }
 
-    if (!payloadItems.length) {
+    // Deep validation for items
+    items.forEach((item, index) => {
+      if (!item.category_id) {
+        newErrors[`item_${index}_category_id`] = 'Category is required'
+      }
+      if (!item.expense_date) {
+        newErrors[`item_${index}_expense_date`] = 'Expense date is required'
+      }
+      if (!item.description || item.description.trim() === '') {
+        newErrors[`item_${index}_description`] = 'Description is required'
+      } else if (item.description.length > 500) {
+        newErrors[`item_${index}_description`] = 'Description must be less than 500 characters'
+      }
+      if (!item.amount || isNaN(Number(item.amount)) || Number(item.amount) <= 0) {
+        newErrors[`item_${index}_amount`] = 'Amount must be greater than 0'
+      }
+      if (item.quantity && (isNaN(Number(item.quantity)) || Number(item.quantity) <= 0)) {
+        newErrors[`item_${index}_quantity`] = 'Quantity must be greater than 0'
+      }
+      if (item.tax_amount && (isNaN(Number(item.tax_amount)) || Number(item.tax_amount) < 0)) {
+        newErrors[`item_${index}_tax_amount`] = 'Tax amount cannot be negative'
+      }
+    })
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the errors in the form')
       return
     }
 
@@ -142,7 +186,7 @@ const ReimbursementCreate = () => {
       claim_date: form.claim_date,
       expense_date_start: form.expense_date_start || undefined,
       expense_date_end: form.expense_date_end || undefined,
-      currency: form.currency || 'USD',
+      currency: form.currency || 'INR',
       description: form.description || undefined,
       total_amount: computeTotalAmount(),
       items: payloadItems,
@@ -153,11 +197,20 @@ const ReimbursementCreate = () => {
   
   return (
     <div className="space-y-6 max-w-5xl">
-      <div>
-        <h1 className="page-title">New Reimbursement Claim</h1>
-        <p className="page-description">
-          Create a new reimbursement claim with one or more expense items
-        </p>
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate('/reimbursements')}
+          className="p-2 rounded-md hover:bg-gray-100 transition"
+        >
+          <ArrowLeft className="h-5 w-5 text-gray-700" />
+        </button>
+        <div>
+          <h1 className="page-title">New Reimbursement Claim</h1>
+          <p className="page-description">
+            Create a new reimbursement claim with one or more expense items
+          </p>
+        </div>
       </div>
 
       <form onSubmit={onSubmit} className="card">
@@ -174,8 +227,11 @@ const ReimbursementCreate = () => {
                   placeholder="Search staff by name or code"
                   value={form.staff_search}
                   onChange={(e) => onStaffSearchChange(e.target.value)}
-                  className="input pl-10"
+                  className={`input pl-10 ${errors.staff_id ? 'border-red-500' : ''}`}
                 />
+                {errors.staff_id && (
+                  <p className="mt-1 text-xs text-red-500">{errors.staff_id}</p>
+                )}
                 {isStaffDropdownOpen && (
                   <div className="absolute z-10 mt-1 w-full bg-white border border-secondary-200 rounded-md shadow-lg max-h-60 overflow-auto">
                     {staffList?.items && staffList.items.length > 0 ? (
@@ -233,9 +289,11 @@ const ReimbursementCreate = () => {
                 name="claim_date"
                 value={form.claim_date}
                 onChange={onChange}
-                required
-                className="input"
+                className={`input ${errors.claim_date ? 'border-red-500' : ''}`}
               />
+              {errors.claim_date && (
+                <p className="mt-1 text-xs text-red-500">{errors.claim_date}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary-700 mb-1">
@@ -247,9 +305,9 @@ const ReimbursementCreate = () => {
                 onChange={onChange}
                 className="input"
               >
-                <option value="USD">USD</option>
+                {/* <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
+                <option value="GBP">GBP</option> */}
                 <option value="INR">INR</option>
               </select>
             </div>
@@ -306,12 +364,19 @@ const ReimbursementCreate = () => {
                 Add item
               </button>
             </div>
+            {errors.items && (
+              <p className="text-sm text-red-500">{errors.items}</p>
+            )}
 
             <div className="space-y-4">
               {items.map((item, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-1 md:grid-cols-6 gap-3 border border-secondary-200 rounded-md p-3"
+                  className={`grid grid-cols-1 md:grid-cols-6 gap-3 border rounded-md p-3 ${
+                    Object.keys(errors).some(k => k.startsWith(`item_${index}_`))
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-secondary-200'
+                  }`}
                 >
                   <div>
                     <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -321,7 +386,7 @@ const ReimbursementCreate = () => {
                       name="category_id"
                       value={item.category_id}
                       onChange={(e) => onItemChange(index, e)}
-                      className="input"
+                      className={`input ${errors[`item_${index}_category_id`] ? 'border-red-500' : ''}`}
                     >
                       <option value="">Select category</option>
                       {categories?.map((cat: ExpenseCategory) => (
@@ -330,6 +395,9 @@ const ReimbursementCreate = () => {
                         </option>
                       ))}
                     </select>
+                    {errors[`item_${index}_category_id`] && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors[`item_${index}_category_id`]}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -340,8 +408,11 @@ const ReimbursementCreate = () => {
                       name="expense_date"
                       value={item.expense_date}
                       onChange={(e) => onItemChange(index, e)}
-                      className="input"
+                      className={`input ${errors[`item_${index}_expense_date`] ? 'border-red-500' : ''}`}
                     />
+                    {errors[`item_${index}_expense_date`] && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors[`item_${index}_expense_date`]}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -352,8 +423,11 @@ const ReimbursementCreate = () => {
                       placeholder="Description"
                       value={item.description}
                       onChange={(e) => onItemChange(index, e)}
-                      className="input"
+                      className={`input ${errors[`item_${index}_description`] ? 'border-red-500' : ''}`}
                     />
+                    {errors[`item_${index}_description`] && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors[`item_${index}_description`]}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -365,8 +439,11 @@ const ReimbursementCreate = () => {
                       placeholder="Amount"
                       value={item.amount}
                       onChange={(e) => onItemChange(index, e)}
-                      className="input"
+                      className={`input ${errors[`item_${index}_amount`] ? 'border-red-500' : ''}`}
                     />
+                    {errors[`item_${index}_amount`] && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors[`item_${index}_amount`]}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -378,8 +455,11 @@ const ReimbursementCreate = () => {
                       placeholder="Qty"
                       value={item.quantity}
                       onChange={(e) => onItemChange(index, e)}
-                      className="input"
+                      className={`input ${errors[`item_${index}_quantity`] ? 'border-red-500' : ''}`}
                     />
+                    {errors[`item_${index}_quantity`] && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors[`item_${index}_quantity`]}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -392,7 +472,7 @@ const ReimbursementCreate = () => {
                         placeholder="Tax"
                         value={item.tax_amount}
                         onChange={(e) => onItemChange(index, e)}
-                        className="input"
+                        className={`input ${errors[`item_${index}_tax_amount`] ? 'border-red-500' : ''}`}
                       />
                       {items.length > 1 && (
                         <button
@@ -404,6 +484,9 @@ const ReimbursementCreate = () => {
                         </button>
                       )}
                     </div>
+                    {errors[`item_${index}_tax_amount`] && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors[`item_${index}_tax_amount`]}</p>
+                    )}
                   </div>
                 </div>
               ))}
