@@ -1,10 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card'
-import { Shield, UserCog, Building, Bell, Lock } from 'lucide-react'
+import { Shield, UserCog, Building, Bell, Lock, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
-
-// const getPermissions = useAuthStore(state => state.getPermissions)
 
 const Settings: React.FC = () => {
   const settingsOptions = [
@@ -16,6 +13,15 @@ const Settings: React.FC = () => {
       color: 'text-blue-500',
       bgColor: 'bg-blue-50',
       // isAllowed: getPermissions('role:view')
+      isAllowed: true
+    },
+    {
+      title: 'Profile',
+      description: 'View your profile and attendance.',
+      icon: User,
+      href: '/settings/profile',
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-50',
       isAllowed: true
     },
     {

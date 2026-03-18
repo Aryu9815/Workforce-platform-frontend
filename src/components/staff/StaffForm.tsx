@@ -10,7 +10,7 @@ interface OptionType {
 
 interface StaffFormProps {
   defaultValues?: any
-  onSubmit: (data: any) => void
+  onSubmit: (data: any, profileImage?: File) => void
   isEdit?: boolean
   loading?: boolean
   departments: OptionType[]
@@ -47,8 +47,13 @@ const StaffForm = ({
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   useEffect(() => {
+    let isMounted = true
+    let currentUrl: string | null = null
+
     if (defaultValues) {
       setForm(prev => ({
         ...prev,
@@ -61,8 +66,46 @@ const StaffForm = ({
           ? defaultValues.join_date.slice(0, 10)
           : '',
       }))
+
+      if (defaultValues.profile_image) {
+        const fetchExistingImage = async () => {
+          try {
+            // Extract just the filename if a full path is provided
+            const fileNameOnly = defaultValues.profile_image.split(/[/\\]/).pop() || defaultValues.profile_image
+            const blob = await staffApi.getProfileImage(fileNameOnly)
+            if (!isMounted) return
+            
+            currentUrl = URL.createObjectURL(blob)
+            setImagePreview(currentUrl)
+          } catch (error) {
+            if (isMounted) {
+              console.error('Failed to fetch existing profile image:', error)
+            }
+          }
+        }
+        fetchExistingImage()
+      }
+    }
+
+    return () => {
+      isMounted = false
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl)
+      }
     }
   }, [defaultValues])
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setProfileImage(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -107,7 +150,7 @@ const StaffForm = ({
       return
     }
 
-    onSubmit(form)
+    onSubmit(form, profileImage || undefined)
   }
 
   const inputClass = "input"
@@ -133,6 +176,74 @@ const StaffForm = ({
         <h2 className="section-title mb-6">
           Personal Information
         </h2>
+
+        {/* Profile Image Section */}
+        <div className="flex flex-col items-center sm:flex-row gap-6 mb-8">
+          <div className="relative group">
+            <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Profile Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-gray-400">
+                  <svg
+                    className="w-12 h-12"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <label className="absolute bottom-1 right-1 bg-white p-1.5 rounded-full shadow-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition group-hover:scale-110">
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </label>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-gray-900">Profile Picture</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              JPG, GIF or PNG. Max size of 800K
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setProfileImage(null)
+                setImagePreview(null)
+              }}
+              className="mt-2 text-xs font-medium text-red-600 hover:text-red-500 transition"
+            >
+              Remove photo
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">

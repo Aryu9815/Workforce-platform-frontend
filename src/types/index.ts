@@ -145,6 +145,7 @@ export interface Staff {
   exit_reason?: string;
   skills: string[];
   is_active: boolean;
+  profile_image?: string;
   created_at?: string;
   updated_at?: string;
 }

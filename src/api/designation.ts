@@ -13,13 +13,13 @@ export interface UpdateDesignationData extends Partial<CreateDesignationData> {
 }
 
 export const designationApi = {
-  getDesignations: async (): Promise<Designation[]> => {
-    const response = await apiClient.get('/staff/designations')
+  getDesignations: async (isDropdown: boolean = false): Promise<Designation[]> => {
+    const response = await apiClient.get('/staff/designations', { params: { is_dropdown: isDropdown } })
     return response.data
   },
 
   getDesignation: async (id: string): Promise<Designation> => {
-    const designations = await designationApi.getDesignations()
+    const designations = await designationApi.getDesignations(true)
     const designation = designations.find(d => d.id === id)
     if (!designation) {
       throw new Error('Designation not found')

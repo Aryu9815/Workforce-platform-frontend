@@ -41,6 +41,7 @@ import AssetDetail from './pages/assets/AssetDetail' // Module not found – com
 import Settings from './pages/settings/Settings'
 import RolesPage from './pages/settings/RolesPage'
 import RoleDetailsPage from './pages/settings/RoleDetailsPage'
+import Profile from './pages/settings/Profile'
 import NotFound from './pages/NotFound'
 // import { useBootstrap } from './hooks/useBootstrap'
 import { useBootstrap } from './hooks/useBootstrap'
@@ -54,7 +55,7 @@ function App() {
     }
     return <>{children}</>
   }
-  
+
   const LoggedInRoute = ({ children }: { children: React.ReactNode }) => {
     if (!isloggedIn) {
       return <Navigate to="/login" replace />
@@ -67,7 +68,7 @@ function App() {
       {/* Public routes */}
       <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />} />
       <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" replace />} />
-      
+
       {/* Tenant selection */}
       <Route path="/select-tenant" element={
         <LoggedInRoute>
@@ -82,7 +83,7 @@ function App() {
         </ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
-        
+
         {/* Staff routes */}
         <Route path="staff" element={<StaffList />} />
         <Route path="staff/new" element={<StaffCreate />} />
@@ -99,7 +100,7 @@ function App() {
         <Route path="designations/new" element={<DesignationCreate />} />
         <Route path="designations/:id/edit" element={<DesignationEdit />} />
 
-        
+
         {/* Project routes */}
         <Route path="projects" element={<ProjectList />} />
         <Route path="projects/new" element={<ProjectCreate />} />
@@ -110,26 +111,20 @@ function App() {
         <Route path="projects/:id/members" element={<ProjectMembersList />} />
         <Route path="projects/:id/members/new" element={<ProjectMemberCreate />} />
         <Route path="projects/:id/members/:memberId/edit" element={<ProjectMemberCreate />} />
-        
+
         {/* Task routes */}
         <Route path="task-labels" element={<TaskLabelList />} />
-        {/* <Route path="tasks" element={<TaskList />} />
-        <Route path="tasks/:id" element={<TaskDetail />} /> */}
         <Route path="projects/:id/backlog" element={<Backlog />} />
-        
+
         {/* Attendance routes */}
         <Route path="attendance" element={<Attendance />} />
         <Route path="attendance/:id" element={<AttendanceDetail />} />
         <Route path="attendance/leave" element={<LeaveRequests />} />
-        
-        {/* Inventory routes */}
-        {/* <Route path="inventory" element={<InventoryList />} />
-        <Route path="inventory/:id" element={<InventoryDetail />} /> */}
-        
+
         {/* Asset management */}
         <Route path="assets" element={<AssetsPage />} />
         <Route path="assets/:id" element={<AssetDetail />} />
-        
+
         {/* Reimbursement routes */}
         <Route path="reimbursements" element={<ReimbursementList />} />
         <Route path="reimbursements/new" element={<ReimbursementCreate />} />
@@ -139,6 +134,7 @@ function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="settings/roles" element={<RolesPage />} />
         <Route path="settings/roles/:id" element={<RoleDetailsPage />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
       {/* 404 */}

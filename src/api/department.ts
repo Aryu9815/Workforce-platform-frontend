@@ -14,13 +14,13 @@ export interface UpdateDepartmentData extends Partial<CreateDepartmentData> {
 }
 
 export const departmentApi = {
-  getDepartments: async (): Promise<Department[]> => {
-    const response = await apiClient.get('/staff/departments')
+  getDepartments: async (isDropdown: boolean = false): Promise<Department[]> => {
+    const response = await apiClient.get('/staff/departments', { params: { is_dropdown: isDropdown } })
     return response.data
   },
 
   getDepartment: async (id: string): Promise<Department> => {
-    const departments = await departmentApi.getDepartments()
+    const departments = await departmentApi.getDepartments(true)
     const department = departments.find(d => d.id === id)
     if (!department) {
       throw new Error('Department not found')

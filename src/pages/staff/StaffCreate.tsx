@@ -16,13 +16,13 @@ const StaffCreate = () => {
   // Fetch Departments
   const { data: departments, isLoading: departmentsLoading } = useQuery({
     queryKey: ['departments'],
-    queryFn: () => departmentApi.getDepartments(),
+    queryFn: () => departmentApi.getDepartments(true),
   })
 
   // Fetch Designations
   const { data: designations, isLoading: designationsLoading } = useQuery({
     queryKey: ['designations'],
-    queryFn: () => designationApi.getDesignations(),
+    queryFn: () => designationApi.getDesignations(true),
   })
 
   // Fetch Roles
@@ -32,7 +32,8 @@ const StaffCreate = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: staffApi.createStaff,
+    mutationFn: (variables: { data: any; profileImage?: File }) =>
+      staffApi.createStaff(variables),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
       toast.success('Staff member created')
@@ -76,7 +77,7 @@ const StaffCreate = () => {
           </div>
         ) : (
           <StaffForm
-            onSubmit={(data) => mutation.mutate(data)}
+            onSubmit={(data, profileImage) => mutation.mutate({ data, profileImage })}
             loading={mutation.isPending}
             departments={departments || []}
             designations={designations || []}

@@ -82,6 +82,7 @@ const LeaveRequests = () => {
   
 
 
+
   if (!canViewLeave) {
     return (
       <div className="p-6">

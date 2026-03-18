@@ -55,7 +55,8 @@ const StaffEdit = () => {
 
   /* Update Staff */
   const updateMutation = useMutation({
-    mutationFn: (data: any) => staffApi.updateStaff(id!, data),
+    mutationFn: (variables: { data: any; profileImage?: File }) =>
+      staffApi.updateStaff({ id: id!, ...variables }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] })
       queryClient.invalidateQueries({ queryKey: ['staff', id] })
@@ -128,6 +129,7 @@ const StaffEdit = () => {
             work_location: staff.work_location,
             skills: staff.skills,
             is_active: staff.is_active,
+            profile_image: staff.profile_image,
             join_date: staff.join_date
               ? staff.join_date.split('T')[0]
               : ''
@@ -137,7 +139,7 @@ const StaffEdit = () => {
           roles={roles}
           isEdit
           loading={updateMutation.isPending}
-          onSubmit={(data) => updateMutation.mutate(data)}
+          onSubmit={(data, profileImage) => updateMutation.mutate({ data, profileImage })}
         />
 
       </div>

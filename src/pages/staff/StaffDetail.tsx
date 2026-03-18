@@ -17,6 +17,7 @@ import { staffApi } from '../../api/staff'
 import { useAuthStore } from '../../store/authStore'
 import toast from 'react-hot-toast'
 import { getErrorMessage } from '../../lib/utils'
+import StaffAvatar from '../../components/staff/StaffAvatar'
 const StaffDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -128,9 +129,18 @@ const StaffDetail = () => {
         <div className="flex gap-6">
 
           {/* Avatar */}
-          <div className="h-20 w-20 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-700 text-2xl font-semibold">
-            {staff.first_name?.[0]}
-            {staff.last_name?.[0]}
+          <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
+            <StaffAvatar
+              filename={staff.profile_image}
+              alt={staff.full_name}
+              className="w-full h-full"
+              fallback={
+                <div className="text-indigo-700 text-2xl font-semibold">
+                  {staff.first_name?.[0]}
+                  {staff.last_name?.[0]}
+                </div>
+              }
+            />
           </div>
 
           <div className="flex-1">
